@@ -112,11 +112,17 @@
     updatePlayer(dt);
     for (const cat of cats) {
       const before = cat.hearts;
-      Cats.updateCat(cat, dt);
+      const beforeState = cat.state;
+      Cats.updateCat(cat, dt, player);
       if (cat.hearts > before) { // 刚吃完一口
         spawnHearts(cat.x + 8, cat.y);
         spawnText(cat.x + 8, cat.y - 10, '喵♪');
-        if (dishes.length) dishes.shift(); // 吃完撤碟
+      }
+      if (beforeState === 'eat' && (cat.state === 'follow' || cat.state === 'wander')) { // 吃完撤碟（无论是否满心）
+        if (dishes.length) dishes.shift();
+      }
+      if (cat.state === 'nap' && Math.random() < dt * 0.5) { // 睡觉偶尔冒 Z
+        spawnText(cat.x + 14, cat.y - 2, 'z');
       }
     }
     render(dt);

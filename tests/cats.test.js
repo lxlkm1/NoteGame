@@ -72,3 +72,18 @@ test('好感度上限 5，超出不再增加', () => {
   for (let i = 0; i < 200; i++) updateCat(cat, 0.016);
   assert.equal(cat.hearts, 5);
 });
+
+test('喂满 5 心后吃完进入 follow，计时结束 return，到家 nap', () => {
+  const cat = createCats()[0];
+  cat.hearts = 4;
+  const player = { x: cat.x + 30, y: cat.y };
+  feed(cat, cat.x + 5, cat.y);
+  for (let i = 0; i < 300; i++) updateCat(cat, 0.016); // 4.8s：走完 + 吃完，follow 8s 未到
+  assert.equal(cat.hearts, 5);
+  assert.equal(cat.state, 'follow');
+  cat.followTimer = 0.01;
+  updateCat(cat, 0.02, player);
+  assert.equal(cat.state, 'return');
+  for (let i = 0; i < 100; i++) updateCat(cat, 0.016, player); // 1.6s：走回家（约 0.3s）后仍在打盹（nap 最短 5s）
+  assert.equal(cat.state, 'nap');
+});

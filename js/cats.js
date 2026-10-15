@@ -58,7 +58,7 @@ const Cats = (() => {
     return false;
   }
 
-  function updateCat(cat, dt) {
+  function updateCat(cat, dt, player) {
     cat.stateTimer -= dt;
     cat.blinkTimer += dt;
     switch (cat.state) {
@@ -95,9 +95,30 @@ const Cats = (() => {
       case 'eat': {
         if (cat.stateTimer <= 0) {
           cat.hearts = Math.min(5, cat.hearts + 1);
-          cat.state = 'wander';
-          cat.stateTimer = 2 + Math.random() * 3;
-          pickWanderTarget(cat);
+          if (cat.hearts >= 5) {          // 心满意足 → 跟随
+            cat.state = 'follow';
+            cat.followTimer = 8;
+          } else {
+            cat.state = 'wander';
+            cat.stateTimer = 2 + Math.random() * 3;
+            pickWanderTarget(cat);
+          }
+        }
+        break;
+      }
+      case 'follow': {
+        cat.followTimer -= dt;
+        if (cat.followTimer <= 0) { cat.state = 'return'; break; }
+        if (!player) break;
+        const d = Math.hypot(player.x - cat.x, player.y - cat.y);
+        if (d > 24) moveToward(cat, player.x, player.y, CAT_SPEED * 1.8, dt);
+        break;
+      }
+      case 'return': {
+        const arrived = moveToward(cat, cat.homeX, cat.homeY, CAT_SPEED * 1.5, dt);
+        if (arrived) {
+          cat.state = 'nap';
+          cat.stateTimer = 5 + Math.random() * 3; // 心满意足地睡
         }
         break;
       }
