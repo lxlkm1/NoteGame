@@ -10,11 +10,11 @@ test('中庭地图尺寸：30 行，每行 40 字符', () => {
 
 test('房间地图尺寸一致', () => {
   const reading = ROOM_MAPS.reading;
-  assert.equal(reading.length, 10);
-  for (const row of reading) assert.equal(row.length, 14);
+  assert.equal(reading.length, 30);
+  for (const row of reading) assert.equal(row.length, 40);
   const toilet = ROOM_MAPS.toilet;
-  assert.equal(toilet.length, 7);
-  for (const row of toilet) assert.equal(row.length, 10);
+  assert.equal(toilet.length, 30);
+  for (const row of toilet) assert.equal(row.length, 40);
 });
 
 test('parseMap 返回网格且四角是墙', () => {
@@ -39,18 +39,18 @@ test('中庭碰撞：墙/大门不可通行，地板/棋盘/凳子/门可通行'
 test('房间碰撞：书架/桌子/洁具不可通行，出口门可通行', () => {
   const reading = ROOM_MAPS.reading;
   const toilet = ROOM_MAPS.toilet;
-  assert.equal(isSolidAtPx(2 * TILE + 8, 2 * TILE + 8, reading), true);   // 书架
-  assert.equal(isSolidAtPx(4 * TILE + 8, 6 * TILE + 8, reading), true);   // 桌子
-  assert.equal(isSolidAtPx(7 * TILE + 8, 9 * TILE + 8, reading), false);  // 出口门（row 9, col 7）
-  assert.equal(isSolidAtPx(2 * TILE + 8, 2 * TILE + 8, toilet), true);    // 洁具
-  assert.equal(isSolidAtPx(7 * TILE + 8, 6 * TILE + 8, toilet), false);   // 出口门（row 6, col 7）
+  assert.equal(isSolidAtPx(3 * TILE + 8, 3 * TILE + 8, reading), true);   // 书架
+  assert.equal(isSolidAtPx(5 * TILE + 8, 10 * TILE + 8, reading), true);  // 桌子（col 5 是 T）
+  assert.equal(isSolidAtPx(19 * TILE + 8, 29 * TILE + 8, reading), false); // 出口门
+  assert.equal(isSolidAtPx(3 * TILE + 8, 5 * TILE + 8, toilet), true);    // 洁具
+  assert.equal(isSolidAtPx(19 * TILE + 8, 29 * TILE + 8, toilet), false); // 出口门
 });
 
 test('门检测：中庭门 → 房间类型，房间门 → exit', () => {
   assert.equal(isDoorAt(1 * TILE + 8, 2 * TILE + 8, ATRIUM_MAP), true);   // 卫生间门
   assert.equal(isDoorAt(1 * TILE + 8, 8 * TILE + 8, ATRIUM_MAP), true);   // 阅览室门
   assert.equal(isDoorAt(19 * TILE + 8, 27 * TILE + 8, ATRIUM_MAP), false); // 地板不是门
-  assert.equal(isDoorAt(7 * TILE + 8, 9 * TILE + 8, ROOM_MAPS.reading), true); // 房间出口（row 9, col 7）
+  assert.equal(isDoorAt(19 * TILE + 8, 29 * TILE + 8, ROOM_MAPS.reading), true); // 房间出口（全屏，row 29 col 19）
 });
 
 test('越界坐标视为不可通行', () => {

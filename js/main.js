@@ -142,8 +142,8 @@
     atriumPos = { x: player.x, y: player.y };   // 记住中庭位置
     scene = roomType;
     currentMap = ROOM_MAPS[roomType];
-    player.x = Math.floor(currentMap[0].length / 2) * TILE;
-    player.y = (currentMap.length - 2) * TILE;  // 站在出口门上方
+    player.x = 19 * TILE;  // 房间正中央
+    player.y = 27 * TILE;  // 站在出口门上方
     player.dir = 'down';
     dishes.length = 0;
     particles.length = 0;
