@@ -16,13 +16,10 @@
 
   function update(dt) { /* Task 3+: 人物/猫/粒子 */ }
 
+  const mapCanvas = MapKit.buildMapCanvas();
+
   function render(now) {
-    ctx.fillStyle = '#2b2633';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    // 临时验证：屏幕中央呼吸色块，证明循环活着（Task 3 移除）
-    const s = 20 + Math.sin(now * 2) * 6;
-    ctx.fillStyle = '#ef9f4d';
-    ctx.fillRect(240 - s / 2, 160 - s / 2, s, s);
+    ctx.drawImage(mapCanvas, 0, 0);
   }
 
   requestAnimationFrame((t) => { lastT = t; requestAnimationFrame(loop); });
