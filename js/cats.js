@@ -84,6 +84,23 @@ const Cats = (() => {
         }
         break;
       }
+      case 'gotoFood': {
+        const arrived = moveToward(cat, cat.dishX, cat.dishY, CAT_SPEED * 1.5, dt);
+        if (arrived) {
+          cat.state = 'eat';
+          cat.stateTimer = 1.6;
+        }
+        break;
+      }
+      case 'eat': {
+        if (cat.stateTimer <= 0) {
+          cat.hearts = Math.min(5, cat.hearts + 1);
+          cat.state = 'wander';
+          cat.stateTimer = 2 + Math.random() * 3;
+          pickWanderTarget(cat);
+        }
+        break;
+      }
     }
   }
 
@@ -106,7 +123,14 @@ const Cats = (() => {
     drawSprite(ctx, frame, cat.palette, cat.x, cat.y, cat.dir < 0);
   }
 
-  return { CAT_DEFS, createCats, updateCat, drawCat };
+  function feed(cat, dishX, dishY) {
+    if (cat.state === 'eat' || cat.state === 'gotoFood') return; // 正在吃就不重复投
+    cat.dishX = dishX;
+    cat.dishY = dishY;
+    cat.state = 'gotoFood';
+  }
+
+  return { CAT_DEFS, createCats, updateCat, drawCat, feed };
 })();
 
 if (typeof module !== 'undefined') module.exports = Cats;

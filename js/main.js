@@ -64,23 +64,127 @@
 
   const cats = Cats.createCats();
 
+  const FEED_RANGE = 40;
+  const dishes = [];   // {x, y}
+  const particles = []; // {x, y, vx, vy, life, ttl, kind, text?}
+
+  function spawnHearts(x, y) {
+    for (let i = 0; i < 5; i++) {
+      particles.push({
+        x: x + (Math.random() * 16 - 8), y: y - 4,
+        vx: Math.random() * 8 - 4, vy: -18 - Math.random() * 10,
+        life: 0, ttl: 1 + Math.random() * 0.5, kind: 'heart',
+      });
+    }
+  }
+
+  function spawnText(x, y, text) {
+    particles.push({ x, y, vx: 0, vy: -10, life: 0, ttl: 1.4, kind: 'text', text });
+  }
+
+  function nearestFeedableCat() {
+    let best = null, bestD = FEED_RANGE;
+    for (const cat of cats) {
+      const d = Math.hypot(cat.x + 8 - (player.x + 8), cat.y + 8 - (player.y + 8));
+      if (d < bestD) { best = cat; bestD = d; }
+    }
+    return best;
+  }
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() !== 'e') return;
+    const cat = nearestFeedableCat();
+    if (!cat) return;
+    // 碟落在猫与玩家之间、猫身前 14px
+    const dx = player.x - cat.x, dy = player.y - cat.y;
+    const len = Math.hypot(dx, dy) || 1;
+    const dishX = cat.x + (dx / len) * 14, dishY = cat.y + (dy / len) * 14 + 4;
+    dishes.push({ x: dishX, y: dishY });
+    Cats.feed(cat, dishX, dishY);
+    cat.hasMet = true;
+  });
+
   // ---- 循环 ----
   let lastT = 0;
   function loop(t) {
     const dt = Math.min((t - lastT) / 1000, 0.05);
     lastT = t;
     updatePlayer(dt);
-    for (const cat of cats) Cats.updateCat(cat, dt);
-    render();
+    for (const cat of cats) {
+      const before = cat.hearts;
+      Cats.updateCat(cat, dt);
+      if (cat.hearts > before) { // 刚吃完一口
+        spawnHearts(cat.x + 8, cat.y);
+        spawnText(cat.x + 8, cat.y - 10, '喵♪');
+        if (dishes.length) dishes.shift(); // 吃完撤碟
+      }
+    }
+    render(dt);
     requestAnimationFrame(loop);
   }
 
-  function render() {
+  function drawDishes() {
+    for (const d of dishes) {
+      drawSprite(ctx, Sprites.DISH, Sprites.PALETTE_DISH, d.x, d.y);
+    }
+  }
+
+  function drawParticles(dt) {
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.life += dt;
+      if (p.life > p.ttl) { particles.splice(i, 1); continue; }
+      p.x += p.vx * dt; p.y += p.vy * dt;
+      const alpha = 1 - p.life / p.ttl;
+      ctx.globalAlpha = alpha;
+      if (p.kind === 'heart') {
+        drawSprite(ctx, Sprites.HEART, { A: '#ef6a8a' }, p.x, p.y);
+      } else {
+        ctx.fillStyle = '#f5d7e0';
+        ctx.font = '8px monospace';
+        ctx.fillText(p.text, p.x - 6, p.y);
+      }
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  function drawCatOverlay() { // 气泡提示 + 名牌 + 心条
+    const target = nearestFeedableCat();
+    for (const cat of cats) {
+      const near = Math.hypot(cat.x + 8 - (player.x + 8), cat.y + 8 - (player.y + 8)) < 64;
+      if (!near) continue;
+      // 名牌
+      ctx.font = '8px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#1a181f';
+      ctx.fillText(cat.name, cat.x + 8, cat.y - 10);
+      ctx.fillStyle = '#f5f2ec';
+      ctx.fillText(cat.name, cat.x + 8, cat.y - 11);
+      // 5 心条
+      for (let i = 0; i < 5; i++) {
+        drawSprite(ctx, Sprites.HEART, { A: i < cat.hearts ? '#ef6a8a' : '#4a4453' }, cat.x - 12 + i * 8, cat.y - 8);
+      }
+      ctx.textAlign = 'left';
+    }
+    if (target) { // 「E 投喂」气泡
+      const bx = target.x + 4, by = target.y - 22;
+      ctx.fillStyle = '#f5f2ec';
+      ctx.fillRect(bx, by, 10, 10);
+      ctx.fillStyle = '#1a181f';
+      ctx.font = 'bold 8px monospace';
+      ctx.fillText('E', bx + 3, by + 8);
+    }
+  }
+
+  function render(dt) {
     ctx.drawImage(mapCanvas, 0, 0);
+    drawDishes();
     const actors = [...cats.map((c) => ({ y: c.y, draw: () => Cats.drawCat(ctx, c, drawSprite, Sprites.CAT_FRAMES) })),
                     { y: player.y, draw: drawPlayer }];
     actors.sort((a, b) => a.y - b.y);
     for (const a of actors) a.draw();
+    drawCatOverlay();
+    drawParticles(dt);
   }
 
   requestAnimationFrame((t) => { lastT = t; requestAnimationFrame(loop); });

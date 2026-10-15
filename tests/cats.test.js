@@ -1,7 +1,7 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert');
-const { CAT_DEFS, createCats, updateCat } = require('../js/cats.js');
+const { CAT_DEFS, createCats, updateCat, feed } = require('../js/cats.js');
 
 test('恰好 10 只猫，每只字段齐全、调色板五色俱全', () => {
   assert.equal(CAT_DEFS.length, 10);
@@ -52,4 +52,23 @@ test('闲逛到达目标后站立停顿（wander 期间 pauseTimer > 0）', () =
     if (cat.state === 'wander' && cat.pauseTimer > 0) observedPause = true;
   }
   assert.ok(observedPause, 'wander 期间应出现站立停顿（pauseTimer > 0）');
+});
+
+test('feed 叫醒睡着的猫并走向食物；吃完好感 +1', () => {
+  const cat = createCats()[0];
+  cat.state = 'nap';
+  feed(cat, cat.x + 20, cat.y);
+  assert.equal(cat.state, 'gotoFood');
+  // 200 帧 = 3.2s：走 20px(≈1.2s) + 吃 1.6s，且吃完后 2s 内不会切 nap
+  for (let i = 0; i < 200; i++) updateCat(cat, 0.016);
+  assert.equal(cat.state, 'wander');
+  assert.equal(cat.hearts, 1);
+});
+
+test('好感度上限 5，超出不再增加', () => {
+  const cat = createCats()[0];
+  cat.hearts = 5;
+  feed(cat, cat.x, cat.y);
+  for (let i = 0; i < 200; i++) updateCat(cat, 0.016);
+  assert.equal(cat.hearts, 5);
 });
