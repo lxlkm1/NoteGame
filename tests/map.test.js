@@ -41,16 +41,16 @@ test('房间碰撞：书架/桌子/洁具不可通行，出口门可通行', () 
   const toilet = ROOM_MAPS.toilet;
   assert.equal(isSolidAtPx(2 * TILE + 8, 3 * TILE + 8, reading), true);   // 书架
   assert.equal(isSolidAtPx(4 * TILE + 8, 10 * TILE + 8, reading), true);  // 桌子
-  assert.equal(isSolidAtPx(19 * TILE + 8, 29 * TILE + 8, reading), false); // 出口门
+  assert.equal(isSolidAtPx(20 * TILE + 8, 29 * TILE + 8, reading), false); // 出口门（col 20-21）
   assert.equal(isSolidAtPx(2 * TILE + 8, 5 * TILE + 8, toilet), true);    // 洁具
-  assert.equal(isSolidAtPx(19 * TILE + 8, 29 * TILE + 8, toilet), false); // 出口门
+  assert.equal(isSolidAtPx(20 * TILE + 8, 29 * TILE + 8, toilet), false); // 出口门
 });
 
 test('门检测：中庭大门M → 房间类型，房间门m → exit', () => {
   assert.equal(isDoorAt(4 * TILE + 8, 8 * TILE + 8, ATRIUM_MAP), true);   // 左上大门（卫生间）
   assert.equal(isDoorAt(4 * TILE + 8, 21 * TILE + 8, ATRIUM_MAP), true);  // 左下大门（阅览室）
   assert.equal(isDoorAt(19 * TILE + 8, 27 * TILE + 8, ATRIUM_MAP), false); // 棋盘不是门
-  assert.equal(isDoorAt(19 * TILE + 8, 29 * TILE + 8, ROOM_MAPS.reading), true); // 房间出口
+  assert.equal(isDoorAt(20 * TILE + 8, 29 * TILE + 8, ROOM_MAPS.reading), true); // 房间出口（col 20）
 });
 
 test('越界坐标视为不可通行', () => {
