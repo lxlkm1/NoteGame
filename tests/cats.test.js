@@ -43,3 +43,13 @@ test('wander 走向目标点且不超出领地半径 + 8px 容差', () => {
   assert.ok(Math.abs(cat.x - cat.homeX) <= r + 16, `x 越界: ${cat.x}`);
   assert.ok(Math.abs(cat.y - cat.homeY) <= r + 16, `y 越界: ${cat.y}`);
 });
+
+test('闲逛到达目标后站立停顿（wander 期间 pauseTimer > 0）', () => {
+  const cat = createCats()[0];
+  let observedPause = false;
+  for (let i = 0; i < 1200; i++) { // 模拟约 19 秒
+    updateCat(cat, 0.016);
+    if (cat.state === 'wander' && cat.pauseTimer > 0) observedPause = true;
+  }
+  assert.ok(observedPause, 'wander 期间应出现站立停顿（pauseTimer > 0）');
+});

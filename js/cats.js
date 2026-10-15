@@ -27,7 +27,7 @@ const Cats = (() => {
       x: def.col * TILE, y: def.row * TILE,
       state: 'wander', stateTimer: 2 + Math.random() * 4,
       targetX: def.col * TILE, targetY: def.row * TILE,
-      dir: 1, walkTimer: 0, blinkTimer: 0,
+      dir: 1, walkTimer: 0, blinkTimer: 0, pauseTimer: 0,
       hearts: 0,
       dishX: 0, dishY: 0,        // Task 5 使用
       followTimer: 0,            // Task 6 使用
@@ -63,8 +63,13 @@ const Cats = (() => {
     cat.blinkTimer += dt;
     switch (cat.state) {
       case 'wander': {
-        const arrived = moveToward(cat, cat.targetX, cat.targetY, CAT_SPEED, dt);
-        if (arrived) pickWanderTarget(cat);
+        if (cat.pauseTimer > 0) { // 站立片刻：只倒计时，不移动
+          cat.pauseTimer -= dt;
+          if (cat.pauseTimer <= 0) pickWanderTarget(cat);
+        } else {
+          const arrived = moveToward(cat, cat.targetX, cat.targetY, CAT_SPEED, dt);
+          if (arrived) cat.pauseTimer = 0.6 + Math.random() * 1.2; // 到达目标，停顿 0.6~1.8s
+        }
         if (cat.stateTimer <= 0) { // 走累了，睡一觉
           cat.state = 'nap';
           cat.stateTimer = 4 + Math.random() * 4;
@@ -88,7 +93,7 @@ const Cats = (() => {
       case 'nap': return 'sleep';
       case 'eat': return 'eat';
       case 'wander': {
-        const moving = Math.hypot(cat.targetX - cat.x, cat.targetY - cat.y) > 2;
+        const moving = cat.pauseTimer <= 0 && Math.hypot(cat.targetX - cat.x, cat.targetY - cat.y) > 2;
         if (!moving) return Math.floor(cat.blinkTimer / 1.6) % 5 === 4 ? 'idle2' : 'idle1';
         return Math.floor(cat.walkTimer / 0.25) % 2 === 0 ? 'walk1' : 'walk2';
       }
