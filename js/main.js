@@ -62,19 +62,25 @@
                player.x, player.y, player.dir === 'left');
   }
 
+  const cats = Cats.createCats();
+
   // ---- 循环 ----
   let lastT = 0;
   function loop(t) {
     const dt = Math.min((t - lastT) / 1000, 0.05);
     lastT = t;
     updatePlayer(dt);
+    for (const cat of cats) Cats.updateCat(cat, dt);
     render();
     requestAnimationFrame(loop);
   }
 
   function render() {
     ctx.drawImage(mapCanvas, 0, 0);
-    drawPlayer();
+    const actors = [...cats.map((c) => ({ y: c.y, draw: () => Cats.drawCat(ctx, c, drawSprite, Sprites.CAT_FRAMES) })),
+                    { y: player.y, draw: drawPlayer }];
+    actors.sort((a, b) => a.y - b.y);
+    for (const a of actors) a.draw();
   }
 
   requestAnimationFrame((t) => { lastT = t; requestAnimationFrame(loop); });
