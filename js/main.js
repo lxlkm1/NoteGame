@@ -51,7 +51,7 @@
 
   // ---- 人物 ----
   const player = {
-    x: 19 * TILE, y: 27 * TILE, // 出生点：大门口内侧
+    x: 17 * TILE, y: 27 * TILE, // 出生点：大门口内侧（36 列 → col 17-18）
     dir: 'up',
     moving: false,
     animTimer: 0,
@@ -142,7 +142,7 @@
     atriumPos = { x: player.x, y: player.y };   // 记住中庭位置
     scene = roomType;
     currentMap = ROOM_MAPS[roomType];
-    player.x = 19 * TILE;  // 房间正中央
+    player.x = 17 * TILE;  // 房间正中央（36 列 → col 17-18 中间）
     player.y = 27 * TILE;  // 站在出口门上方
     player.dir = 'down';
     dishes.length = 0;
