@@ -218,10 +218,15 @@ const MapKit = (() => {
       ctx.fillRect(x + 9, y + 4, 5, 6);
       return;
     }
-    // 地板基色（暖木棋盘）
+    // 地板 `.` 用单一深色（与棋盘区分）
+    if (ch === '.') {
+      ctx.fillStyle = '#4a3f35';
+      ctx.fillRect(x, y, TILE, TILE);
+      return;
+    }
+    // 其他 tile 的基色（暖木交替，用于棋盘等）
     ctx.fillStyle = (col + row) % 2 === 0 ? '#63503e' : '#5a4837';
     ctx.fillRect(x, y, TILE, TILE);
-    if (ch === '.') return;
     if (ch === 'B') { // 书架：木框 + 一排彩色书
       ctx.fillStyle = '#7a4a2e';
       ctx.fillRect(x, y, TILE, TILE);
