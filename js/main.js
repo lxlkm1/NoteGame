@@ -134,8 +134,14 @@
     const cy = Math.floor((player.y + 15) / TILE);
     if (cy < 0 || cy >= currentMap.length) return null;
     const row = currentMap[cy];
-    if (cx < 0 || cx >= row.length || row[cx] !== 'm') return null;
-    return scene === 'atrium' ? (cy === 2 ? 'toilet' : 'reading') : 'exit';
+    if (cx < 0 || cx >= row.length || (row[cx] !== 'M' && row[cx] !== 'm')) return null;
+    if (scene === 'atrium') {
+      // 4 个大门：左侧 row 8-9（上）和 21-22（下），右侧对称
+      if (cy >= 8 && cy <= 9) return 'toilet'; // 上方门 → 卫生间
+      if (cy >= 21 && cy <= 22) return 'reading'; // 下方门 → 阅览室
+      return null;
+    }
+    return 'exit'; // 房间里的门 → 退出
   }
 
   function enterRoom(roomType) {

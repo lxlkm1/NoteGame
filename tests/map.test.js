@@ -25,15 +25,15 @@ test('parseMap 返回网格且四角是墙', () => {
   assert.equal(grid[29][35], '#');
 });
 
-test('中庭碰撞：墙/大门不可通行，地板/棋盘/凳子/门可通行', () => {
+test('中庭碰撞：墙/大门不可通行，棋盘/凳子/大门M可通行', () => {
   const solid = (c, r) => isSolidAtPx(c * TILE + 8, r * TILE + 8, ATRIUM_MAP);
   assert.equal(solid(0, 0), true);    // 外墙
   assert.equal(solid(1, 3), true);    // 左内墙
-  assert.equal(solid(19, 29), true);  // 大门
-  assert.equal(solid(19, 27), false); // 地板（出生点）
-  assert.equal(solid(18, 14), false); // 棋盘（可走）
-  assert.equal(solid(14, 11), false); // 棋子凳子（可走）
-  assert.equal(solid(1, 2), false);   // 传送门（可走）
+  assert.equal(solid(17, 29), true);  // 大门D
+  assert.equal(solid(17, 27), false); // 棋盘（出生点）
+  assert.equal(solid(15, 14), false); // 棋盘（可走）
+  assert.equal(solid(3, 7), false);   // 棋子凳子（可走）
+  assert.equal(solid(1, 8), false);   // 大门M（可走）
 });
 
 test('房间碰撞：书架/桌子/洁具不可通行，出口门可通行', () => {
@@ -46,10 +46,10 @@ test('房间碰撞：书架/桌子/洁具不可通行，出口门可通行', () 
   assert.equal(isSolidAtPx(17 * TILE + 8, 29 * TILE + 8, toilet), false); // 出口门
 });
 
-test('门检测：中庭门 → 房间类型，房间门 → exit', () => {
-  assert.equal(isDoorAt(1 * TILE + 8, 2 * TILE + 8, ATRIUM_MAP), true);   // 卫生间门
-  assert.equal(isDoorAt(1 * TILE + 8, 8 * TILE + 8, ATRIUM_MAP), true);   // 阅览室门
-  assert.equal(isDoorAt(17 * TILE + 8, 27 * TILE + 8, ATRIUM_MAP), false); // 地板不是门
+test('门检测：中庭大门M → 房间类型，房间门m → exit', () => {
+  assert.equal(isDoorAt(1 * TILE + 8, 8 * TILE + 8, ATRIUM_MAP), true);   // 左上大门（卫生间）
+  assert.equal(isDoorAt(1 * TILE + 8, 21 * TILE + 8, ATRIUM_MAP), true);  // 左下大门（阅览室）
+  assert.equal(isDoorAt(17 * TILE + 8, 27 * TILE + 8, ATRIUM_MAP), false); // 棋盘不是门
   assert.equal(isDoorAt(17 * TILE + 8, 29 * TILE + 8, ROOM_MAPS.reading), true); // 房间出口
 });
 

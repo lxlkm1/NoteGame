@@ -4,39 +4,39 @@ const MapKit = (() => {
   'use strict';
   const TILE = 16;
 
-  // 图例：# 墙 | . 地板 | B 书架 | T 桌 | c 椅(可走) | q 象棋棋盘格(可走)
-  //        | z 棋子凳子(可走) | m 传送门(可走) | R 卫生间洁具 | D 大门
-  // 中庭：中央大棋盘 + 棋子凳子，四周墙上有 6 个传送门（左右各 2 阅览室 + 左上/右上卫生间），下中大门
+  // 图例：# 墙 | q 棋盘格(可走) | B 书架 | T 桌 | c 椅(可走)
+  //        | z 棋子凳子(可走) | M 大门传送点(可走) | R 卫生间洁具 | D 大门
+  // 中庭：整体棋盘色地面 + 中央大棋盘（带 32 棋子凳），左右各 2 个大门，下中大门
   const ATRIUM_MAP = [
     '####################################',
-    '##................................##',
-    '#m................................m#',
-    '##................................##',
-    '##................................##',
-    '##................................##',
-    '##................................##',
-    '##.zqqzqqzqqzqqzqqzqqzqqzqqzqqqqq.##',
-    '#m.qqqqqqqqqqqqqqqqqqqqqqqqqqqqqq.m#',
-    '#m.qqqqqqqqqqqqqqqqqqqqqqqqqqqqqq.m#',
-    '##.qqqzqqqqqqqqqqqqqqqqqzqqqqqqqq.##',
-    '##.qqqqqqqqqqqqqqqqqqqqqqqqqqqqqq.##',
-    '##.qqqqqqqqqqqqqqqqqqqqqqqqqqqqqq.##',
-    '##.zqqqqqzqqqqqzqqqqqzqqqqqzqqqqq.##',
-    '##.qqqqqqqqqqqqqqqqqqqqqqqqqqqqqq.##',
-    '##.qqqqqqqqqqqqqqqqqqqqqqqqqqqqqq.##',
-    '##.qqqqqqqqqqqqqqqqqqqqqqqqqqqqqq.##',
-    '##.qqqqqqqqqqqqqqqqqqqqqqqqqqqqqq.##',
-    '##.qqqqqqqqqqqqqqqqqqqqqqqqqqqqqq.##',
-    '##.qqqqqqqqqqqqqqqqqqqqqqqqqqqqqq.##',
-    '##.zqqqqqzqqqqqzqqqqqzqqqqqzqqqqq.##',
-    '#m.qqqqqqqqqqqqqqqqqqqqqqqqqqqqqq.m#',
-    '#m.qqqqqqqqqqqqqqqqqqqqqqqqqqqqqq.m#',
-    '##.qqqzqqqqqqqqqqqqqqqqqzqqqqqqqq.##',
-    '##.qqqqqqqqqqqqqqqqqqqqqqqqqqqqqq.##',
-    '#m.qqqqqqqqqqqqqqqqqqqqqqqqqqqqqq.m#',
-    '##.zqqzqqzqqzqqzqqzqqzqqzqqzqqqqq.##',
-    '##................................##',
-    '##................................##',
+    '##qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq##',
+    '##qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq##',
+    '##qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq##',
+    '##qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq##',
+    '##qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq##',
+    '##qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq##',
+    '##qzqqzqqzqqzqqzqqzqqzqqzqqzqqqqqq##',
+    '#MqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqM#',
+    '#MqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqM#',
+    '##qqqqzqqqqqqqqqqqqqqqqqzqqqqqqqqq##',
+    '##qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq##',
+    '##qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq##',
+    '##qzqqqqqzqqqqqzqqqqqzqqqqqzqqqqqq##',
+    '##qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq##',
+    '##qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq##',
+    '##qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq##',
+    '##qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq##',
+    '##qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq##',
+    '##qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq##',
+    '##qzqqqqqzqqqqqzqqqqqzqqqqqzqqqqqq##',
+    '#MqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqM#',
+    '#MqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqM#',
+    '##qqqqzqqqqqqqqqqqqqqqqqzqqqqqqqqq##',
+    '##qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq##',
+    '##qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq##',
+    '##qzqqzqqzqqzqqzqqzqqzqqzqqzqqqqqq##',
+    '##qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq##',
+    '##qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq##',
     '#################DD#################',
   ];
 
@@ -143,13 +143,13 @@ const MapKit = (() => {
     return SOLID_CHARS.has(map[row][col]);
   }
 
-  // 判断某格是否为传送门（可进入的门）
+  // 判断某格是否为传送门（可进入的大门 M）
   function isDoorAt(px, py, map) {
     map = map || ATRIUM_MAP;
     const col = Math.floor(px / TILE);
     const row = Math.floor(py / TILE);
     if (col < 0 || row < 0 || col >= map[0].length || row >= map.length) return false;
-    return map[row][col] === 'm';
+    return map[row][col] === 'M' || map[row][col] === 'm';
   }
 
   // ---- 渲染（只在浏览器调用） ----
@@ -180,6 +180,17 @@ const MapKit = (() => {
       ctx.fillRect(x + 1, y + 1, 6, 14);
       ctx.fillStyle = '#e8c86e';
       ctx.fillRect(x + 9, y + 7, 2, 2);
+      ctx.fillStyle = '#5c3820';
+      ctx.fillRect(x, y + 14, TILE, 2);
+      return;
+    }
+    if (ch === 'M') { // 大门：高大的木门（2格高组成），门框 + 门扇
+      ctx.fillStyle = '#6d4628';
+      ctx.fillRect(x, y, TILE, TILE);
+      ctx.fillStyle = '#8a5c3a';
+      ctx.fillRect(x + 1, y + 1, 14, 14);
+      ctx.fillStyle = '#e8c86e';
+      ctx.fillRect(x + 11, y + 7, 3, 3);
       ctx.fillStyle = '#5c3820';
       ctx.fillRect(x, y + 14, TILE, 2);
       return;
@@ -218,13 +229,7 @@ const MapKit = (() => {
       ctx.fillRect(x + 9, y + 4, 5, 6);
       return;
     }
-    // 地板 `.` 用深灰色石砖（与棋盘暖木色明显区分）
-    if (ch === '.') {
-      ctx.fillStyle = '#3a3540';
-      ctx.fillRect(x, y, TILE, TILE);
-      return;
-    }
-    // 其他 tile 的基色（暖木交替，用于棋盘等）
+    // 其他 tile 的基色（暖木交替，用于书架/桌子等下层）
     ctx.fillStyle = (col + row) % 2 === 0 ? '#63503e' : '#5a4837';
     ctx.fillRect(x, y, TILE, TILE);
     if (ch === 'B') { // 书架：木框 + 一排彩色书
