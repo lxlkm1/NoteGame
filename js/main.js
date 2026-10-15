@@ -30,6 +30,7 @@
     updateSoundIcon();
   }
   window.addEventListener('keydown', (e) => {
+    if (e.repeat) return; // 忽略系统自动重复，避免 M 键长按导致静音反复切换
     const k = e.key.toLowerCase();
     if (k === 'm') {
       if (!audioInited) { Sound.init(); Sound.startBgm(); audioInited = true; }

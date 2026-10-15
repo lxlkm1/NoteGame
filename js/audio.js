@@ -141,7 +141,7 @@ const Sound = (() => {
     sfxGain.connect(masterGain);
   }
 
-  // 一次性音效振荡器：osc + gain 包络，播完 stop 自动断开，无节点泄漏
+  // 一次性音效振荡器：osc + gain 包络，stop 后由 GC 回收（增益归 0.0001，近似静音）
   function sfx({ wave, freq, sweepTo, dur, peak, attack, filter }) {
     const when = ctx.currentTime;
     const osc = ctx.createOscillator();
