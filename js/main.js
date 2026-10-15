@@ -51,7 +51,7 @@
 
   // ---- 人物 ----
   const player = {
-    x: 17 * TILE, y: 27 * TILE, // 出生点：大门口内侧（36 列 → col 17-18）
+    x: 19 * TILE, y: 27 * TILE, // 出生点：大门口内侧（39 列 → col 19-20）
     dir: 'up',
     moving: false,
     animTimer: 0,
@@ -128,7 +128,6 @@
     document.getElementById('progress').textContent = `撸猫 ${met} / 10`;
   }
 
-  // ---- 场景切换：门（传送点） ----
   function doorAtPlayer() { // 玩家脚部中心所在格是否为传送门
     const cx = Math.floor((player.x + 8) / TILE);
     const cy = Math.floor((player.y + 15) / TILE);
@@ -136,7 +135,7 @@
     const row = currentMap[cy];
     if (cx < 0 || cx >= row.length || (row[cx] !== 'M' && row[cx] !== 'm')) return null;
     if (scene === 'atrium') {
-      // 4 个大门：左侧 row 8-9（上）和 21-22（下），右侧对称
+      // 4 个大门：左侧 col 4, row 8-9（上）和 21-22（下），右侧 col 37 对称
       if (cy >= 8 && cy <= 9) return 'toilet'; // 上方门 → 卫生间
       if (cy >= 21 && cy <= 22) return 'reading'; // 下方门 → 阅览室
       return null;

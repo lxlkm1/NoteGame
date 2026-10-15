@@ -9,7 +9,7 @@ html, body {
 }
 #game-wrap { position: relative; }
 #game {
-  width: 864px;
+  width: 936px;
   height: 720px;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
@@ -26,5 +26,5 @@ html, body {
 }
 #hud .hint { color: #8d8496; margin-left: 12px; font-size: 12px; }
 @media (max-width: 1000px) {
-  #game { width: 576px; height: 480px; }
+  #game { width: 624px; height: 480px; }
 }

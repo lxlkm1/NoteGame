@@ -5,16 +5,16 @@ const Cats = (() => {
 
   // 位置 = 格坐标(可小数) × 16。bounds 为可选显式闲逛矩形（像素），否则用 home ± radius
   const CAT_DEFS = [
-    { id: 'xueqiu',   name: '雪球', persona: '棋盘中央晒太阳',   col: 15,   row: 14,    palette: { A: '#f5f2ec', B: '#d8d2c6', C: '#e890a8', E: '#4a4a55', W: '#f5f2ec' } },
-    { id: 'tuantuan', name: '团团', persona: '棋盘上流口水',     col: 12,   row: 12,    palette: { A: '#ef9f4d', B: '#d97f2e', C: '#e890a8', E: '#4a3a2b', W: '#f5ecd9' } },
-    { id: 'tangyuan', name: '汤圆', persona: '看棋盘上的棋',     col: 18,   row: 15,    palette: { A: '#f5f2ec', B: '#9aa0ab', C: '#e890a8', E: '#4a4a55', W: '#f5f2ec' } },
-    { id: 'buding',   name: '布丁', persona: '整个中庭都是我家', col: 18,   row: 24, radius: 60, bounds: { x1: 3 * 16, y1: 3 * 16, x2: 32 * 16, y2: 27 * 16 }, palette: { A: '#f2c14e', B: '#d9a32e', C: '#e890a8', E: '#4a3a2b', W: '#faf3dd' } },
-    { id: 'meiqiu',   name: '煤球', persona: '门边的小哨兵',     col: 4,    row: 16,    palette: { A: '#3d3a45', B: '#2b2933', C: '#e890a8', E: '#c9c4d4', W: '#f5f2ec' } },
-    { id: 'momo',     name: '墨墨', persona: '大厅里的大人物',   col: 3,    row: 8, radius: 16, palette: { A: '#423e4a', B: '#302d38', C: '#e890a8', E: '#d4b95e', W: '#5a5566' } },
-    { id: 'naitang',  name: '奶糖', persona: '守着棋盘的小奶猫', col: 15,   row: 16, radius: 10, palette: { A: '#f5f2ec', B: '#3d3a45', C: '#e890a8', E: '#4a4a55', W: '#f5f2ec' } },
-    { id: 'zhima',    name: '芝麻', persona: '大厅巡逻员',       col: 32,   row: 20,    palette: { A: '#ef9f4d', B: '#3d3a45', C: '#e890a8', E: '#4a3a2b', W: '#f5f2ec' } },
-    { id: 'huihui',   name: '灰灰', persona: '大厅监工',         col: 32,   row: 6, radius: 16, palette: { A: '#9aa0ab', B: '#7d828d', C: '#e890a8', E: '#4a4a55', W: '#e8e4dc' } },
-    { id: 'huajuan',  name: '花卷', persona: '在门口等你很久了', col: 17,   row: 27, radius: 20, palette: { A: '#ef9f4d', B: '#f5f2ec', C: '#e890a8', E: '#4a3a2b', W: '#faf3dd' } },
+    { id: 'xueqiu',   name: '雪球', persona: '棋盘中央晒太阳',   col: 19,   row: 14,    palette: { A: '#f5f2ec', B: '#d8d2c6', C: '#e890a8', E: '#4a4a55', W: '#f5f2ec' } },
+    { id: 'tuantuan', name: '团团', persona: '棋盘上流口水',     col: 16,   row: 12,    palette: { A: '#ef9f4d', B: '#d97f2e', C: '#e890a8', E: '#4a3a2b', W: '#f5ecd9' } },
+    { id: 'tangyuan', name: '汤圆', persona: '看棋盘上的棋',     col: 22,   row: 15,    palette: { A: '#f5f2ec', B: '#9aa0ab', C: '#e890a8', E: '#4a4a55', W: '#f5f2ec' } },
+    { id: 'buding',   name: '布丁', persona: '整个中庭都是我家', col: 20,   row: 24, radius: 60, bounds: { x1: 5 * 16, y1: 3 * 16, x2: 36 * 16, y2: 27 * 16 }, palette: { A: '#f2c14e', B: '#d9a32e', C: '#e890a8', E: '#4a3a2b', W: '#faf3dd' } },
+    { id: 'meiqiu',   name: '煤球', persona: '门边的小哨兵',     col: 6,    row: 16,    palette: { A: '#3d3a45', B: '#2b2933', C: '#e890a8', E: '#c9c4d4', W: '#f5f2ec' } },
+    { id: 'momo',     name: '墨墨', persona: '大厅里的大人物',   col: 5,    row: 8, radius: 16, palette: { A: '#423e4a', B: '#302d38', C: '#e890a8', E: '#d4b95e', W: '#5a5566' } },
+    { id: 'naitang',  name: '奶糖', persona: '守着棋盘的小奶猫', col: 19,   row: 16, radius: 10, palette: { A: '#f5f2ec', B: '#3d3a45', C: '#e890a8', E: '#4a4a55', W: '#f5f2ec' } },
+    { id: 'zhima',    name: '芝麻', persona: '大厅巡逻员',       col: 35,   row: 20,    palette: { A: '#ef9f4d', B: '#3d3a45', C: '#e890a8', E: '#4a3a2b', W: '#f5f2ec' } },
+    { id: 'huihui',   name: '灰灰', persona: '大厅监工',         col: 35,   row: 6, radius: 16, palette: { A: '#9aa0ab', B: '#7d828d', C: '#e890a8', E: '#4a4a55', W: '#e8e4dc' } },
+    { id: 'huajuan',  name: '花卷', persona: '在门口等你很久了', col: 19,   row: 27, radius: 20, palette: { A: '#ef9f4d', B: '#f5f2ec', C: '#e890a8', E: '#4a3a2b', W: '#faf3dd' } },
   ];
 
   const CAT_SPEED = 12; // px/s，慢悠悠
