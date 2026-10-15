@@ -218,9 +218,9 @@ const MapKit = (() => {
       ctx.fillRect(x + 9, y + 4, 5, 6);
       return;
     }
-    // 地板 `.` 用单一深色（与棋盘区分）
+    // 地板 `.` 用深灰色石砖（与棋盘暖木色明显区分）
     if (ch === '.') {
-      ctx.fillStyle = '#4a3f35';
+      ctx.fillStyle = '#3a3540';
       ctx.fillRect(x, y, TILE, TILE);
       return;
     }
