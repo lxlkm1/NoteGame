@@ -91,6 +91,11 @@
     return best;
   }
 
+  function updateProgress() { // 撸猫进度：统计已投喂过的不同猫
+    const met = cats.filter((c) => c.hasMet).length;
+    document.getElementById('progress').textContent = `撸猫 ${met} / 10`;
+  }
+
   window.addEventListener('keydown', (e) => {
     if (e.key.toLowerCase() !== 'e') return;
     const cat = nearestFeedableCat();
@@ -102,6 +107,7 @@
     dishes.push({ x: dishX, y: dishY });
     Cats.feed(cat, dishX, dishY);
     cat.hasMet = true;
+    updateProgress();
   });
 
   // ---- 循环 ----
@@ -185,7 +191,13 @@
   function render(dt) {
     ctx.drawImage(mapCanvas, 0, 0);
     drawDishes();
-    const actors = [...cats.map((c) => ({ y: c.y, draw: () => Cats.drawCat(ctx, c, drawSprite, Sprites.CAT_FRAMES) })),
+    for (const cat of cats) { // 猫转向玩家：仅 idle（wander 且未移动）时生效
+      const idle = cat.state === 'wander' &&
+        (cat.pauseTimer > 0 || Math.hypot(cat.targetX - cat.x, cat.targetY - cat.y) <= 2);
+      const near = Math.hypot(cat.x + 8 - (player.x + 8), cat.y + 8 - (player.y + 8)) < 56;
+      cat.facePlayer = idle && near;
+    }
+    const actors = [...cats.map((c) => ({ y: c.y, draw: () => Cats.drawCat(ctx, c, drawSprite, Sprites.CAT_FRAMES, player) })),
                     { y: player.y, draw: drawPlayer }];
     actors.sort((a, b) => a.y - b.y);
     for (const a of actors) a.draw();

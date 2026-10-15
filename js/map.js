@@ -88,6 +88,14 @@ const MapKit = (() => {
       ctx.fillRect(x, y + 2, TILE, TILE - 4);
       ctx.fillStyle = '#9d6d47';
       ctx.fillRect(x, y + 2, TILE, 3);
+      if (col % 2 === 0) { // 桌上小台灯：偶数列才画，避免每格一盏
+        ctx.fillStyle = '#d8d2c6';                  // 灯罩
+        ctx.fillRect(x + 9, y + 3, 4, 3);
+        ctx.fillStyle = '#ffd98a';                  // 暖光
+        ctx.fillRect(x + 10, y + 6, 2, 2);
+        ctx.fillStyle = '#5c3820';                  // 灯杆
+        ctx.fillRect(x + 10, y + 8, 1, 4);
+      }
       return;
     }
     if (ch === 'c') { // 椅子（可走）
@@ -142,6 +150,26 @@ const MapKit = (() => {
         drawTile(c2, grid[r][cCol], cCol, r);
       }
     }
+    // 窗外光斑：每个窗下方投一束暖光（复用上方解构的 grid）
+    c2.globalAlpha = 0.12;
+    c2.fillStyle = '#ffd98a';
+    for (let cCol = 0; cCol < 30; cCol++) {
+      if (grid[1][cCol] === 'W') {
+        c2.beginPath();
+        c2.moveTo(cCol * TILE + 2, 2 * TILE);
+        c2.lineTo(cCol * TILE + 14, 2 * TILE);
+        c2.lineTo(cCol * TILE + 16, 6 * TILE);
+        c2.lineTo(cCol * TILE, 6 * TILE);
+        c2.closePath();
+        c2.fill();
+      }
+    }
+    c2.globalAlpha = 1;
+    // 门口垫子
+    c2.fillStyle = '#8c3b40';
+    c2.fillRect(13 * TILE + 2, 18 * TILE + 6, 4 * TILE - 4, TILE - 6);
+    c2.fillStyle = '#a54a50';
+    c2.fillRect(13 * TILE + 4, 18 * TILE + 8, 4 * TILE - 8, TILE - 10);
     return cv;
   }
 

@@ -139,9 +139,12 @@ const Cats = (() => {
     }
   }
 
-  function drawCat(ctx, cat, drawSprite, CAT_FRAMES) {
+  function drawCat(ctx, cat, drawSprite, CAT_FRAMES, player) {
     const frame = CAT_FRAMES[catFrame(cat)];
-    drawSprite(ctx, frame, cat.palette, cat.x, cat.y, cat.dir < 0);
+    const flip = cat.facePlayer
+      ? (player.x < cat.x)
+      : (cat.dir < 0);
+    drawSprite(ctx, frame, cat.palette, cat.x, cat.y, flip);
   }
 
   function feed(cat, dishX, dishY) {
