@@ -91,7 +91,7 @@ main.js 挂钩点：L107（dish）、L122（meow）、L126（follow）、nap 边
 
 ### 4.2 合成实现要点
 
-- **一次性振荡器**：每个音效 = `createOscillator` + `createGain`（包络）→ 播完 `stop()` 自动断开，无节点泄漏
+- **一次性振荡器**：每个音效 = `createOscillator` + `createGain`（包络）→ 播完 `stop()`，节点由 GC 回收（增益归 0.0001，近似静音），不会累积可感知的泄漏
 - **前瞻调度器**（lookahead scheduler）：`setInterval` 25ms 检查一次，把未来 100ms 内该响的音符用 `ctx.currentTime + offset` 排入音频时间轴——节奏精确性靠音频时钟而非定时器，不会抖
 - **顶层零 DOM/零音频 API**：`AudioContext` 仅在 `init()` 内部创建 → `js/audio.js` 在 Node 中可直接 `require` 测试纯逻辑
 - **`canonBar()` 完全确定性**：无随机数，一轮音符事件的时间轴固定（砍掉变奏后的额外收益——测试无需注入随机源）
