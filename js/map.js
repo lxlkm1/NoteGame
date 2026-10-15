@@ -15,49 +15,47 @@ const MapKit = (() => {
     '##....................................##',
     '##....................................##',
     '##....................................##',
-    '##......zqzqzqzqzqzqzqzqzqqqqqqq......##',
-    '#m......qqqqqqqqqqqqqqqqqqqqqqqq......m#',
-    '#m......qqqqqqqqqqqqqqqqqqqqqqqq......m#',
-    '##......qqzqqqqqqqqqqqzqqqqqqqqq......##',
-    '##......qqqqqqqqqqqqqqqqqqqqqqqq......##',
-    '##......qqqqqqqqqqqqqqqqqqqqqqqq......##',
-    '##......zqqqzqqqzqqqzqqqzqqqqqqq......##',
-    '##......qqqqqqqqqqqqqqqqqqqqqqqq......##',
-    '##......qqqqqqqqqqqqqqqqqqqqqqqq......##',
-    '##......qqqqqqqqqqqqqqqqqqqqqqqq......##',
-    '##......qqqqqqqqqqqqqqqqqqqqqqqq......##',
-    '##......qqqqqqqqqqqqqqqqqqqqqqqq......##',
-    '##......qqqqqqqqqqqqqqqqqqqqqqqq......##',
-    '##......zqqqzqqqzqqqzqqqzqqqqqqq......##',
-    '#m......qqqqqqqqqqqqqqqqqqqqqqqq......m#',
-    '#m......qqqqqqqqqqqqqqqqqqqqqqqq......m#',
-    '##......qqzqqqqqqqqqqqzqqqqqqqqq......##',
-    '##......qqqqqqqqqqqqqqqqqqqqqqqq......##',
-    '#m......qqqqqqqqqqqqqqqqqqqqqqqq......m#',
-    '##......zqzqzqzqzqzqzqzqzqqqqqqq......##',
+    '##...zqqzqqzqqzqqzqqzqqzqqzqqzqqqqq...##',
+    '#m...qqqqqqqqqqqqqqqqqqqqqqqqqqqqqq...m#',
+    '#m...qqqqqqqqqqqqqqqqqqqqqqqqqqqqqq...m#',
+    '##...qqqzqqqqqqqqqqqqqqqqqzqqqqqqqq...##',
+    '##...qqqqqqqqqqqqqqqqqqqqqqqqqqqqqq...##',
+    '##...qqqqqqqqqqqqqqqqqqqqqqqqqqqqqq...##',
+    '##...zqqqqqzqqqqqzqqqqqzqqqqqzqqqqq...##',
+    '##...qqqqqqqqqqqqqqqqqqqqqqqqqqqqqq...##',
+    '##...qqqqqqqqqqqqqqqqqqqqqqqqqqqqqq...##',
+    '##...qqqqqqqqqqqqqqqqqqqqqqqqqqqqqq...##',
+    '##...qqqqqqqqqqqqqqqqqqqqqqqqqqqqqq...##',
+    '##...qqqqqqqqqqqqqqqqqqqqqqqqqqqqqq...##',
+    '##...qqqqqqqqqqqqqqqqqqqqqqqqqqqqqq...##',
+    '##...zqqqqqzqqqqqzqqqqqzqqqqqzqqqqq...##',
+    '#m...qqqqqqqqqqqqqqqqqqqqqqqqqqqqqq...m#',
+    '#m...qqqqqqqqqqqqqqqqqqqqqqqqqqqqqq...m#',
+    '##...qqqzqqqqqqqqqqqqqqqqqzqqqqqqqq...##',
+    '##...qqqqqqqqqqqqqqqqqqqqqqqqqqqqqq...##',
+    '#m...qqqqqqqqqqqqqqqqqqqqqqqqqqqqqq...m#',
+    '##...zqqzqqzqqzqqzqqzqqzqqzqqzqqqqq...##',
     '##....................................##',
     '##....................................##',
     '###################DD###################',
   ];
 
-  // 棋子凳子：标准中国象棋开局布局（红方下黑方上，32 子完整）
-  // 黑方（上）9 子大子 + 2 砲 + 5 卒 = 16
-  // 红方（下）9 子大子 + 2 炮 + 5 兵 = 16
+  // 棋子凳子：标准中国象棋开局布局（30 格宽棋盘，红方下黑方上，32 子完整）
   const CHESS_SEATS = {
     // 黑方大子（row 7）
-    '8,7': '車', '10,7': '馬', '12,7': '象', '14,7': '士', '16,7': '將',
-    '18,7': '士', '20,7': '象', '22,7': '馬', '24,7': '車',
+    '5,7': '車', '8,7': '馬', '11,7': '象', '14,7': '士', '17,7': '將',
+    '20,7': '士', '23,7': '象', '26,7': '馬', '29,7': '車',
     // 黑砲（row 10）
-    '10,10': '砲', '22,10': '砲',
-    // 黑卒（row 13, 15, 18 共 5 个）
-    '8,13': '卒', '12,13': '卒', '16,13': '卒', '20,13': '卒', '24,13': '卒',
-    // 红方大子（row 26）
-    '8,26': '車', '10,26': '馬', '12,26': '相', '14,26': '仕', '16,26': '帥',
-    '18,26': '仕', '20,26': '相', '22,26': '馬', '24,26': '車',
+    '8,10': '砲', '26,10': '砲',
+    // 黑卒（row 13）
+    '5,13': '卒', '11,13': '卒', '17,13': '卒', '23,13': '卒', '29,13': '卒',
+    // 红兵（row 20）
+    '5,20': '兵', '11,20': '兵', '17,20': '兵', '23,20': '兵', '29,20': '兵',
     // 红炮（row 23）
-    '10,23': '炮', '22,23': '炮',
-    // 红兵（row 20 共 5 个）
-    '8,20': '兵', '12,20': '兵', '16,20': '兵', '20,20': '兵', '24,20': '兵',
+    '8,23': '炮', '26,23': '炮',
+    // 红方大子（row 26）
+    '5,26': '車', '8,26': '馬', '11,26': '相', '14,26': '仕', '17,26': '帥',
+    '20,26': '仕', '23,26': '相', '26,26': '馬', '29,26': '車',
   };
 
   // 房间地图（独立场景，进门切换）。阅览室/卫生间 都做成 40×30 全屏。
