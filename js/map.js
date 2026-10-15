@@ -1,62 +1,112 @@
 // map.js —— 图书馆地图：数据、解析、碰撞、预渲染
+// 场景：中庭（40x30 大厅）+ 房间（阅览室/卫生间，独立小地图，进门切换）
 const MapKit = (() => {
   'use strict';
   const TILE = 16;
 
-  // 40 列 × 30 行。萍乡学院图书馆一楼布局。
-  // 图例：# 墙 | . 地板 | B 书架 | T 桌 | c 椅(可走) | S 螺旋楼梯 | q 象棋棋盘(可走) | R 卫生间 | D 大门
-  // 结构：中央超大挑空中庭（地面象棋棋盘 + 两个螺旋楼梯），左右各两个阅览室（门朝中庭），
-  //       左上/右上各一个卫生间，下面中间是大门。
-  const MAP = [
+  // 图例：# 墙 | . 地板 | B 书架 | T 桌 | c 椅(可走) | q 象棋棋盘格(可走)
+  //        | z 棋子凳子(可走) | m 传送门(可走) | R 卫生间洁具 | D 大门
+  // 中庭：中央大棋盘 + 棋子凳子，四周墙上有 6 个传送门（左右各 2 阅览室 + 左上/右上卫生间），下中大门
+  const ATRIUM_MAP = [
     '########################################',
-    '#RRRR#............................#RRRR#',
-    '#RRRR#............................#RRRR#',
-    '#RRRR#............................#RRRR#',
-    '##########....................##########',
-    '#BBBBBBBB#....................#BBBBBBBB#',
-    '#BBBBBBBB#....................#BBBBBBBB#',
-    '#........#....................#........#',
-    '#......................................#',
-    '#......................................#',
-    '#ccTTTTcc#....................#ccTTTTcc#',
-    '#ccTTTTcc#......qqqqqqqq......#ccTTTTcc#',
-    '#........#......qqqqqqqq......#........#',
-    '##########..SS..qqqqqqqq..SS..##########',
-    '#BBBBBBBB#..SS..qqqqqqqq..SS..#BBBBBBBB#',
-    '#BBBBBBBB#..SS..qqqqqqqq..SS..#BBBBBBBB#',
-    '#........#..SS..qqqqqqqq..SS..#........#',
-    '#...............qqqqqqqq...............#',
-    '#...............qqqqqqqq...............#',
-    '#ccTTTTcc#....................#ccTTTTcc#',
-    '#ccTTTTcc#....................#ccTTTTcc#',
-    '#........#....................#........#',
-    '##########....................##########',
-    '#......................................#',
-    '#......................................#',
-    '#......................................#',
-    '#......................................#',
-    '#......................................#',
-    '#......................................#',
+    '##....................................##',
+    '#m....................................m#',
+    '##....................................##',
+    '##....................................##',
+    '##....................................##',
+    '##....................................##',
+    '##....................................##',
+    '#m....................................m#',
+    '#m....................................m#',
+    '##....................................##',
+    '##............zqzqzqqz................##',
+    '##............qqqqqqqq................##',
+    '##............qzqqzqqq................##',
+    '##............qqqqqqqq................##',
+    '##............qqqqqqqq................##',
+    '##............qqqqqqqq................##',
+    '##............qqqzqqqq................##',
+    '##............qqqqqqqq................##',
+    '##............qqqqzqqq................##',
+    '##....................................##',
+    '#m....................................m#',
+    '#m....................................m#',
+    '##....................................##',
+    '##....................................##',
+    '##....................................##',
+    '##....................................##',
+    '##....................................##',
+    '##....................................##',
     '###################DD###################',
   ];
 
-  const SOLID_CHARS = new Set(['#', 'B', 'T', 'S', 'R', 'D']);
+  // 棋子凳子：地图上 z 的位置 → 象棋繁体字（中国象棋棋子造型的凳子，黑方用字）
+  const CHESS_SEATS = {
+    '14,11': '車',
+    '16,11': '馬',
+    '18,11': '將',
+    '21,11': '象',
+    '15,13': '砲',
+    '18,13': '卒',
+    '17,17': '士',
+    '18,19': '帥',
+  };
 
-  function parseMap() {
-    const rows = MAP.length;
-    const cols = MAP[0].length;
-    if (rows !== 30 || cols !== 40) {
-      throw new Error(`地图尺寸错误：期望 40x30，实际 ${cols}x${rows}`);
+  // 房间地图（独立场景，进门切换）。阅览室 14x10，卫生间 10x8。
+  const ROOM_MAPS = {
+    reading: [
+      '##############',
+      '#............#',
+      '#.BBBB..BBBB.#',
+      '#.B..B..B..B.#',
+      '#.BBBB..BBBB.#',
+      '#............#',
+      '#...TTTTTT...#',
+      '#...TTTTTT...#',
+      '#............#',
+      '#######mm#####',
+    ],
+    toilet: [
+      '##########',
+      '#........#',
+      '#.R....R.#',
+      '#.R....R.#',
+      '#........#',
+      '#........#',
+      '#######mm#',
+    ],
+  };
+
+  const SOLID_CHARS = new Set(['#', 'B', 'T', 'R', 'D']);
+
+  function dims(map) {
+    const rows = map.length;
+    const cols = map[0].length;
+    for (const r of map) if (r.length !== cols) {
+      throw new Error(`地图行宽不一致：期望 ${cols}，实际 ${r.length}`);
     }
-    const grid = MAP.map((row) => row.split(''));
-    return { rows, cols, grid };
+    return { rows, cols, grid: map.map((r) => r.split('')) };
   }
 
-  function isSolidAtPx(px, py) {
+  function parseMap(map) {
+    return dims(map || ATRIUM_MAP);
+  }
+
+  function isSolidAtPx(px, py, map) {
+    map = map || ATRIUM_MAP;
     const col = Math.floor(px / TILE);
     const row = Math.floor(py / TILE);
-    if (col < 0 || row < 0 || col >= 40 || row >= 30) return true;
-    return SOLID_CHARS.has(MAP[row][col]);
+    if (col < 0 || row < 0 || col >= map[0].length || row >= map.length) return true;
+    return SOLID_CHARS.has(map[row][col]);
+  }
+
+  // 判断某格是否为传送门（可进入的门）
+  function isDoorAt(px, py, map) {
+    map = map || ATRIUM_MAP;
+    const col = Math.floor(px / TILE);
+    const row = Math.floor(py / TILE);
+    if (col < 0 || row < 0 || col >= map[0].length || row >= map.length) return false;
+    return map[row][col] === 'm';
   }
 
   // ---- 渲染（只在浏览器调用） ----
@@ -80,18 +130,15 @@ const MapKit = (() => {
       ctx.fillRect(x + 11, y + 8, 2, 2);
       return;
     }
-    if (ch === 'S') { // 螺旋楼梯：深色底座 + 同心螺旋纹（不可走装饰）
-      ctx.fillStyle = '#3f3546';
+    if (ch === 'm') { // 传送门：可进入的门（门框 + 门扇）
+      ctx.fillStyle = '#6d4628';
       ctx.fillRect(x, y, TILE, TILE);
-      ctx.fillStyle = '#6b5a78';
-      ctx.beginPath(); ctx.arc(x + 8, y + 8, 6.5, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#8a7a96';
-      ctx.beginPath(); ctx.arc(x + 8, y + 8, 4.5, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#5a4a6a';
-      ctx.beginPath(); ctx.arc(x + 8, y + 8, 2.5, 0, Math.PI * 2); ctx.fill();
-      ctx.strokeStyle = '#c2b2cc';
-      ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.arc(x + 8, y + 8, 5.5, 0, Math.PI); ctx.stroke();
+      ctx.fillStyle = '#8a5c3a';
+      ctx.fillRect(x + 1, y + 1, 6, 14);
+      ctx.fillStyle = '#e8c86e';
+      ctx.fillRect(x + 9, y + 7, 2, 2);
+      ctx.fillStyle = '#5c3820';
+      ctx.fillRect(x, y + 14, TILE, 2);
       return;
     }
     if (ch === 'q') { // 象棋棋盘格（可走）：米白/深棕交替
@@ -99,14 +146,32 @@ const MapKit = (() => {
       ctx.fillRect(x, y, TILE, TILE);
       return;
     }
-    if (ch === 'R') { // 卫生间：瓷砖 + 洁具（不可走小隔间）
+    if (ch === 'z') { // 棋子凳子：圆形棋子造型，写繁体象棋字
+      ctx.fillStyle = '#c89a5e';
+      ctx.beginPath(); ctx.arc(x + 8, y + 8, 7.5, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#8a5c30';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(x + 8, y + 8, 7.5, 0, Math.PI * 2); ctx.stroke();
+      ctx.fillStyle = '#8a5c30';
+      ctx.beginPath(); ctx.arc(x + 8, y + 8, 5, 0, Math.PI * 2); ctx.fill();
+      const label = CHESS_SEATS[col + ',' + row];
+      if (label) {
+        ctx.fillStyle = '#f0d9b0';
+        ctx.font = 'bold 9px serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(label, x + 8, y + 9);
+        ctx.textBaseline = 'alphabetic';
+        ctx.textAlign = 'left';
+      }
+      return;
+    }
+    if (ch === 'R') { // 卫生间洁具：瓷砖 + 马桶/洗手台
       ctx.fillStyle = '#a8b8c8';
       ctx.fillRect(x, y, TILE, TILE);
-      ctx.fillStyle = '#8898a8';
-      ctx.fillRect(x, y, TILE, 1);
-      ctx.fillStyle = '#f0f4f8';  // 洗手台
+      ctx.fillStyle = '#f0f4f8';
       ctx.fillRect(x + 2, y + 3, 5, 3);
-      ctx.fillStyle = '#e8ecf0';  // 马桶
+      ctx.fillStyle = '#e8ecf0';
       ctx.fillRect(x + 9, y + 4, 5, 6);
       return;
     }
@@ -131,14 +196,6 @@ const MapKit = (() => {
       ctx.fillRect(x, y + 2, TILE, TILE - 4);
       ctx.fillStyle = '#9d6d47';
       ctx.fillRect(x, y + 2, TILE, 3);
-      if (col % 2 === 0) { // 桌上小台灯：偶数列才画，避免每格一盏
-        ctx.fillStyle = '#d8d2c6';
-        ctx.fillRect(x + 9, y + 3, 4, 3);
-        ctx.fillStyle = '#ffd98a';
-        ctx.fillRect(x + 10, y + 6, 2, 2);
-        ctx.fillStyle = '#5c3820';
-        ctx.fillRect(x + 10, y + 8, 1, 4);
-      }
       return;
     }
     if (ch === 'c') { // 椅子（可走）
@@ -150,31 +207,35 @@ const MapKit = (() => {
     }
   }
 
-  function buildMapCanvas() {
+  function buildCanvas(map) {
+    map = map || ATRIUM_MAP;
+    const { rows, cols, grid } = dims(map);
     const cv = document.createElement('canvas');
-    cv.width = 640;
-    cv.height = 480;
+    cv.width = cols * TILE;
+    cv.height = rows * TILE;
     const c2 = cv.getContext('2d');
-    const { grid } = parseMap();
-    for (let r = 0; r < 30; r++) {
-      for (let cCol = 0; cCol < 40; cCol++) {
-        drawTile(c2, grid[r][cCol], cCol, r);
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        drawTile(c2, grid[r][c], c, r);
       }
     }
-    // 挑空中庭：中央洒下暖光（天井采光）
-    c2.globalAlpha = 0.10;
-    c2.fillStyle = '#ffd98a';
-    c2.fillRect(10 * TILE, 4 * TILE, 20 * TILE, 24 * TILE);
-    c2.globalAlpha = 1;
-    // 大门口垫子
-    c2.fillStyle = '#8c3b40';
-    c2.fillRect(19 * TILE + 2, 28 * TILE + 6, 2 * TILE - 4, TILE - 6);
-    c2.fillStyle = '#a54a50';
-    c2.fillRect(19 * TILE + 4, 28 * TILE + 8, 2 * TILE - 8, TILE - 10);
+    if (map === ATRIUM_MAP) { // 中庭挑空暖光 + 门口垫子
+      c2.globalAlpha = 0.10;
+      c2.fillStyle = '#ffd98a';
+      c2.fillRect(2 * TILE, 2 * TILE, 35 * TILE, 26 * TILE);
+      c2.globalAlpha = 1;
+      c2.fillStyle = '#8c3b40';
+      c2.fillRect(19 * TILE + 2, 28 * TILE + 6, 2 * TILE - 4, TILE - 6);
+      c2.fillStyle = '#a54a50';
+      c2.fillRect(19 * TILE + 4, 28 * TILE + 8, 2 * TILE - 8, TILE - 10);
+    }
     return cv;
   }
 
-  return { TILE, MAP, parseMap, isSolidAtPx, buildMapCanvas };
+  return {
+    TILE, ATRIUM_MAP, ROOM_MAPS, CHESS_SEATS,
+    parseMap, isSolidAtPx, isDoorAt, buildCanvas,
+  };
 })();
 
 if (typeof module !== 'undefined') module.exports = MapKit;

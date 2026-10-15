@@ -3,11 +3,19 @@
   'use strict';
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d');
-  const { TILE, isSolidAtPx, buildMapCanvas } = MapKit;
+  const { TILE, ATRIUM_MAP, ROOM_MAPS, isSolidAtPx, isDoorAt, buildCanvas } = MapKit;
   const { drawSprite, PLAYER_FRAMES, PALETTE_PLAYER } = Sprites;
 
   const SPEED = 70;          // px/s
-  const mapCanvas = buildMapCanvas();
+  // 场景：atrium（中庭）| reading（阅览室）| toilet（卫生间）；画布缓存
+  const canvases = {
+    atrium: buildCanvas(ATRIUM_MAP),
+    reading: buildCanvas(ROOM_MAPS.reading),
+    toilet: buildCanvas(ROOM_MAPS.toilet),
+  };
+  let scene = 'atrium';
+  let currentMap = ATRIUM_MAP;
+  let atriumPos = { x: 19 * TILE, y: 27 * TILE };
 
   // ---- 键盘 ----
   const keys = new Set();
@@ -51,8 +59,8 @@
 
   function playerSolid(x, y) { // 脚部碰撞盒 (x+3, y+12, 10, 4)
     const l = x + 3, t = y + 12, r = l + 9, b = t + 3;
-    return isSolidAtPx(l, t) || isSolidAtPx(r, t) ||
-           isSolidAtPx(l, b) || isSolidAtPx(r, b);
+    return isSolidAtPx(l, t, currentMap) || isSolidAtPx(r, t, currentMap) ||
+           isSolidAtPx(l, b, currentMap) || isSolidAtPx(r, b, currentMap);
   }
 
   function updatePlayer(dt) {
@@ -69,8 +77,8 @@
     const my = (dy / len) * SPEED * dt;
     if (!playerSolid(player.x + mx, player.y)) player.x += mx; // 分轴：先 x 后 y
     if (!playerSolid(player.x, player.y + my)) player.y += my;
-    player.x = Math.max(0, Math.min(640 - 16, player.x));
-    player.y = Math.max(0, Math.min(480 - 16, player.y));
+    player.x = Math.max(0, Math.min(currentMap[0].length * TILE - 16, player.x));
+    player.y = Math.max(0, Math.min(currentMap.length * TILE - 16, player.y));
     player.animTimer += dt;
   }
 
@@ -120,8 +128,42 @@
     document.getElementById('progress').textContent = `撸猫 ${met} / 10`;
   }
 
+  // ---- 场景切换：门（传送点） ----
+  function doorAtPlayer() { // 玩家脚部中心所在格是否为传送门
+    const cx = Math.floor((player.x + 8) / TILE);
+    const cy = Math.floor((player.y + 15) / TILE);
+    if (cy < 0 || cy >= currentMap.length) return null;
+    const row = currentMap[cy];
+    if (cx < 0 || cx >= row.length || row[cx] !== 'm') return null;
+    return scene === 'atrium' ? (cy === 2 ? 'toilet' : 'reading') : 'exit';
+  }
+
+  function enterRoom(roomType) {
+    atriumPos = { x: player.x, y: player.y };   // 记住中庭位置
+    scene = roomType;
+    currentMap = ROOM_MAPS[roomType];
+    player.x = Math.floor(currentMap[0].length / 2) * TILE;
+    player.y = (currentMap.length - 2) * TILE;  // 站在出口门上方
+    player.dir = 'down';
+    dishes.length = 0;
+    particles.length = 0;
+  }
+
+  function exitRoom() {
+    scene = 'atrium';
+    currentMap = ATRIUM_MAP;
+    player.x = atriumPos.x;
+    player.y = atriumPos.y;
+    dishes.length = 0;
+    particles.length = 0;
+  }
+
   window.addEventListener('keydown', (e) => {
     if (e.key.toLowerCase() !== 'e') return;
+    const door = doorAtPlayer();
+    if (door === 'exit') { exitRoom(); return; }
+    if (door) { enterRoom(door); return; }
+    if (scene !== 'atrium') return; // 房间里没有猫可喂
     const cat = nearestFeedableCat();
     if (!cat) return;
     // 碟落在猫与玩家之间、猫身前 14px
@@ -139,26 +181,28 @@
     const dt = Math.min((t - lastT) / 1000, 0.05);
     lastT = t;
     updatePlayer(dt);
-    for (const cat of cats) {
-      const before = cat.hearts;
-      const beforeState = cat.state;
-      Cats.updateCat(cat, dt, player);
-      if (cat.hearts > before) { // 刚吃完一口
-        spawnHearts(cat.x + 8, cat.y);
-        spawnText(cat.x + 8, cat.y - 10, '喵♪');
-        Sound.play('meow', { cat });
-      }
-      if (beforeState === 'eat' && cat.state === 'follow') { // 满心跟随边沿
-        Sound.play('follow');
-      }
-      if (beforeState === 'eat' && (cat.state === 'follow' || cat.state === 'wander')) { // 吃完撤碟（无论是否满心）
-        if (dishes.length) dishes.shift();
-      }
-      if (beforeState !== 'nap' && cat.state === 'nap') { // 进入打盹边沿 → 呼噜
-        Sound.play('purr');
-      }
-      if (cat.state === 'nap' && Math.random() < dt * 0.5) { // 睡觉偶尔冒 Z
-        spawnText(cat.x + 14, cat.y - 2, 'z');
+    if (scene === 'atrium') { // 猫只在中庭活动，不进房间
+      for (const cat of cats) {
+        const before = cat.hearts;
+        const beforeState = cat.state;
+        Cats.updateCat(cat, dt, player);
+        if (cat.hearts > before) { // 刚吃完一口
+          spawnHearts(cat.x + 8, cat.y);
+          spawnText(cat.x + 8, cat.y - 10, '喵♪');
+          Sound.play('meow', { cat });
+        }
+        if (beforeState === 'eat' && cat.state === 'follow') { // 满心跟随边沿
+          Sound.play('follow');
+        }
+        if (beforeState === 'eat' && (cat.state === 'follow' || cat.state === 'wander')) { // 吃完撤碟（无论是否满心）
+          if (dishes.length) dishes.shift();
+        }
+        if (beforeState !== 'nap' && cat.state === 'nap') { // 进入打盹边沿 → 呼噜
+          Sound.play('purr');
+        }
+        if (cat.state === 'nap' && Math.random() < dt * 0.5) { // 睡觉偶尔冒 Z
+          spawnText(cat.x + 14, cat.y - 2, 'z');
+        }
       }
     }
     render(dt);
@@ -219,20 +263,38 @@
   }
 
   function render(dt) {
-    ctx.drawImage(mapCanvas, 0, 0);
-    drawDishes();
-    for (const cat of cats) { // 猫转向玩家：仅 idle（wander 且未移动）时生效
-      const idle = cat.state === 'wander' &&
-        (cat.pauseTimer > 0 || Math.hypot(cat.targetX - cat.x, cat.targetY - cat.y) <= 2);
-      const near = Math.hypot(cat.x + 8 - (player.x + 8), cat.y + 8 - (player.y + 8)) < 56;
-      cat.facePlayer = idle && near;
+    ctx.drawImage(canvases[scene], 0, 0);
+    if (scene === 'atrium') {
+      drawDishes();
+      for (const cat of cats) { // 猫转向玩家：仅 idle（wander 且未移动）时生效
+        const idle = cat.state === 'wander' &&
+          (cat.pauseTimer > 0 || Math.hypot(cat.targetX - cat.x, cat.targetY - cat.y) <= 2);
+        const near = Math.hypot(cat.x + 8 - (player.x + 8), cat.y + 8 - (player.y + 8)) < 56;
+        cat.facePlayer = idle && near;
+      }
+      const actors = [...cats.map((c) => ({ y: c.y, draw: () => Cats.drawCat(ctx, c, drawSprite, Sprites.CAT_FRAMES, player) })),
+                      { y: player.y, draw: drawPlayer }];
+      actors.sort((a, b) => a.y - b.y);
+      for (const a of actors) a.draw();
+      drawCatOverlay();
+    } else {
+      drawPlayer();
     }
-    const actors = [...cats.map((c) => ({ y: c.y, draw: () => Cats.drawCat(ctx, c, drawSprite, Sprites.CAT_FRAMES, player) })),
-                    { y: player.y, draw: drawPlayer }];
-    actors.sort((a, b) => a.y - b.y);
-    for (const a of actors) a.draw();
-    drawCatOverlay();
+    drawDoorHint();
     drawParticles(dt);
+  }
+
+  function drawDoorHint() { // 站在门前提示进出
+    const door = doorAtPlayer();
+    if (!door) return;
+    const label = door === 'exit' ? 'E 出门' : 'E 进入';
+    ctx.font = 'bold 8px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#1a181f';
+    ctx.fillText(label, player.x + 8, player.y - 6);
+    ctx.fillStyle = '#f5f2ec';
+    ctx.fillText(label, player.x + 8, player.y - 7);
+    ctx.textAlign = 'left';
   }
 
   requestAnimationFrame((t) => { lastT = t; requestAnimationFrame(loop); });
