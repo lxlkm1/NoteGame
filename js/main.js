@@ -17,6 +17,29 @@
   });
   window.addEventListener('keyup', (e) => keys.delete(e.key.toLowerCase()));
 
+  // ---- 音频：首次按键懒初始化 BGM + M 键静音 ----
+  let audioInited = false;
+  function updateSoundIcon() {
+    document.getElementById('sound').textContent = Sound.isMuted() ? '🔇' : '🔊';
+  }
+  function initAudio() {
+    if (audioInited) return;
+    Sound.init();
+    Sound.startBgm();
+    audioInited = true;
+    updateSoundIcon();
+  }
+  window.addEventListener('keydown', (e) => {
+    const k = e.key.toLowerCase();
+    if (k === 'm') {
+      if (!audioInited) { Sound.init(); Sound.startBgm(); audioInited = true; }
+      Sound.toggleMute();
+      updateSoundIcon();
+      return;
+    }
+    initAudio();
+  });
+
   // ---- 人物 ----
   const player = {
     x: 10 * TILE, y: 18 * TILE, // 出生点：门内
@@ -104,7 +127,7 @@
     const dx = player.x - cat.x, dy = player.y - cat.y;
     const len = Math.hypot(dx, dy) || 1;
     const dishX = cat.x + (dx / len) * 14, dishY = cat.y + (dy / len) * 14 + 4;
-    if (Cats.feed(cat, dishX, dishY)) dishes.push({ x: dishX, y: dishY });
+    if (Cats.feed(cat, dishX, dishY)) { dishes.push({ x: dishX, y: dishY }); Sound.play('dish'); }
     cat.hasMet = true;
     updateProgress();
   });
@@ -122,9 +145,16 @@
       if (cat.hearts > before) { // 刚吃完一口
         spawnHearts(cat.x + 8, cat.y);
         spawnText(cat.x + 8, cat.y - 10, '喵♪');
+        Sound.play('meow', { cat });
+      }
+      if (beforeState === 'eat' && cat.state === 'follow') { // 满心跟随边沿
+        Sound.play('follow');
       }
       if (beforeState === 'eat' && (cat.state === 'follow' || cat.state === 'wander')) { // 吃完撤碟（无论是否满心）
         if (dishes.length) dishes.shift();
+      }
+      if (beforeState !== 'nap' && cat.state === 'nap') { // 进入打盹边沿 → 呼噜
+        Sound.play('purr');
       }
       if (cat.state === 'nap' && Math.random() < dt * 0.5) { // 睡觉偶尔冒 Z
         spawnText(cat.x + 14, cat.y - 2, 'z');
