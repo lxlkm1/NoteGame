@@ -43,7 +43,7 @@
 
   // ---- 人物 ----
   const player = {
-    x: 10 * TILE, y: 18 * TILE, // 出生点：门内
+    x: 19 * TILE, y: 27 * TILE, // 出生点：大门口内侧
     dir: 'up',
     moving: false,
     animTimer: 0,
@@ -69,8 +69,8 @@
     const my = (dy / len) * SPEED * dt;
     if (!playerSolid(player.x + mx, player.y)) player.x += mx; // 分轴：先 x 后 y
     if (!playerSolid(player.x, player.y + my)) player.y += my;
-    player.x = Math.max(0, Math.min(480 - 16, player.x));
-    player.y = Math.max(0, Math.min(320 - 16, player.y));
+    player.x = Math.max(0, Math.min(640 - 16, player.x));
+    player.y = Math.max(0, Math.min(480 - 16, player.y));
     player.animTimer += dt;
   }
 
