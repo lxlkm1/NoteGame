@@ -27,7 +27,7 @@ const Cats = (() => {
       x: def.col * TILE, y: def.row * TILE,
       state: 'wander', stateTimer: 2 + Math.random() * 4,
       targetX: def.col * TILE, targetY: def.row * TILE,
-      dir: 1, walkTimer: 0, blinkTimer: 0, pauseTimer: 0,
+      dir: 1, walkTimer: 0, blinkTimer: Math.random() * 8, pauseTimer: 0, moving: false,
       hearts: 0,
       dishX: 0, dishY: 0,        // Task 5 使用
       followTimer: 0,            // Task 6 使用
@@ -61,6 +61,7 @@ const Cats = (() => {
   function updateCat(cat, dt, player) {
     cat.stateTimer -= dt;
     cat.blinkTimer += dt;
+    cat.moving = false;
     switch (cat.state) {
       case 'wander': {
         if (cat.pauseTimer > 0) { // 站立片刻：只倒计时，不移动
@@ -68,6 +69,7 @@ const Cats = (() => {
           if (cat.pauseTimer <= 0) pickWanderTarget(cat);
         } else {
           const arrived = moveToward(cat, cat.targetX, cat.targetY, CAT_SPEED, dt);
+          cat.moving = !arrived;
           if (arrived) cat.pauseTimer = 0.6 + Math.random() * 1.2; // 到达目标，停顿 0.6~1.8s
         }
         if (cat.stateTimer <= 0) { // 走累了，睡一觉
@@ -80,12 +82,14 @@ const Cats = (() => {
         if (cat.stateTimer <= 0) { // 睡够了
           cat.state = 'wander';
           cat.stateTimer = 3 + Math.random() * 5;
+          cat.pauseTimer = 0; // 清除入睡前的残留停顿，醒后立即走动
           pickWanderTarget(cat);
         }
         break;
       }
       case 'gotoFood': {
         const arrived = moveToward(cat, cat.dishX, cat.dishY, CAT_SPEED * 1.5, dt);
+        cat.moving = !arrived;
         if (arrived) {
           cat.state = 'eat';
           cat.stateTimer = 1.6;
@@ -111,11 +115,12 @@ const Cats = (() => {
         if (cat.followTimer <= 0) { cat.state = 'return'; break; }
         if (!player) break;
         const d = Math.hypot(player.x - cat.x, player.y - cat.y);
-        if (d > 24) moveToward(cat, player.x, player.y, CAT_SPEED * 1.8, dt);
+        if (d > 24) cat.moving = !moveToward(cat, player.x, player.y, CAT_SPEED * 1.8, dt);
         break;
       }
       case 'return': {
         const arrived = moveToward(cat, cat.homeX, cat.homeY, CAT_SPEED * 1.5, dt);
+        cat.moving = !arrived;
         if (arrived) {
           cat.state = 'nap';
           cat.stateTimer = 5 + Math.random() * 3; // 心满意足地睡
@@ -130,12 +135,10 @@ const Cats = (() => {
     switch (cat.state) {
       case 'nap': return 'sleep';
       case 'eat': return 'eat';
-      case 'wander': {
-        const moving = cat.pauseTimer <= 0 && Math.hypot(cat.targetX - cat.x, cat.targetY - cat.y) > 2;
-        if (!moving) return Math.floor(cat.blinkTimer / 1.6) % 5 === 4 ? 'idle2' : 'idle1';
+      default: {
+        if (!cat.moving) return Math.floor(cat.blinkTimer / 1.6) % 5 === 4 ? 'idle2' : 'idle1';
         return Math.floor(cat.walkTimer / 0.25) % 2 === 0 ? 'walk1' : 'walk2';
       }
-      default: return Math.floor(cat.walkTimer / 0.25) % 2 === 0 ? 'walk1' : 'walk2';
     }
   }
 
@@ -148,10 +151,11 @@ const Cats = (() => {
   }
 
   function feed(cat, dishX, dishY) {
-    if (cat.state === 'eat' || cat.state === 'gotoFood') return; // 正在吃就不重复投
+    if (cat.state === 'eat' || cat.state === 'gotoFood') return false; // 正在吃就不重复投
     cat.dishX = dishX;
     cat.dishY = dishY;
     cat.state = 'gotoFood';
+    return true;
   }
 
   return { CAT_DEFS, createCats, updateCat, drawCat, feed };

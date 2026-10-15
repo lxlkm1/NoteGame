@@ -260,11 +260,9 @@ const Sprites = (() => {
     '..AAA..',
     '...A...',
   ];
-  const ZZZ = ['AAA', '..A', 'AAA'];
-
   return {
     drawSprite, PLAYER_FRAMES, PALETTE_PLAYER,
-    CAT_FRAMES, DISH, PALETTE_DISH, HEART, ZZZ,
+    CAT_FRAMES, DISH, PALETTE_DISH, HEART,
   };
 })();
 

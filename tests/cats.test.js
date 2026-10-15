@@ -73,6 +73,41 @@ test('好感度上限 5，超出不再增加', () => {
   assert.equal(cat.hearts, 5);
 });
 
+test('feed 对已在 gotoFood/eat 的猫返回 false 且状态与目标不变；新投喂返回 true 并进入 gotoFood', () => {
+  const cat = createCats()[0];
+  cat.state = 'gotoFood';
+  cat.dishX = 100; cat.dishY = 100;
+  assert.equal(feed(cat, 50, 60), false, 'gotoFood 中的猫应拒绝重复投喂');
+  assert.equal(cat.state, 'gotoFood');
+  assert.equal(cat.dishX, 100);
+  assert.equal(cat.dishY, 100);
+
+  const cat2 = createCats()[0];
+  cat2.state = 'eat';
+  assert.equal(feed(cat2, 50, 60), false, 'eat 中的猫应拒绝重复投喂');
+  assert.equal(cat2.state, 'eat');
+
+  const cat3 = createCats()[0];
+  assert.equal(feed(cat3, 50, 60), true, '新投喂应被接受');
+  assert.equal(cat3.state, 'gotoFood');
+  assert.equal(cat3.dishX, 50);
+  assert.equal(cat3.dishY, 60);
+});
+
+test('follow 状态：仍在接近玩家时 moving=true，到达 24px 停步距离后 moving=false', () => {
+  const cat = createCats()[0];
+  cat.state = 'follow';
+  cat.followTimer = 10;
+  const player = { x: cat.x + 40, y: cat.y };
+  updateCat(cat, 0.016, player);
+  assert.equal(cat.moving, true, '仍在接近玩家时应 moving=true');
+
+  cat.x = player.x + 10; // 进入 24px 停步距离
+  cat.y = player.y;
+  updateCat(cat, 0.016, player);
+  assert.equal(cat.moving, false, '到达停步距离后应 moving=false');
+});
+
 test('喂满 5 心后吃完进入 follow，计时结束 return，到家 nap', () => {
   const cat = createCats()[0];
   cat.hearts = 4;

@@ -104,8 +104,7 @@
     const dx = player.x - cat.x, dy = player.y - cat.y;
     const len = Math.hypot(dx, dy) || 1;
     const dishX = cat.x + (dx / len) * 14, dishY = cat.y + (dy / len) * 14 + 4;
-    dishes.push({ x: dishX, y: dishY });
-    Cats.feed(cat, dishX, dishY);
+    if (Cats.feed(cat, dishX, dishY)) dishes.push({ x: dishX, y: dishY });
     cat.hasMet = true;
     updateProgress();
   });
