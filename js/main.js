@@ -39,6 +39,7 @@
   resizeViewport();
   window.addEventListener('resize', resizeViewport);
   window.visualViewport?.addEventListener('resize', resizeViewport);
+  if (window.ResizeObserver) new ResizeObserver(resizeViewport).observe(canvas);
   window.addEventListener('keydown', (e) => {
     keys.add(e.key.toLowerCase());
     if (['arrowup','arrowdown','arrowleft','arrowright'].includes(e.key.toLowerCase())) e.preventDefault();
