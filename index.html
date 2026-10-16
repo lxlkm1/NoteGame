@@ -12,6 +12,15 @@
   <canvas id="game" width="1248" height="960"></canvas>
   <audio id="bgm" src="assent/canon.mp3" loop preload="auto"></audio>
   <div id="hud"><span id="brand">NoteGame</span> <span id="progress" class="hint">撸猫 0 / 11</span> <span id="sound" class="hint">🔊</span></div>
+  <div id="touch-controls" aria-label="触屏游戏操作">
+    <div id="dpad" aria-label="方向键">
+      <button class="control up" data-key="arrowup" aria-label="向上">▲</button>
+      <button class="control left" data-key="arrowleft" aria-label="向左">◀</button>
+      <button class="control right" data-key="arrowright" aria-label="向右">▶</button>
+      <button class="control down" data-key="arrowdown" aria-label="向下">▼</button>
+    </div>
+    <button id="interact" class="control" aria-label="交互或投喂">交互</button>
+  </div>
 </div>
 <script src="maps/tiles.js"></script>
 <script src="maps/atrium.js"></script>

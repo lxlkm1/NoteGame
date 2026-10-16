@@ -23,6 +23,20 @@
 
   // ---- 键盘 ----
   const keys = new Set();
+  const mobileLayout = window.matchMedia('(max-width: 700px) and (pointer: coarse)');
+  function resizeViewport() {
+    if (mobileLayout.matches) {
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = Math.max(1, Math.round(rect.width * MapKit.ART_SCALE));
+      canvas.height = Math.max(1, Math.round(rect.height * MapKit.ART_SCALE));
+    } else {
+      canvas.width = 1248;
+      canvas.height = 960;
+    }
+    ctx.imageSmoothingEnabled = false;
+  }
+  resizeViewport();
+  window.addEventListener('resize', resizeViewport);
   window.addEventListener('keydown', (e) => {
     keys.add(e.key.toLowerCase());
     if (['arrowup','arrowdown','arrowleft','arrowright'].includes(e.key.toLowerCase())) e.preventDefault();
@@ -173,8 +187,7 @@
     particles.length = 0;
   }
 
-  window.addEventListener('keydown', (e) => {
-    if (e.key.toLowerCase() !== 'e') return;
+  function interact() {
     const door = doorAtPlayer();
     if (door) {
       if (door.to === 'atrium') { exitRoom(); return; }
@@ -207,6 +220,36 @@
       if (Mimi.offerFood(mimi, player, currentMap, TILES)) Sound.play('dish');
     }
     return;
+  }
+  window.addEventListener('keydown', (e) => { if (e.key.toLowerCase() === 'e' && !e.repeat) interact(); });
+  for (const button of document.querySelectorAll('#dpad [data-key]')) {
+    const key = button.dataset.key;
+    button.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      button.setPointerCapture(e.pointerId);
+      keys.add(key);
+      button.classList.add('pressed');
+      initAudio();
+    });
+    const release = (e) => {
+      e.preventDefault();
+      keys.delete(key);
+      button.classList.remove('pressed');
+    };
+    button.addEventListener('pointerup', release);
+    button.addEventListener('pointercancel', release);
+    button.addEventListener('lostpointercapture', release);
+  }
+  document.getElementById('interact').addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    initAudio();
+    interact();
+  });
+  document.getElementById('sound').addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    if (!audioInited) { initAudio(); return; }
+    Sound.toggleMute();
+    updateSoundIcon();
   });
 
   // ---- 循环 ----
@@ -322,12 +365,21 @@
       ctx.fillRect(bx, by, 10, 10);
       ctx.fillStyle = '#1a181f';
       ctx.font = 'bold 8px monospace';
-      ctx.fillText('E', bx + 3, by + 8);
+      ctx.fillText(mobileLayout.matches ? '●' : 'E', bx + 3, by + 8);
     }
   }
 
   function render(dt) {
-    ctx.drawImage(scenes[scene].canvas, 0, 0, canvas.width / MapKit.ART_SCALE, canvas.height / MapKit.ART_SCALE);
+    const viewW = canvas.width / MapKit.ART_SCALE;
+    const viewH = canvas.height / MapKit.ART_SCALE;
+    const worldW = currentMap[0].length * TILE;
+    const worldH = currentMap.length * TILE;
+    const cameraX = mobileLayout.matches ? Math.max(0, Math.min(worldW - viewW, player.x + 8 - viewW / 2)) : 0;
+    const cameraY = mobileLayout.matches ? Math.max(0, Math.min(worldH - viewH, player.y + 8 - viewH / 2)) : 0;
+    ctx.setTransform(MapKit.ART_SCALE, 0, 0, MapKit.ART_SCALE, 0, 0);
+    ctx.clearRect(0, 0, viewW, viewH);
+    ctx.translate(-cameraX, -cameraY);
+    ctx.drawImage(scenes[scene].canvas, 0, 0, worldW, worldH);
     if (scene === 'outside') {
       drawDishes();
       for (const cat of cats) { // 猫转向玩家：仅 idle（wander 且未移动）时生效
@@ -354,11 +406,11 @@
       }
       if (Mimi.canOfferFood(mimi, player, currentMap, TILES)) {
         ctx.fillStyle = '#f5f2ec'; ctx.font = '8px monospace';
-        ctx.fillText('E 放食物', player.x - 8, player.y - 7);
+        ctx.fillText(`${mobileLayout.matches ? '交互' : 'E'} 放食物`, player.x - 8, player.y - 7);
       }
       if (Bowls.nearestEmpty(bowls, player)) {
         ctx.fillStyle = '#f5f2ec'; ctx.font = '8px monospace';
-        ctx.fillText('E 碗里放粮', player.x - 8, player.y - 15);
+        ctx.fillText(`${mobileLayout.matches ? '交互' : 'E'} 碗里放粮`, player.x - 8, player.y - 15);
       }
     } else {
       const actors = NPCs.visible(npcs, scene).map(npc =>
@@ -381,8 +433,9 @@
   function drawDoorHint() { // 站在门前提示进出
     const door = doorAtPlayer();
     if (!door) return;
-    const label = door.to === 'atrium' ? (scene === 'outside' ? 'E 进馆' : 'E 出门') :
-                  door.to === 'outside' ? 'E 出馆' : 'E 进入';
+    const action = mobileLayout.matches ? '交互' : 'E';
+    const label = door.to === 'atrium' ? (scene === 'outside' ? `${action} 进馆` : `${action} 出门`) :
+                  door.to === 'outside' ? `${action} 出馆` : `${action} 进入`;
     ctx.font = 'bold 8px monospace';
     ctx.textAlign = 'center';
     ctx.fillStyle = '#1a181f';
