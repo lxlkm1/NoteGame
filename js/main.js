@@ -3,6 +3,8 @@
   'use strict';
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d');
+  ctx.setTransform(MapKit.ART_SCALE, 0, 0, MapKit.ART_SCALE, 0, 0); // 世界坐标仍是 16px/格
+  ctx.imageSmoothingEnabled = false;
   const { TILE, isSolidAtPx, doorDestAt, buildCanvas } = MapKit;
   const { drawSprite, PLAYER_FRAMES, PALETTE_PLAYER } = Sprites;
   const TILES = MAPS.tiles;
@@ -94,7 +96,7 @@
 
   function drawPlayer() {
     drawSprite(ctx, PLAYER_FRAMES[frameKey()], PALETTE_PLAYER,
-               player.x, player.y, player.dir === 'left');
+               player.x, player.y, player.dir === 'left', 1.5);
   }
 
   const cats = Cats.createCats(); // 普通猫固定生活在室外
@@ -325,7 +327,7 @@
   }
 
   function render(dt) {
-    ctx.drawImage(scenes[scene].canvas, 0, 0);
+    ctx.drawImage(scenes[scene].canvas, 0, 0, canvas.width / MapKit.ART_SCALE, canvas.height / MapKit.ART_SCALE);
     if (scene === 'outside') {
       drawDishes();
       for (const cat of cats) { // 猫转向玩家：仅 idle（wander 且未移动）时生效

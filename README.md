@@ -28,6 +28,8 @@ python3 -m http.server 8137
 # 打开 http://localhost:8137
 ```
 
+地图仍是 39×30 格；每格使用 32×32 绘制像素，角色和建筑加入细节。移动与碰撞继续使用每格 16 单位的世界坐标。
+
 ## 技术说明
 
 纯 HTML + Canvas + 原生 JavaScript，零依赖零构建。

@@ -175,12 +175,12 @@ const NPCs = (() => {
       ctx.fillStyle = '#343b4b'; ctx.fillRect(x + 2, y + 3, 12, 9);
       ctx.fillStyle = '#8baac0'; ctx.fillRect(x + 3, y + 4, 10, 7);
       ctx.fillStyle = '#d8d7c9'; ctx.fillRect(x + 1, y + 12, 14, 2);
-      drawSprite(ctx, sprites.DUYU_FRAME, sprites.DUYU_PALETTE, npc.x, npc.y, false);
+      drawSprite(ctx, sprites.DUYU_FRAME, sprites.DUYU_PALETTE, npc.x, npc.y, false, 1.5);
       return;
     }
     const frame = npc.moving ? (Math.floor(npc.animTimer / 0.2) % 2 ? 'down1' : 'down2') : 'down1';
     const frameName = npc.facing === 'up' && npc.moving ? 'up1' : frame;
-    drawSprite(ctx, sprites.PLAYER_FRAMES[frameName], COLORS[npc.color], npc.x, npc.y, false);
+    drawSprite(ctx, sprites.PLAYER_FRAMES[frameName], COLORS[npc.color], npc.x, npc.y, false, 1.5);
     if (!npc.moving && (npc.kind === 'study' || npc.phase === 'study')) {
       ctx.fillStyle = '#e8dcc8'; ctx.fillRect(npc.x + 3, npc.y + 10, 10, 4);
       ctx.fillStyle = Math.floor(npc.animTimer / 1.3) % 2 ? '#8595a7' : '#a59070';

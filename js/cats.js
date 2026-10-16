@@ -219,7 +219,7 @@ const Cats = (() => {
     const flip = cat.facePlayer
       ? (player.x < cat.x)
       : (cat.dir < 0);
-    drawSprite(ctx, frame, cat.palette, cat.x, cat.y, flip);
+    drawSprite(ctx, frame, cat.palette, cat.x, cat.y, flip, 1.25);
   }
 
   function feed(cat, dishX, dishY, source = 'player') {

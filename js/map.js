@@ -3,6 +3,7 @@
 const MapKit = (() => {
   'use strict';
   const TILE = 16;
+  const ART_SCALE = 2;
 
   // 校验所有行等宽，返回 { rows, cols, grid }
   function parseMap(mapRows) {
@@ -210,17 +211,107 @@ const MapKit = (() => {
     draw(ctx, col * TILE, row * TILE, col, row, ch, sceneData);
   }
 
+  // 在 32px 绘制层补充 1px 级细节；格子与碰撞仍使用 16px 世界坐标。
+  function drawTileDetails(ctx, ch, col, row, tiles) {
+    const style = tiles[ch] && tiles[ch].style;
+    const x = col * TILE * ART_SCALE, y = row * TILE * ART_SCALE;
+    const dot = (color, dx, dy, w = 1, h = 1) => {
+      ctx.fillStyle = color; ctx.fillRect(x + dx, y + dy, w, h);
+    };
+    const seed = (col * 17 + row * 31) % 11;
+    switch (style) {
+      case 'floor':
+        if (seed % 3 === 0) dot('#715a43', 3 + seed, 7, 8, 1);
+        if (seed % 4 === 0) dot('#4f4033', 18, 23, 6, 1);
+        break;
+      case 'wall':
+      case 'facade':
+        dot('#716b80', 2, 2, 27, 1);
+        dot('#3d3948', 1, 19, 30, 1);
+        dot('#696476', 5 + seed, 23, 8, 1);
+        if (style === 'facade' && row === 2 && col % 6 === 3) {
+          dot('#f8dca0', 8, 7, 2, 10);
+          dot('#b48657', 22, 10, 1, 15);
+        }
+        break;
+      case 'bookshelf': {
+        dot('#a1714c', 0, 1, 32, 2);
+        dot('#3f291d', 0, 27, 32, 2);
+        for (let i = 0; i < 4; i++) {
+          const bx = 2 + i * 8;
+          dot('#e8d0a4', bx, 7 + i % 2, 1, 15);
+          dot('#382b32', bx + 4, 19, 2, 2);
+          dot('#d5aa6c', bx + 1, 9, 2, 1);
+        }
+        break;
+      }
+      case 'table':
+        dot('#bd8b5a', 1, 5, 30, 1);
+        dot('#71472d', 0, 24, 32, 2);
+        dot('#aa754b', 4 + seed, 13, 13, 1);
+        dot('#b47d50', 19, 19, 7, 1);
+        break;
+      case 'chair':
+        dot('#9c7351', 5, 7, 22, 2);
+        dot('#4c3529', 5, 23, 22, 2);
+        dot('#ad8059', 8, 12, 16, 1);
+        break;
+      case 'pavement':
+        dot('#92919b', 3, 3, 11, 1);
+        dot('#52535e', 28, 4, 1, 27);
+        dot('#a3a0a4', 7 + seed, 22, 3, 1);
+        break;
+      case 'grass':
+      case 'tree':
+      case 'shrub':
+      case 'lamp':
+      case 'bench':
+        dot('#6d9473', 3 + seed, 26, 1, 3);
+        dot('#244b3c', 21, 28, 2, 2);
+        if (style === 'tree' || style === 'shrub') {
+          dot('#7aa883', 8, 9, 4, 2);
+          dot('#5b966e', 19, 14, 5, 2);
+          dot('#1d3d32', 5, 22, 7, 2);
+          dot('#91ad79', 14, 5, 2, 2);
+        }
+        if (style === 'lamp') dot('#fff2b6', 11, 7, 10, 2);
+        if (style === 'bench') dot('#c39767', 6, 11, 20, 1);
+        break;
+      case 'toilet':
+        dot('#ffffff', 5, 7, 8, 1);
+        dot('#758c9f', 18, 24, 9, 1);
+        break;
+      case 'door':
+      case 'bigDoor':
+      case 'outsideDoor':
+        dot('#b17b50', 5, 3, 1, 23);
+        dot('#4b2d20', 26, 4, 1, 24);
+        dot('#f6d887', 22, 16, 3, 3);
+        break;
+      case 'chessFloor':
+      case 'chessSeat':
+        dot('#e9d9bd', 1, 1, 4, 1);
+        break;
+    }
+  }
+
   function buildCanvas(sceneData, tiles) {
     const { rows, cols, grid } = parseMap(sceneData.map);
     const cv = document.createElement('canvas');
-    cv.width = cols * TILE;
-    cv.height = rows * TILE;
+    cv.width = cols * TILE * ART_SCALE;
+    cv.height = rows * TILE * ART_SCALE;
     const c2 = cv.getContext('2d');
+    c2.setTransform(ART_SCALE, 0, 0, ART_SCALE, 0, 0);
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
         drawTile(c2, grid[r][c], c, r, tiles, sceneData);
       }
     }
+    c2.setTransform(1, 0, 0, 1, 0, 0);
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) drawTileDetails(c2, grid[r][c], c, r, tiles);
+    }
+    c2.setTransform(ART_SCALE, 0, 0, ART_SCALE, 0, 0);
     const decor = sceneData.decor;
     if (decor) {
       if (decor.light) { // 挑空暖光
@@ -242,7 +333,7 @@ const MapKit = (() => {
     return cv;
   }
 
-  return { TILE, parseMap, isSolidAtPx, isDoorAt, doorDestAt, buildCanvas };
+  return { TILE, ART_SCALE, parseMap, isSolidAtPx, isDoorAt, doorDestAt, buildCanvas };
 })();
 
 if (typeof module !== 'undefined') module.exports = MapKit;

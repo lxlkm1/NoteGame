@@ -7,7 +7,12 @@ const reading = require('../maps/reading.js');
 const toilet = require('../maps/toilet.js');
 const outside = require('../maps/outside.js');
 const { CAT_DEFS } = require('../js/cats.js');
-const { TILE, parseMap, isSolidAtPx, isDoorAt, doorDestAt } = require('../js/map.js');
+const { TILE, ART_SCALE, parseMap, isSolidAtPx, isDoorAt, doorDestAt } = require('../js/map.js');
+
+test('绘制分辨率为每格 32 像素，碰撞格仍为 16 单位', () => {
+  assert.equal(TILE, 16);
+  assert.equal(TILE * ART_SCALE, 32);
+});
 
 const ATRIUM_MAP = atrium.map;
 
