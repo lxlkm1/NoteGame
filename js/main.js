@@ -38,6 +38,7 @@
   }
   resizeViewport();
   window.addEventListener('resize', resizeViewport);
+  window.visualViewport?.addEventListener('resize', resizeViewport);
   window.addEventListener('keydown', (e) => {
     keys.add(e.key.toLowerCase());
     if (['arrowup','arrowdown','arrowleft','arrowright'].includes(e.key.toLowerCase())) e.preventDefault();
@@ -261,13 +262,29 @@
   }, { passive: true });
   document.getElementById('fullscreen').addEventListener('click', async () => {
     const wrap = document.getElementById('game-wrap');
+    const tip = document.getElementById('fullscreen-tip');
+    tip.hidden = true;
+    tip.textContent = '';
     try {
-      if (document.fullscreenElement) await document.exitFullscreen();
-      else if (wrap.requestFullscreen) await wrap.requestFullscreen();
-    } catch (err) { console.warn('Fullscreen unavailable:', err); }
-    resizeViewport();
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+      } else if (wrap.requestFullscreen) {
+        await wrap.requestFullscreen();
+        if (screen.orientation?.lock) {
+          try { await screen.orientation.lock('landscape'); } catch (_) { /* 用户仍可手动横屏 */ }
+        }
+      }
+      else tip.textContent = '此浏览器不支持网页全屏。可将 NoteGame 添加到手机主屏幕，再从主屏幕打开。';
+    } catch (err) {
+      tip.textContent = `全屏未开启（${err.name || '浏览器限制'}）。请直接在 Chrome 中打开游戏，再点全屏。`;
+    }
+    if (tip.textContent) tip.hidden = false;
+    requestAnimationFrame(resizeViewport);
   });
-  document.addEventListener('fullscreenchange', resizeViewport);
+  document.addEventListener('fullscreenchange', () => {
+    document.getElementById('fullscreen').textContent = document.fullscreenElement ? '⛶ 退出全屏' : '⛶ 全屏';
+    requestAnimationFrame(resizeViewport);
+  });
 
   // ---- 循环 ----
   let lastT = 0;
