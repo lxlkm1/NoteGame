@@ -6,6 +6,7 @@ const atrium = require('../maps/atrium.js');
 const reading = require('../maps/reading.js');
 const toilet = require('../maps/toilet.js');
 const outside = require('../maps/outside.js');
+const { CAT_DEFS } = require('../js/cats.js');
 const { TILE, parseMap, isSolidAtPx, isDoorAt, doorDestAt } = require('../js/map.js');
 
 const ATRIUM_MAP = atrium.map;
@@ -80,13 +81,13 @@ test('越界坐标视为不可通行', () => {
   assert.equal(isSolidAtPx(5000, 5000, ATRIUM_MAP, tiles), true);
 });
 
-test('连通性：中庭出生点到所有猫位可达（BFS）', () => {
-  const { grid } = parseMap(ATRIUM_MAP);
+test('连通性：前庭入口到十只普通猫的出生点可达（BFS）', () => {
+  const { grid } = parseMap(outside.map);
   const walk = (c, r) => { // 按 tiles 语义：非 solid 且非门（门另一头是别的场景）
     const t = tiles[grid[r][c]];
     return t && !t.solid && !t.portal;
   };
-  const start = [atrium.spawn.col, atrium.spawn.row];
+  const start = [outside.entry.col, outside.entry.row];
   const seen = new Set([start.join(',')]);
   const queue = [start];
   while (queue.length) {
@@ -100,14 +101,7 @@ test('连通性：中庭出生点到所有猫位可达（BFS）', () => {
       queue.push([nc, nr]);
     }
   }
-  // 10 只猫各自位置（39列，棋盘 col 7-36）
-  const catSpots = [
-    [19, 14], [16, 12], [22, 15], // 棋盘上猫
-    [20, 24], [6, 16], [5, 8],    // 大厅猫
-    [19, 16], [35, 20], [35, 6],  // 其他猫
-    [19, 27],                     // 门口猫
-  ];
-  for (const [c, r] of catSpots) {
+  for (const { col: c, row: r } of CAT_DEFS) {
     assert.equal(seen.has(c + ',' + r), true, `猫位 (${c},${r}) 不可达`);
   }
 });

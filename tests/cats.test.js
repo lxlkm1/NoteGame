@@ -2,6 +2,44 @@
 const test = require('node:test');
 const assert = require('node:assert');
 const { CAT_DEFS, createCats, updateCat, feed } = require('../js/cats.js');
+const outside = require('../maps/outside.js');
+const tiles = require('../maps/tiles.js');
+const { isSolidAtPx } = require('../js/map.js');
+
+test('十只普通猫出生在前庭的可走位置', () => {
+  const expected = [
+    [19, 12], [19, 23], [7, 11], [31, 11], [3, 18],
+    [35, 18], [13, 24], [25, 24], [7, 27], [31, 27],
+  ];
+  assert.deepEqual(CAT_DEFS.map(({ col, row }) => [col, row]), expected);
+  for (const [col, row] of expected) {
+    assert.equal(tiles[outside.map[row][col]].solid, false, `${col},${row} 不可走`);
+  }
+});
+
+test('普通猫在室外活动时不会穿过树丛', () => {
+  const cat = createCats()[0];
+  cat.x = 13 * 16; cat.y = 16 * 16;
+  cat.targetX = 10 * 16; cat.targetY = 15 * 16;
+  cat.stateTimer = 100;
+  cat.pauseTimer = 0;
+  for (let i = 0; i < 200; i++) {
+    updateCat(cat, 0.05, null, outside.map, tiles);
+    assert.equal(isSolidAtPx(cat.x + 8, cat.y + 15, outside.map, tiles), false);
+  }
+});
+
+test('普通猫被玩家带到树丛另一侧后能绕路回家', () => {
+  const cat = createCats()[2]; // 汤圆，家在左上草地
+  cat.x = 13 * 16; cat.y = 18 * 16;
+  cat.state = 'return';
+  for (let i = 0; i < 2000 && cat.state === 'return'; i++) {
+    updateCat(cat, 0.05, null, outside.map, tiles);
+    assert.equal(isSolidAtPx(cat.x + 8, cat.y + 15, outside.map, tiles), false);
+  }
+  assert.equal(cat.state, 'nap');
+  assert.ok(Math.hypot(cat.x - cat.homeX, cat.y - cat.homeY) < 1);
+});
 
 test('恰好 10 只猫，每只字段齐全、调色板五色俱全', () => {
   assert.equal(CAT_DEFS.length, 10);
@@ -63,6 +101,15 @@ test('feed 叫醒睡着的猫并走向食物；吃完好感 +1', () => {
   for (let i = 0; i < 200; i++) updateCat(cat, 0.016);
   assert.equal(cat.state, 'wander');
   assert.equal(cat.hearts, 1);
+});
+
+test('学生投喂时猫会进食，但不增加玩家好感或触发跟随', () => {
+  const cat = createCats()[0];
+  assert.equal(feed(cat, cat.x, cat.y, 'npc'), true);
+  for (let i = 0; i < 100; i++) updateCat(cat, 0.05);
+  assert.equal(cat.hearts, 0);
+  assert.equal(cat.hasMet, false);
+  assert.notEqual(cat.state, 'follow');
 });
 
 test('好感度上限 5，超出不再增加', () => {

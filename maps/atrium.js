@@ -74,6 +74,10 @@
     },
     // 门不再需要清单：W=卫生间 / M=阅览室（字符即目的地，见 tiles.js）
     spawn: { col: 20, row: 28 }, // 出生点：大门口内侧（39 列 → col 19-20）
+    students: [
+      { col: 10, row: 10, color: 'green' },
+      { col: 28, row: 23, color: 'blue' },
+    ],
     decor: {
       light: { x: 2, y: 2, w: 35, h: 26, alpha: 0.1, color: "#ffd98a" }, // 挑空暖光
       mat: { col: 19, row: 28, w: 2 }, // 门口垫子

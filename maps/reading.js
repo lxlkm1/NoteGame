@@ -37,6 +37,12 @@
     ],
     // 出口门不需要清单：地图里的 m 字符即表示"回中庭"（见 tiles.js）
     entry: { col: 20, row: 27 }, // 进入房间时玩家落点（出口门上方）
+    students: [
+      { col: 2, row: 10, color: 'blue' },
+      { col: 24, row: 11, color: 'green' },
+      { col: 9, row: 14, color: 'red' },
+      { col: 31, row: 22, color: 'brown' },
+    ],
   };
   if (typeof module !== "undefined") module.exports = root.MAPS.reading;
 })(typeof window !== "undefined" ? window : globalThis);

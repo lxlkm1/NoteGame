@@ -1,0 +1,69 @@
+'use strict';
+const test = require('node:test');
+const assert = require('node:assert');
+const NPCs = require('../js/npcs.js');
+const atrium = require('../maps/atrium.js');
+const reading = require('../maps/reading.js');
+const outside = require('../maps/outside.js');
+const tiles = require('../maps/tiles.js');
+
+const maps = { atrium, reading, outside };
+
+test('阅览室四名学生、中庭两名学生都坐在可走座位上', () => {
+  const world = NPCs.create(maps, () => 0.1);
+  assert.equal(world.study.filter(n => n.scene === 'reading').length, 4);
+  assert.equal(world.study.filter(n => n.scene === 'atrium').length, 2);
+  for (const npc of world.study) {
+    const ch = maps[npc.scene].map[npc.row][npc.col];
+    assert.equal(ch, npc.scene === 'reading' ? 'c' : 'z');
+    assert.equal(tiles[ch].solid, false);
+  }
+});
+
+test('进出馆学生跨越前门，在中庭和前庭之间切换场景', () => {
+  const world = NPCs.create(maps, () => 0.1);
+  const inbound = world.commuters[0];
+  const outbound = world.commuters[1];
+  assert.equal(inbound.scene, 'outside');
+  assert.equal(outbound.scene, 'atrium');
+  for (let i = 0; i < 400; i++) NPCs.update(world, 0.1, [], () => 0.9);
+  assert.equal(inbound.scene, 'atrium');
+  assert.equal(outbound.scene, 'outside');
+});
+
+test('小情侣定时随机出现，最多一对，且会一起离开', () => {
+  const world = NPCs.create(maps, () => 0.1);
+  for (let i = 0; i < 25; i++) NPCs.update(world, 1, [], () => 0.1);
+  assert.ok(world.couple);
+  assert.equal(world.couple.members.length, 2);
+  assert.equal(NPCs.visible(world, 'outside').filter(n => n.kind === 'couple').length, 2);
+  for (let i = 0; i < 100; i++) NPCs.update(world, 1, [], () => 0.1);
+  assert.ok(NPCs.visible(world, 'outside').filter(n => n.kind === 'couple').length <= 2);
+  const empty = NPCs.create(maps, () => 0.9);
+  for (let i = 0; i < 25; i++) NPCs.update(empty, 1, [], () => 0.9);
+  assert.equal(empty.couple, null);
+});
+
+test('室外学生接近猫时按概率提出一次投喂，冷却阻止连续投喂', () => {
+  const world = NPCs.create(maps, () => 0.1);
+  const npc = world.commuters[0];
+  npc.x = 19 * 16; npc.y = 12 * 16;
+  npc.feedCooldown = 0;
+  const cat = { x: npc.x, y: npc.y, state: 'wander', id: 'xueqiu' };
+  const first = NPCs.update(world, 0.05, [cat], () => 0.1);
+  assert.equal(first.filter(e => e.type === 'feed').length, 1);
+  const second = NPCs.update(world, 0.05, [cat], () => 0.1);
+  assert.equal(second.filter(e => e.type === 'feed').length, 0);
+});
+
+test('小情侣靠近猫时也可能投喂', () => {
+  const world = NPCs.create(maps, () => 0.1);
+  NPCs.update(world, 18, [], () => 0.1);
+  const member = world.couple.members[0];
+  member.feedCooldown = 0;
+  const cat = { x: member.x, y: member.y, state: 'nap', id: 'xueqiu' };
+  const events = NPCs.update(world, 0.05, [cat], () => 0.1);
+  assert.equal(events.length, 1);
+  assert.equal(events[0].npcId, member.id);
+  assert.equal(events[0].cat, cat);
+});

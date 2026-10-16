@@ -97,13 +97,14 @@
                player.x, player.y, player.dir === 'left');
   }
 
-  const cats = Cats.createCats();
+  const cats = Cats.createCats(); // 普通猫固定生活在室外
+  const npcs = NPCs.create(MAPS);
   let mimi = null;
   let mimiHearts = 0;
   let mimiMet = false;
 
   const FEED_RANGE = 40;
-  const dishes = [];   // {x, y}
+  const dishes = [];   // {catId, x, y}
   const particles = []; // {x, y, vx, vy, life, ttl, kind, text?}
 
   function spawnHearts(x, y) {
@@ -123,6 +124,7 @@
   function nearestFeedableCat() {
     let best = null, bestD = FEED_RANGE;
     for (const cat of cats) {
+      if (cat.state === 'gotoFood' || cat.state === 'eat') continue;
       const d = Math.hypot(cat.x + 8 - (player.x + 8), cat.y + 8 - (player.y + 8));
       if (d < bestD) { best = cat; bestD = d; }
     }
@@ -152,7 +154,6 @@
       mimi = Mimi.shouldAppear(Math.random()) ? Mimi.create(site, mimiHearts) : null;
     }
     Sound.setBgmTrack(name);
-    dishes.length = 0;
     particles.length = 0;
   }
 
@@ -165,7 +166,6 @@
     if (cameFromOutside) player.dir = 'up';
     if (cameFromOutside) mimi = null;
     Sound.setBgmTrack('atrium');
-    dishes.length = 0;
     particles.length = 0;
   }
 
@@ -178,19 +178,24 @@
       return;
     }
     if (scene === 'outside') {
+      const cat = nearestFeedableCat();
+      if (cat) {
+        const dx = player.x - cat.x, dy = player.y - cat.y;
+        const len = Math.hypot(dx, dy) || 1;
+        let dishX = cat.x + (dx / len) * 14;
+        let dishY = cat.y + (dy / len) * 14 + 4;
+        if (playerSolid(dishX, dishY)) { dishX = cat.x; dishY = cat.y; }
+        if (Cats.feed(cat, dishX, dishY)) {
+          dishes.push({ catId: cat.id, x: dishX, y: dishY });
+          Sound.play('dish');
+          cat.hasMet = true;
+          updateProgress();
+        }
+        return;
+      }
       if (Mimi.offerFood(mimi, player, currentMap, TILES)) Sound.play('dish');
-      return;
     }
-    if (scene !== 'atrium') return;
-    const cat = nearestFeedableCat();
-    if (!cat) return;
-    // 碟落在猫与玩家之间、猫身前 14px
-    const dx = player.x - cat.x, dy = player.y - cat.y;
-    const len = Math.hypot(dx, dy) || 1;
-    const dishX = cat.x + (dx / len) * 14, dishY = cat.y + (dy / len) * 14 + 4;
-    if (Cats.feed(cat, dishX, dishY)) { dishes.push({ x: dishX, y: dishY }); Sound.play('dish'); }
-    cat.hasMet = true;
-    updateProgress();
+    return;
   });
 
   // ---- 循环 ----
@@ -199,11 +204,17 @@
     const dt = Math.min((t - lastT) / 1000, 0.05);
     lastT = t;
     updatePlayer(dt);
-    if (scene === 'atrium') { // 猫只在中庭活动，不进房间
+    for (const event of NPCs.update(npcs, dt, scene === 'outside' ? cats : [])) {
+      if (event.type === 'feed' && Cats.feed(event.cat, event.x, event.y, 'npc')) {
+        dishes.push({ catId: event.cat.id, x: event.x, y: event.y });
+        Sound.play('dish');
+      }
+    }
+    if (scene === 'outside') {
       for (const cat of cats) {
         const before = cat.hearts;
         const beforeState = cat.state;
-        Cats.updateCat(cat, dt, player);
+        Cats.updateCat(cat, dt, player, currentMap, TILES);
         if (cat.hearts > before) { // 刚吃完一口
           spawnHearts(cat.x + 8, cat.y);
           spawnText(cat.x + 8, cat.y - 10, '喵♪');
@@ -213,7 +224,8 @@
           Sound.play('follow');
         }
         if (beforeState === 'eat' && (cat.state === 'follow' || cat.state === 'wander')) { // 吃完撤碟（无论是否满心）
-          if (dishes.length) dishes.shift();
+          const dishIndex = dishes.findIndex(dish => dish.catId === cat.id);
+          if (dishIndex >= 0) dishes.splice(dishIndex, 1);
         }
         if (beforeState !== 'nap' && cat.state === 'nap') { // 进入打盹边沿 → 呼噜
           Sound.play('purr');
@@ -222,15 +234,16 @@
           spawnText(cat.x + 14, cat.y - 2, 'z');
         }
       }
-    } else if (scene === 'outside' && mimi) {
-      const before = mimi.hearts;
-      Mimi.update(mimi, dt, player, currentMap, TILES);
-      if (mimi.hearts > before) {
-        mimiHearts = mimi.hearts;
-        mimiMet = true;
-        spawnHearts(mimi.x + 8, mimi.y);
-        Sound.play('meow', { cat: mimi });
-        updateProgress();
+      if (mimi) {
+        const before = mimi.hearts;
+        Mimi.update(mimi, dt, player, currentMap, TILES);
+        if (mimi.hearts > before) {
+          mimiHearts = mimi.hearts;
+          mimiMet = true;
+          spawnHearts(mimi.x + 8, mimi.y);
+          Sound.play('meow', { cat: mimi });
+          updateProgress();
+        }
       }
     }
     render(dt);
@@ -292,7 +305,7 @@
 
   function render(dt) {
     ctx.drawImage(scenes[scene].canvas, 0, 0);
-    if (scene === 'atrium') {
+    if (scene === 'outside') {
       drawDishes();
       for (const cat of cats) { // 猫转向玩家：仅 idle（wander 且未移动）时生效
         const idle = cat.state === 'wander' &&
@@ -302,17 +315,16 @@
       }
       const actors = [...cats.map((c) => ({ y: c.y, draw: () => Cats.drawCat(ctx, c, drawSprite, Sprites.CAT_FRAMES, player) })),
                       { y: player.y, draw: drawPlayer }];
-      actors.sort((a, b) => a.y - b.y);
-      for (const a of actors) a.draw();
-      drawCatOverlay();
-    } else if (scene === 'outside') {
-      if (mimi && mimi.food) drawSprite(ctx, Sprites.DISH, Sprites.PALETTE_DISH, mimi.food.x, mimi.food.y);
-      const actors = [{ y: player.y, draw: drawPlayer }];
+      for (const npc of NPCs.visible(npcs, scene)) {
+        actors.push({ y: npc.y, draw: () => NPCs.draw(ctx, npc, drawSprite, Sprites) });
+      }
       if (mimi && mimi.state !== 'hidden') {
         actors.push({ y: mimi.y, draw: () => Cats.drawCat(ctx, mimi, drawSprite, Sprites.MIMI_FRAMES, player) });
       }
       actors.sort((a, b) => a.y - b.y);
+      if (mimi && mimi.food) drawSprite(ctx, Sprites.DISH, Sprites.PALETTE_DISH, mimi.food.x, mimi.food.y);
       for (const actor of actors) actor.draw();
+      drawCatOverlay();
       if (mimi && mimi.state !== 'hidden' && Math.hypot(player.x - mimi.x, player.y - mimi.y) < 112) {
         ctx.fillStyle = '#f5f2ec'; ctx.font = '8px monospace';
         ctx.fillText('咪咪', mimi.x, mimi.y - 7);
@@ -322,7 +334,11 @@
         ctx.fillText('E 放食物', player.x - 8, player.y - 7);
       }
     } else {
-      drawPlayer();
+      const actors = NPCs.visible(npcs, scene).map(npc =>
+        ({ y: npc.y, draw: () => NPCs.draw(ctx, npc, drawSprite, Sprites) }));
+      actors.push({ y: player.y, draw: drawPlayer });
+      actors.sort((a, b) => a.y - b.y);
+      for (const actor of actors) actor.draw();
     }
     drawDoorHint();
     drawParticles(dt);
