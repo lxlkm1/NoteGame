@@ -64,3 +64,39 @@ test('躲在树丛的咪咪也会在玩家退远后出来吃食物', () => {
   }
   assert.equal(mimi.hasMet, true);
 });
+
+test('空闲一段时间后咪咪会高速乱跑，并保持在可走位置', () => {
+  const mimi = Mimi.create(site);
+  mimi.frenzyTimer = 0.01;
+  let sawFrenzy = false;
+  for (let i = 0; i < 500; i++) {
+    Mimi.update(mimi, 0.05, player(30, 18), outside.map, tiles, () => 0.4);
+    sawFrenzy ||= mimi.state === 'frenzy';
+    const ch = outside.map[Math.floor((mimi.y + 8) / 16)][Math.floor((mimi.x + 8) / 16)];
+    assert.equal(tiles[ch].solid, false);
+    if (sawFrenzy && mimi.state === 'waiting') break;
+  }
+  assert.equal(sawFrenzy, true);
+  assert.equal(mimi.state, 'waiting');
+});
+
+test('碗里有粮时咪咪立刻赶来，即使玩家在碗旁也会吃', () => {
+  const mimi = Mimi.create(site);
+  const bowl = { x: 14 * 16, y: 17 * 16, filled: true };
+  assert.equal(Mimi.offerBowlFood(mimi, bowl), true);
+  assert.equal(mimi.state, 'approaching');
+  for (let i = 0; i < 300 && bowl.filled; i++) {
+    Mimi.update(mimi, 0.05, player(14, 17), outside.map, tiles, () => 0.5);
+  }
+  assert.equal(bowl.filled, false);
+  assert.equal(mimi.hearts, 1);
+  assert.equal(mimi.hasMet, true);
+});
+
+test('碗中已有猫粮时，咪咪会主动发现并优先赶去', () => {
+  const mimi = Mimi.create(site);
+  const bowl = { x: 14 * 16, y: 17 * 16, filled: true };
+  Mimi.update(mimi, 0.05, player(14, 17), outside.map, tiles, () => 0.5, [bowl]);
+  assert.equal(mimi.state, 'approaching');
+  assert.equal(mimi.food.bowl, bowl);
+});

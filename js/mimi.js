@@ -6,7 +6,7 @@ const Mimi = (() => {
   const FOOD_MIN = 6 * TILE;
   const FOOD_MAX = 8 * TILE;
   const DIR = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
-  const PALETTE = { A: '#f5f2ec', B: '#292d35', C: '#e890a8', E: '#3d3a45', W: '#f5f2ec' };
+  const PALETTE = { B: '#25252d', C: '#bd8590', E: '#312c31', G: '#d9b94e', W: '#f5f1e8' };
 
   function shouldAppear(sample) { return sample < 0.4; }
 
@@ -18,6 +18,7 @@ const Mimi = (() => {
       state: 'waiting', stateTimer: 0, hearts, hasMet: hearts > 0,
       food: null, path: [], pathGoal: null,
       moving: false, dir: 1, walkTimer: 0, blinkTimer: 0, facePlayer: false,
+      frenzyTimer: 18 + Math.random() * 12, frenzyTurns: 0, frenzyTarget: null,
     };
   }
 
@@ -43,6 +44,15 @@ const Mimi = (() => {
     const point = canOfferFood(mimi, player, map, tiles);
     if (!point) return false;
     mimi.food = point;
+    return true;
+  }
+
+  function offerBowlFood(mimi, bowl) {
+    if (!mimi || mimi.state === 'eating') return false;
+    mimi.food = { x: bowl.x, y: bowl.y, bowl };
+    mimi.state = 'approaching';
+    mimi.pathGoal = null;
+    mimi.path = [];
     return true;
   }
 
@@ -105,10 +115,26 @@ const Mimi = (() => {
     return mimi.food && distance(player, mimi.food) > FEAR_RANGE && distance(player, mimi) > FEAR_RANGE;
   }
 
-  function update(mimi, dt, player, map, tiles) {
+  function update(mimi, dt, player, map, tiles, rng = Math.random, bowls = []) {
     mimi.blinkTimer += dt;
     mimi.moving = false;
-    if (mimi.state !== 'hidden' && mimi.state !== 'fleeing' && distance(mimi, player) < FEAR_RANGE) flee(mimi);
+    if (mimi.state !== 'eating' && !(mimi.food && mimi.food.bowl && mimi.food.bowl.filled)) {
+      const fullBowl = bowls.find(bowl => bowl.filled);
+      if (fullBowl) offerBowlFood(mimi, fullBowl);
+    }
+    const bowlFood = mimi.food && mimi.food.bowl && mimi.food.bowl.filled;
+    if (bowlFood && mimi.state !== 'approaching' && mimi.state !== 'eating') {
+      mimi.state = 'approaching'; mimi.pathGoal = null; mimi.path = [];
+    }
+    if (!bowlFood && mimi.state !== 'hidden' && mimi.state !== 'fleeing' && mimi.state !== 'frenzy' && distance(mimi, player) < FEAR_RANGE) flee(mimi);
+
+    if (!mimi.food && ['waiting', 'hidden'].includes(mimi.state)) {
+      mimi.frenzyTimer -= dt;
+      if (mimi.frenzyTimer <= 0) {
+        mimi.state = 'frenzy'; mimi.frenzyTurns = 5 + Math.floor(rng() * 4);
+        mimi.frenzyTarget = null; mimi.pathGoal = null;
+      }
+    }
 
     if (mimi.state === 'fleeing') {
       if (moveTo(mimi, { x: mimi.hide.col * TILE, y: mimi.hide.row * TILE }, 48, dt, map, tiles)) {
@@ -125,7 +151,7 @@ const Mimi = (() => {
     } else if (mimi.state === 'waiting') {
       if (playerFarFromFood(mimi, player)) { mimi.state = 'approaching'; mimi.pathGoal = null; }
     } else if (mimi.state === 'approaching') {
-      if (playerFarFromFood(mimi, player) && moveTo(mimi, mimi.food, 28, dt, map, tiles)) {
+      if ((bowlFood || playerFarFromFood(mimi, player)) && moveTo(mimi, mimi.food, bowlFood ? 64 : 28, dt, map, tiles)) {
         mimi.state = 'eating'; mimi.stateTimer = 1.6;
       }
     } else if (mimi.state === 'eating') {
@@ -133,13 +159,32 @@ const Mimi = (() => {
       if (mimi.stateTimer <= 0) {
         mimi.hearts = Math.min(5, mimi.hearts + 1);
         mimi.hasMet = true;
+        if (mimi.food && mimi.food.bowl) mimi.food.bowl.filled = false;
         mimi.food = null;
         flee(mimi);
+      }
+    } else if (mimi.state === 'frenzy') {
+      if (!mimi.frenzyTarget) {
+        const col = Math.floor((mimi.x + 8) / TILE);
+        const row = Math.floor((mimi.y + 8) / TILE);
+        const options = [];
+        for (let dy = -4; dy <= 4; dy++) for (let dx = -4; dx <= 4; dx++) {
+          if (Math.abs(dx) + Math.abs(dy) < 2 || !walkable(col + dx, row + dy, map, tiles)) continue;
+          if (route(col, row, col + dx, row + dy, map, tiles).length) options.push({ x: (col + dx) * TILE, y: (row + dy) * TILE });
+        }
+        if (options.length) mimi.frenzyTarget = options[Math.floor(rng() * options.length)];
+        else mimi.frenzyTurns = 0;
+      }
+      if (mimi.frenzyTarget && moveTo(mimi, mimi.frenzyTarget, 92, dt, map, tiles)) {
+        mimi.frenzyTarget = null; mimi.frenzyTurns--;
+      }
+      if (mimi.frenzyTurns <= 0) {
+        mimi.state = 'waiting'; mimi.frenzyTimer = 18 + rng() * 12;
       }
     }
   }
 
-  return { shouldAppear, create, canOfferFood, offerFood, update };
+  return { shouldAppear, create, canOfferFood, offerFood, offerBowlFood, update };
 })();
 
 if (typeof module !== 'undefined') module.exports = Mimi;

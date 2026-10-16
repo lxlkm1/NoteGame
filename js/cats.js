@@ -209,7 +209,7 @@ const Cats = (() => {
       case 'eating': return 'eat'; // 室外咪咪复用吃饭帧
       default: {
         if (!cat.moving) return Math.floor(cat.blinkTimer / 1.6) % 5 === 4 ? 'idle2' : 'idle1';
-        return Math.floor(cat.walkTimer / 0.25) % 2 === 0 ? 'walk1' : 'walk2';
+        return Math.floor(cat.walkTimer / (cat.state === 'frenzy' ? 0.09 : 0.25)) % 2 === 0 ? 'walk1' : 'walk2';
       }
     }
   }

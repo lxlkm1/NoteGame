@@ -22,3 +22,17 @@ test('猫帧齐全且每帧 16x16', () => {
     for (const line of f) assert.equal(line.length, 16, `${name} 某行长度`);
   }
 });
+
+const { MIMI_FRAMES } = require('../js/sprites.js');
+
+test('咪咪有独立的 16x16 帧及照片中的金眼、白口鼻和黑斑', () => {
+  for (const name of ['idle1', 'idle2', 'walk1', 'walk2', 'eat', 'sleep']) {
+    const frame = MIMI_FRAMES[name];
+    assert.equal(frame.length, 16, `${name} 行数`);
+    for (const line of frame) assert.equal(line.length, 16, `${name} 某行长度`);
+    assert.notDeepEqual(frame, CAT_FRAMES[name]);
+  }
+  assert.ok(MIMI_FRAMES.idle1.join('').includes('G'));
+  assert.ok(MIMI_FRAMES.idle1.join('').includes('WWWW'));
+  assert.ok(MIMI_FRAMES.idle1.join('').includes('EBB'));
+});

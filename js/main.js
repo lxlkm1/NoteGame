@@ -102,6 +102,7 @@
   let mimi = null;
   let mimiHearts = 0;
   let mimiMet = false;
+  let bowls = [];
 
   const FEED_RANGE = 40;
   const dishes = [];   // {catId, x, y}
@@ -150,6 +151,7 @@
     player.y = entry.row * TILE;
     player.dir = 'down';
     if (name === 'outside') {
+      bowls = Bowls.create();
       const site = Math.random() < 0.5 ? MAPS.outside.mimiSites.left : MAPS.outside.mimiSites.right;
       mimi = Mimi.shouldAppear(Math.random()) ? Mimi.create(site, mimiHearts) : null;
     }
@@ -178,6 +180,13 @@
       return;
     }
     if (scene === 'outside') {
+      const bowl = Bowls.nearestEmpty(bowls, player);
+      if (bowl) {
+        bowl.filled = true;
+        if (mimi) Mimi.offerBowlFood(mimi, bowl);
+        Sound.play('dish');
+        return;
+      }
       const cat = nearestFeedableCat();
       if (cat) {
         const dx = player.x - cat.x, dy = player.y - cat.y;
@@ -236,7 +245,7 @@
       }
       if (mimi) {
         const before = mimi.hearts;
-        Mimi.update(mimi, dt, player, currentMap, TILES);
+        Mimi.update(mimi, dt, player, currentMap, TILES, Math.random, bowls);
         if (mimi.hearts > before) {
           mimiHearts = mimi.hearts;
           mimiMet = true;
@@ -251,6 +260,17 @@
   }
 
   function drawDishes() {
+    for (const bowl of bowls) {
+      ctx.fillStyle = '#4a5a74';
+      ctx.fillRect(bowl.x + 1, bowl.y + 8, 14, 6);
+      ctx.fillStyle = bowl.filled ? '#8a5c34' : '#a8c0d8';
+      ctx.fillRect(bowl.x + 3, bowl.y + 9, 10, 3);
+      if (bowl.filled) {
+        ctx.fillStyle = '#d5ad69';
+        ctx.fillRect(bowl.x + 5, bowl.y + 9, 2, 2);
+        ctx.fillRect(bowl.x + 10, bowl.y + 10, 2, 2);
+      }
+    }
     for (const d of dishes) {
       drawSprite(ctx, Sprites.DISH, Sprites.PALETTE_DISH, d.x, d.y);
     }
@@ -332,6 +352,10 @@
       if (Mimi.canOfferFood(mimi, player, currentMap, TILES)) {
         ctx.fillStyle = '#f5f2ec'; ctx.font = '8px monospace';
         ctx.fillText('E 放食物', player.x - 8, player.y - 7);
+      }
+      if (Bowls.nearestEmpty(bowls, player)) {
+        ctx.fillStyle = '#f5f2ec'; ctx.font = '8px monospace';
+        ctx.fillText('E 碗里放粮', player.x - 8, player.y - 15);
       }
     } else {
       const actors = NPCs.visible(npcs, scene).map(npc =>
