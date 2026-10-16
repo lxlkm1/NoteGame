@@ -11,13 +11,38 @@ const maps = { atrium, reading, outside };
 
 test('阅览室四名学生、中庭两名学生都坐在可走座位上', () => {
   const world = NPCs.create(maps, () => 0.1);
-  assert.equal(world.study.filter(n => n.scene === 'reading').length, 4);
+  assert.equal(world.study.filter(n => n.scene === 'reading' && n.kind === 'study').length, 4);
   assert.equal(world.study.filter(n => n.scene === 'atrium').length, 2);
-  for (const npc of world.study) {
+  for (const npc of world.study.filter(n => n.kind === 'study')) {
     const ch = maps[npc.scene].map[npc.row][npc.col];
     assert.equal(ch, npc.scene === 'reading' ? 'c' : 'z');
     assert.equal(tiles[ch].solid, false);
   }
+});
+
+test('小蠹鱼固定在阅览室可走座位，电脑放在邻桌', () => {
+  const world = NPCs.create(maps, () => 0.1);
+  const duyu = world.duyu;
+  assert.equal(duyu.name, '小蠹鱼');
+  assert.equal(duyu.scene, 'reading');
+  assert.equal(reading.map[duyu.row][duyu.col], 'c');
+  assert.equal(reading.map[duyu.laptop.y / 16][duyu.laptop.x / 16], 'T');
+  assert.ok(NPCs.visible(world, 'reading').includes(duyu));
+});
+
+test('小蠹鱼的对话只在靠近时触发，走远后可以重新触发', () => {
+  const world = NPCs.create(maps, () => 0.1);
+  const near = { x: world.duyu.x, y: world.duyu.y };
+  const far = { x: near.x + 100, y: near.y };
+  NPCs.updateDuyuDialogue(world, near, 'reading', 0.1);
+  assert.ok(world.duyu.dialogueTimer > 3);
+  NPCs.updateDuyuDialogue(world, near, 'reading', 4);
+  assert.equal(world.duyu.dialogueTimer, 0);
+  NPCs.updateDuyuDialogue(world, near, 'reading', 0.1);
+  assert.equal(world.duyu.dialogueTimer, 0);
+  NPCs.updateDuyuDialogue(world, far, 'reading', 0.1);
+  NPCs.updateDuyuDialogue(world, near, 'reading', 0.1);
+  assert.ok(world.duyu.dialogueTimer > 3);
 });
 
 test('进出馆学生跨越前门，在中庭和前庭之间切换场景', () => {

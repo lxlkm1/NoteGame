@@ -43,6 +43,7 @@
       { col: 9, row: 14, color: 'red' },
       { col: 31, row: 22, color: 'brown' },
     ],
+    duyu: { col: 3, row: 18, laptopCol: 4, laptopRow: 18 },
   };
   if (typeof module !== "undefined") module.exports = root.MAPS.reading;
 })(typeof window !== "undefined" ? window : globalThis);

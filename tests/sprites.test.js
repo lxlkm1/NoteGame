@@ -36,3 +36,12 @@ test('咪咪有独立的 16x16 帧及照片中的金眼、白口鼻和黑斑', (
   assert.ok(MIMI_FRAMES.idle1.join('').includes('WWWW'));
   assert.ok(MIMI_FRAMES.idle1.join('').includes('EBB'));
 });
+
+test('小蠹鱼的独立像素形象包含奶牛外套斑块和眼罩', () => {
+  const { DUYU_FRAME, DUYU_PALETTE } = require('../js/sprites.js');
+  assert.equal(DUYU_FRAME.length, 16);
+  for (const row of DUYU_FRAME) assert.equal(row.length, 16);
+  assert.ok(DUYU_FRAME.join('').includes('P'));
+  assert.ok(DUYU_FRAME.join('').includes('M'));
+  assert.ok(DUYU_PALETTE.P && DUYU_PALETTE.M);
+});

@@ -132,6 +132,30 @@ const Sprites = (() => {
     C: '#c25b4e', P: '#4e5a74', B: '#3a3542',
   };
 
+  // 小蠹鱼：参考图中的浅棕外套、深棕斑块和黑色眼罩。
+  const DUYU_FRAME = [
+    '................',
+    '.....HHHHHH.....',
+    '....HHHHHHHH....',
+    '....HHHHHHHH....',
+    '....HSSSSSSH....',
+    '....SMMMMMMS....',
+    '....SSESSESS....',
+    '.....SSSSSS.....',
+    '....CCCCCCCC....',
+    '...CCCCPPCCCC...',
+    '..SCCPPCCCCCCS..',
+    '..SCCCCCCPPCCS..',
+    '....CCCPPPCC....',
+    '....DDDDDDDD....',
+    '....DDD..DDD....',
+    '....BBB..BBB....',
+  ];
+  const DUYU_PALETTE = {
+    H: '#3a2d2c', S: '#e9bd9a', M: '#22232b', E: '#282127',
+    C: '#c8b69d', P: '#6d4f3c', D: '#4a5268', B: '#333039',
+  };
+
   // 猫 16x16。A 主体 B 斑纹 C 耳内/鼻 E 眼 W 白围兜 | . 透明
   const CAT_FRAMES = {
     idle1: [ // 坐姿正面
@@ -373,7 +397,7 @@ const Sprites = (() => {
     '...A...',
   ];
   return {
-    drawSprite, PLAYER_FRAMES, PALETTE_PLAYER,
+    drawSprite, PLAYER_FRAMES, PALETTE_PLAYER, DUYU_FRAME, DUYU_PALETTE,
     CAT_FRAMES, MIMI_FRAMES, DISH, PALETTE_DISH, HEART,
   };
 })();

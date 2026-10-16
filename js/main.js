@@ -213,6 +213,7 @@
     const dt = Math.min((t - lastT) / 1000, 0.05);
     lastT = t;
     updatePlayer(dt);
+    NPCs.updateDuyuDialogue(npcs, player, scene, dt);
     for (const event of NPCs.update(npcs, dt, scene === 'outside' ? cats : [])) {
       if (event.type === 'feed' && Cats.feed(event.cat, event.x, event.y, 'npc')) {
         dishes.push({ catId: event.cat.id, x: event.x, y: event.y });
@@ -363,6 +364,13 @@
       actors.push({ y: player.y, draw: drawPlayer });
       actors.sort((a, b) => a.y - b.y);
       for (const actor of actors) actor.draw();
+      if (scene === 'reading' && npcs.duyu.dialogueTimer > 0) {
+        const x = npcs.duyu.x - 6, y = npcs.duyu.y - 28;
+        ctx.fillStyle = '#302c36'; ctx.fillRect(x - 2, y - 2, 104, 17);
+        ctx.fillStyle = '#f5f2ec'; ctx.fillRect(x, y, 100, 13);
+        ctx.fillStyle = '#302c36'; ctx.font = '8px monospace';
+        ctx.fillText('小蠹鱼：建模比赛好累', x + 3, y + 9);
+      }
     }
     drawDoorHint();
     drawParticles(dt);

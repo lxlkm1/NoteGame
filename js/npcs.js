@@ -19,11 +19,34 @@ const NPCs = (() => {
     for (const scene of ['reading', 'atrium']) {
       maps[scene].students.forEach((seat, i) => study.push(student(`${scene}-${i}`, scene, seat.col, seat.row, seat.color)));
     }
+    const duyu = student('duyu', 'reading', maps.reading.duyu.col, maps.reading.duyu.row, 'brown', 'duyu');
+    duyu.name = '小蠹鱼';
+    duyu.laptop = { x: maps.reading.duyu.laptopCol * TILE, y: maps.reading.duyu.laptopRow * TILE };
+    duyu.dialogueTimer = 0;
+    duyu.playerNear = false;
+    study.push(duyu);
     const inbound = student('inbound', 'outside', 19, 27, 'blue', 'student');
     inbound.phase = 'outsideIn'; inbound.feedCooldown = 6 + rng() * 8;
     const outbound = student('outbound', 'atrium', 20, 20, 'brown', 'student');
     outbound.phase = 'atriumOut'; outbound.feedCooldown = 6 + rng() * 8;
-    return { study, commuters: [inbound, outbound], couple: null, coupleTimer: 18 };
+    return { study, duyu, commuters: [inbound, outbound], couple: null, coupleTimer: 18 };
+  }
+
+  function updateDuyuDialogue(world, player, scene, dt) {
+    const duyu = world.duyu;
+    if (scene !== 'reading') {
+      duyu.playerNear = false;
+      duyu.dialogueTimer = 0;
+      return;
+    }
+    const distance = Math.hypot(player.x - duyu.x, player.y - duyu.y);
+    if (distance <= 48 && !duyu.playerNear) {
+      duyu.playerNear = true;
+      duyu.dialogueTimer = 3.5;
+    } else if (distance > 56) {
+      duyu.playerNear = false;
+    }
+    duyu.dialogueTimer = Math.max(0, duyu.dialogueTimer - dt);
   }
 
   function moveTo(npc, x, y, speed, dt) {
@@ -147,6 +170,14 @@ const NPCs = (() => {
   }
 
   function draw(ctx, npc, drawSprite, sprites) {
+    if (npc.kind === 'duyu') {
+      const x = npc.laptop.x, y = npc.laptop.y;
+      ctx.fillStyle = '#343b4b'; ctx.fillRect(x + 2, y + 3, 12, 9);
+      ctx.fillStyle = '#8baac0'; ctx.fillRect(x + 3, y + 4, 10, 7);
+      ctx.fillStyle = '#d8d7c9'; ctx.fillRect(x + 1, y + 12, 14, 2);
+      drawSprite(ctx, sprites.DUYU_FRAME, sprites.DUYU_PALETTE, npc.x, npc.y, false);
+      return;
+    }
     const frame = npc.moving ? (Math.floor(npc.animTimer / 0.2) % 2 ? 'down1' : 'down2') : 'down1';
     const frameName = npc.facing === 'up' && npc.moving ? 'up1' : frame;
     drawSprite(ctx, sprites.PLAYER_FRAMES[frameName], COLORS[npc.color], npc.x, npc.y, false);
@@ -157,7 +188,7 @@ const NPCs = (() => {
     }
   }
 
-  return { create, update, visible, draw };
+  return { create, update, updateDuyuDialogue, visible, draw };
 })();
 
 if (typeof module !== 'undefined') module.exports = NPCs;
