@@ -28,6 +28,29 @@ test('小蠹鱼固定在阅览室可走座位，电脑放在邻桌', () => {
   assert.equal(reading.map[duyu.row][duyu.col], 'c');
   assert.equal(reading.map[duyu.laptop.y / 16][duyu.laptop.x / 16], 'T');
   assert.ok(NPCs.visible(world, 'reading').includes(duyu));
+  assert.equal(duyu.facing, 'right');
+  assert.equal(duyu.phase, 'typing');
+  for (const point of duyu.walkRoute) {
+    const ch = reading.map[point.y / 16][point.x / 16];
+    assert.equal(tiles[ch].solid, false);
+  }
+});
+
+test('小蠹鱼敲电脑一段时间后会沿可走路线散步，再回座位', () => {
+  const world = NPCs.create(maps, () => 0);
+  const duyu = world.duyu;
+  const home = { x: duyu.x, y: duyu.y };
+  let walked = false;
+  for (let i = 0; i < 500; i++) {
+    NPCs.update(world, 0.1, [], () => 0.9);
+    if (duyu.phase === 'walking') walked = true;
+    if (walked && duyu.phase === 'typing') break;
+  }
+  assert.equal(walked, true);
+  assert.equal(duyu.phase, 'typing');
+  assert.equal(duyu.x, home.x);
+  assert.equal(duyu.y, home.y);
+  assert.equal(duyu.facing, 'right');
 });
 
 test('小蠹鱼的对话只在靠近时触发，走远后可以重新触发', () => {

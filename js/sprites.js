@@ -175,29 +175,71 @@ const Sprites = (() => {
     C: '#c25b4e', P: '#4e5a74', B: '#3a3542',
   };
 
-  // 小蠹鱼：参考图中的浅棕外套、深棕斑块和黑色眼罩。
-  const DUYU_FRAME = [
-    '................',
-    '.....HHHHHH.....',
-    '....HHHHHHHH....',
-    '....HHHHHHHH....',
-    '....HSSSSSSH....',
-    '....SMMMMMMS....',
-    '....SSESSESS....',
-    '.....SSSSSS.....',
-    '....CCCCCCCC....',
-    '...CCCCPPCCCC...',
-    '..SCCPPCCCCCCS..',
-    '..SCCCCCCPPCCS..',
-    '....CCCPPPCC....',
-    '....DDDDDDDD....',
-    '....DDD..DDD....',
-    '....BBB..BBB....',
-  ];
-  const DUYU_PALETTE = {
-    H: '#3a2d2c', S: '#e9bd9a', M: '#22232b', E: '#282127',
-    C: '#c8b69d', P: '#6d4f3c', D: '#4a5268', B: '#333039',
+  // 参考照片里的牛：小角、外张的耳朵、黑眼罩、大白眼、粉鼻和棕色斑块。
+  const DUYU_COW_PALETTE = {
+    O: '#382c2d', T: '#ceb99c', L: '#eadbc1', B: '#775440',
+    M: '#22242b', W: '#f4efe5', K: '#2c2526', P: '#d99189',
+    N: '#8b514f', H: '#493939', E: '#b8796b',
   };
+
+  function cowFrame(pose) {
+    const pixels = Array.from({ length: 32 }, () => Array(32).fill('.'));
+    const rect = (ch, x, y, w, h) => {
+      for (let row = Math.max(0, y); row < Math.min(32, y + h); row++)
+        for (let col = Math.max(0, x); col < Math.min(32, x + w); col++) pixels[row][col] = ch;
+    };
+    const oval = (ch, cx, cy, rx, ry) => {
+      for (let row = 0; row < 32; row++) for (let col = 0; col < 32; col++)
+        if (((col - cx) / rx) ** 2 + ((row - cy) / ry) ** 2 <= 1) pixels[row][col] = ch;
+    };
+    const typing = pose.startsWith('typing');
+    if (typing) {
+      // 身体侧对电脑；右侧粉鼻和前蹄贴近键盘。
+      oval('O', 14, 19, 12, 11); oval('T', 14, 18, 11, 10);
+      oval('B', 8, 20, 5, 7); oval('B', 17, 24, 4, 3);
+      rect('O', 4, 25, 5, 5); rect('H', 5, 28, 5, 3);
+      rect('O', 18, 25, 5, 5); rect('H', 19, 28, 5, 3);
+      rect('B', 6, 4, 4, 6); rect('T', 7, 3, 3, 6);
+      rect('B', 20, 2, 4, 7); rect('T', 21, 2, 3, 6);
+      oval('O', 15, 8, 14, 8); oval('E', 4, 8, 4, 3);
+      oval('T', 19, 11, 11, 9); oval('L', 21, 8, 7, 4);
+      rect('M', 17, 9, 13, 6); oval('W', 23, 11, 4, 4);
+      rect('K', 25, 11, 2, 2);
+      oval('P', 27, 18, 5, 4); rect('N', 29, 17, 2, 2);
+      rect('T', pose === 'typing1' ? 23 : 25, 23, 6, 3);
+      rect('H', pose === 'typing1' ? 27 : 28, 24, 3, 2);
+    } else {
+      // 走动时转向前方，完整展示照片中圆润的奶牛外形。
+      oval('O', 16, 20, 13, 11); oval('T', 16, 19, 12, 10);
+      oval('B', 8, 21, 4, 6); oval('B', 21, 23, 5, 4);
+      rect('O', 6, 25, 6, 5); rect('H', 7, pose === 'walk1' ? 29 : 28, 5, 3);
+      rect('O', 21, 25, 6, 5); rect('H', 22, pose === 'walk1' ? 28 : 29, 5, 3);
+      rect('B', 8, 1, 4, 8); rect('T', 9, 1, 3, 7);
+      rect('B', 21, 1, 4, 8); rect('T', 21, 1, 3, 7);
+      oval('O', 4, 10, 5, 4); oval('E', 4, 10, 4, 3);
+      oval('O', 28, 10, 5, 4); oval('E', 28, 10, 4, 3);
+      oval('O', 16, 11, 12, 9); oval('T', 16, 11, 11, 8);
+      rect('M', 6, 9, 20, 6);
+      oval('W', 11, 11, 4, 4); oval('W', 21, 11, 4, 4);
+      rect('K', 12, 11, 2, 2); rect('K', 20, 11, 2, 2);
+      oval('P', 16, 18, 8, 5);
+      rect('N', 12, 17, 2, 2); rect('N', 20, 17, 2, 2);
+      rect('T', 3, 17, 4, 9); rect('H', 3, 25, 4, 3);
+      rect('T', 25, 17, 4, 9); rect('H', 25, 25, 4, 3);
+    }
+    return pixels.map(row => row.join(''));
+  }
+
+  const DUYU_COW_FRAMES = {
+    typing1: cowFrame('typing1'), typing2: cowFrame('typing2'),
+    walk1: cowFrame('walk1'), walk2: cowFrame('walk2'),
+  };
+
+  function drawDuyuCow(ctx, x, y, pose) {
+    const sprite = detailedSprite(DUYU_COW_FRAMES[pose], DUYU_COW_PALETTE);
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(sprite, Math.round(x) - 4, Math.round(y) - 8, 24, 24);
+  }
 
   // 猫 16x16。A 主体 B 斑纹 C 耳内/鼻 E 眼 W 白围兜 | . 透明
   const CAT_FRAMES = {
@@ -440,7 +482,7 @@ const Sprites = (() => {
     '...A...',
   ];
   return {
-    drawSprite, PLAYER_FRAMES, PALETTE_PLAYER, DUYU_FRAME, DUYU_PALETTE,
+    drawSprite, PLAYER_FRAMES, PALETTE_PLAYER, DUYU_COW_FRAMES, DUYU_COW_PALETTE, drawDuyuCow,
     CAT_FRAMES, MIMI_FRAMES, DISH, PALETTE_DISH, HEART,
   };
 })();

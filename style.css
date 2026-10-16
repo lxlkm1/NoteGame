@@ -24,6 +24,7 @@ html, body {
   color: #e8dcc8;
   font-size: 14px;
 }
+#brand { font-weight: 700; letter-spacing: .06em; }
 #hud .hint { color: #8d8496; margin-left: 12px; font-size: 12px; }
 @media (max-width: 1000px) {
   #game { width: 624px; height: 480px; }

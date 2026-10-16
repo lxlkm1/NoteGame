@@ -1,8 +1,10 @@
 {
-  "name": "library-cats",
+  "name": "notegame",
+  "description": "把日记与回忆中的人、动物和场景，做成可以亲自走进去的互动小游戏。",
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "test": "node --test"
+    "test": "node --test",
+    "build:pages": "node scripts/build-pages.mjs"
   }
 }

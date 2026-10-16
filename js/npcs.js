@@ -24,6 +24,11 @@ const NPCs = (() => {
     duyu.laptop = { x: maps.reading.duyu.laptopCol * TILE, y: maps.reading.duyu.laptopRow * TILE };
     duyu.dialogueTimer = 0;
     duyu.playerNear = false;
+    duyu.facing = 'right';
+    duyu.phase = 'typing';
+    duyu.phaseTimer = 18 + rng() * 10;
+    duyu.walkRoute = maps.reading.duyu.walkRoute.map(point => ({ x: point.col * TILE, y: point.row * TILE }));
+    duyu.walkIndex = 0;
     study.push(duyu);
     const inbound = student('inbound', 'outside', 19, 27, 'blue', 'student');
     inbound.phase = 'outsideIn'; inbound.feedCooldown = 6 + rng() * 8;
@@ -101,6 +106,27 @@ const NPCs = (() => {
     }
   }
 
+  function updateDuyu(duyu, dt, rng) {
+    duyu.animTimer += dt;
+    if (duyu.phase === 'typing') {
+      duyu.moving = false;
+      duyu.facing = 'right';
+      duyu.phaseTimer -= dt;
+      if (duyu.phaseTimer <= 0) { duyu.phase = 'walking'; duyu.walkIndex = 0; }
+      return;
+    }
+    const target = duyu.walkRoute[duyu.walkIndex];
+    if (moveTo(duyu, target.x, target.y, 24, dt)) {
+      duyu.walkIndex++;
+      if (duyu.walkIndex >= duyu.walkRoute.length) {
+        duyu.phase = 'typing';
+        duyu.phaseTimer = 18 + rng() * 10;
+        duyu.moving = false;
+        duyu.facing = 'right';
+      }
+    }
+  }
+
   function createCouple() {
     const members = [student('couple-a', 'outside', 19, 28, 'red', 'couple'),
                      student('couple-b', 'outside', 20, 28, 'green', 'couple')];
@@ -142,7 +168,8 @@ const NPCs = (() => {
   }
 
   function update(world, dt, cats = [], rng = Math.random) {
-    for (const npc of world.study) npc.animTimer += dt;
+    for (const npc of world.study) if (npc.kind !== 'duyu') npc.animTimer += dt;
+    updateDuyu(world.duyu, dt, rng);
     for (const npc of world.commuters) updateCommuter(npc, dt);
     updateCouple(world, dt, rng);
     const events = [];
@@ -175,7 +202,13 @@ const NPCs = (() => {
       ctx.fillStyle = '#343b4b'; ctx.fillRect(x + 2, y + 3, 12, 9);
       ctx.fillStyle = '#8baac0'; ctx.fillRect(x + 3, y + 4, 10, 7);
       ctx.fillStyle = '#d8d7c9'; ctx.fillRect(x + 1, y + 12, 14, 2);
-      drawSprite(ctx, sprites.DUYU_FRAME, sprites.DUYU_PALETTE, npc.x, npc.y, false, 1.5);
+      if (npc.phase === 'typing') {
+        ctx.fillStyle = '#f6e7ad';
+        ctx.fillRect(x + 4 + Math.floor(npc.animTimer * 2) % 6, y + 6, 1, 3);
+      }
+      sprites.drawDuyuCow(ctx, npc.x, npc.y, npc.phase === 'typing'
+        ? (Math.floor(npc.animTimer / 0.18) % 2 ? 'typing2' : 'typing1')
+        : (Math.floor(npc.animTimer / 0.2) % 2 ? 'walk2' : 'walk1'));
       return;
     }
     const frame = npc.moving ? (Math.floor(npc.animTimer / 0.2) % 2 ? 'down1' : 'down2') : 'down1';
