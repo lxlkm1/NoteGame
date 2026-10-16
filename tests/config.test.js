@@ -29,23 +29,23 @@ test('配置体检 2：地图里每个符号都在 tiles 有定义', () => {
   }
 });
 
-test('配置体检 3：doors 指向的格子确实是 portal 符号', () => {
-  for (const [name, scene] of Object.entries(SCENES)) {
-    assert.ok(Array.isArray(scene.doors) && scene.doors.length > 0, `${name} 缺少 doors`);
-    for (const door of scene.doors) {
-      for (const c of door.cols) for (const r of door.rows) {
-        const ch = scene.map[r][c];
-        assert.ok(tiles[ch] && tiles[ch].portal === true,
-          `${name} 门 (${c},${r}) 的符号 ${JSON.stringify(ch)} 不是 portal`);
-      }
+test('配置体检 3：tiles 里每个 portal 目的地都是已知场景名', () => {
+  for (const [ch, t] of Object.entries(tiles)) {
+    if (t.portal) {
+      assert.ok(SCENES[t.portal], `符号 ${JSON.stringify(ch)} 的 portal 指向未知场景 ${JSON.stringify(t.portal)}`);
     }
   }
 });
 
-test('配置体检 4：doors.to 是已知场景名', () => {
+test('配置体检 4：每张地图里出现的 portal 符号目的地均为已知场景', () => {
   for (const [name, scene] of Object.entries(SCENES)) {
-    for (const door of scene.doors) {
-      assert.ok(SCENES[door.to], `${name} 门指向未知场景 ${JSON.stringify(door.to)}`);
+    for (let r = 0; r < scene.map.length; r++) {
+      for (let c = 0; c < scene.map[r].length; c++) {
+        const t = tiles[scene.map[r][c]];
+        if (t && t.portal) {
+          assert.ok(SCENES[t.portal], `${name} (${c},${r}) 的 ${scene.map[r][c]} 门指向未知场景 ${JSON.stringify(t.portal)}`);
+        }
+      }
     }
   }
 });

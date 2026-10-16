@@ -35,9 +35,7 @@
       '#.....................................#',
       '####################mm#################',
     ],
-    doors: [
-      { cols: [20, 21], rows: [29], to: 'atrium' }, // 房间出口
-    ],
+    // 出口门不需要清单：地图里的 m 字符即表示"回中庭"（见 tiles.js）
     entry: { col: 20, row: 27 }, // 进入房间时玩家落点（出口门上方）
   };
   if (typeof module !== 'undefined') module.exports = root.MAPS.reading;

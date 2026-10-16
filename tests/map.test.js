@@ -29,15 +29,16 @@ test('parseMap 返回网格且四角是墙', () => {
   assert.equal(grid[29][38], '#');
 });
 
-test('中庭碰撞：墙/大门不可通行，棋盘/凳子/大门M可通行', () => {
+test('中庭碰撞：墙/大门D不可通行，棋盘/凳子/大门M/W可通行', () => {
   const solid = (c, r) => isSolidAtPx(c * TILE + 8, r * TILE + 8, ATRIUM_MAP, tiles);
   assert.equal(solid(0, 0), true);    // 外墙
-  assert.equal(solid(4, 3), true);    // 左内墙
+  assert.equal(solid(1, 3), true);    // 左墙
   assert.equal(solid(19, 29), true);  // 大门D
   assert.equal(solid(19, 27), false); // 棋盘（出生点）
   assert.equal(solid(19, 14), false); // 棋盘（可走）
   assert.equal(solid(7, 7), false);   // 棋子凳子（可走）
-  assert.equal(solid(4, 8), false);   // 大门M（可走）
+  assert.equal(solid(1, 8), false);   // 大门W（可走）
+  assert.equal(solid(37, 21), false); // 大门M（可走）
 });
 
 test('房间碰撞：书架/桌子/洁具不可通行，出口门可通行', () => {
@@ -48,12 +49,17 @@ test('房间碰撞：书架/桌子/洁具不可通行，出口门可通行', () 
   assert.equal(isSolidAtPx(20 * TILE + 8, 29 * TILE + 8, toilet.map, tiles), false); // 出口门
 });
 
-test('门检测：portal 符号才是门（中庭 M / 房间 m 是门，棋盘和 D 不是）', () => {
-  assert.equal(isDoorAt(4 * TILE + 8, 8 * TILE + 8, ATRIUM_MAP, tiles), true);   // 左上大门（卫生间）
-  assert.equal(isDoorAt(4 * TILE + 8, 21 * TILE + 8, ATRIUM_MAP, tiles), true);  // 左下大门（阅览室）
+test('门检测：portal 符号才是门，字符即目的地（W→卫生间 M→阅览室 m→中庭）', () => {
+  const { doorDestAt } = require('../js/map.js');
+  assert.equal(isDoorAt(1 * TILE + 8, 8 * TILE + 8, ATRIUM_MAP, tiles), true);   // 左上大门 W
+  assert.equal(isDoorAt(37 * TILE + 8, 21 * TILE + 8, ATRIUM_MAP, tiles), true); // 右下大门 M
   assert.equal(isDoorAt(19 * TILE + 8, 27 * TILE + 8, ATRIUM_MAP, tiles), false); // 棋盘不是门
-  assert.equal(isDoorAt(21 * TILE + 8, 29 * TILE + 8, ATRIUM_MAP, tiles), false); // 底边大门 D 不是 portal
-  assert.equal(isDoorAt(20 * TILE + 8, 29 * TILE + 8, reading.map, tiles), true); // 房间出口（col 20）
+  assert.equal(isDoorAt(19 * TILE + 8, 29 * TILE + 8, ATRIUM_MAP, tiles), false); // 底边大门 D 不是 portal
+  // 字符即目的地
+  assert.equal(doorDestAt(1 * TILE + 8, 8 * TILE + 8, ATRIUM_MAP, tiles), 'toilet');
+  assert.equal(doorDestAt(37 * TILE + 8, 21 * TILE + 8, ATRIUM_MAP, tiles), 'reading');
+  assert.equal(doorDestAt(20 * TILE + 8, 29 * TILE + 8, reading.map, tiles), 'atrium'); // 房间出口
+  assert.equal(doorDestAt(19 * TILE + 8, 27 * TILE + 8, ATRIUM_MAP, tiles), null);
 });
 
 test('越界坐标视为不可通行', () => {

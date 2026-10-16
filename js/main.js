@@ -3,7 +3,7 @@
   'use strict';
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d');
-  const { TILE, isSolidAtPx, isDoorAt, buildCanvas } = MapKit;
+  const { TILE, isSolidAtPx, doorDestAt, buildCanvas } = MapKit;
   const { drawSprite, PLAYER_FRAMES, PALETTE_PLAYER } = Sprites;
   const TILES = MAPS.tiles;
 
@@ -130,14 +130,9 @@
     document.getElementById('progress').textContent = `撸猫 ${met} / 10`;
   }
 
-  function doorAtPlayer() { // 玩家脚部中心所在格为传送门 → 返回当前场景的门配置或 null
-    if (!isDoorAt(player.x + 8, player.y + 15, currentMap, TILES)) return null;
-    const cx = Math.floor((player.x + 8) / TILE);
-    const cy = Math.floor((player.y + 15) / TILE);
-    for (const door of scenes[scene].data.doors || []) {
-      if (door.cols.includes(cx) && door.rows.includes(cy)) return door;
-    }
-    return null;
+  function doorAtPlayer() { // 玩家脚部中心所在格的字符即目的地（tiles portal），返回 { to } 或 null
+    const dest = doorDestAt(player.x + 8, player.y + 15, currentMap, TILES);
+    return dest ? { to: dest } : null;
   }
 
   function enterRoom(name) {

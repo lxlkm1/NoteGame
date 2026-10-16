@@ -29,12 +29,17 @@ const MapKit = (() => {
     return !t || !!t.solid;
   }
 
-  // 判断某格是否为传送门（tiles 表里 portal: true 的符号）
+  // 判断某格是否为传送门（tiles 表里 portal 非空的符号）
   function isDoorAt(px, py, mapRows, tiles) {
+    return doorDestAt(px, py, mapRows, tiles) !== null;
+  }
+
+  // 某格传送门的目的地场景名（无门或非 portal 返回 null）
+  function doorDestAt(px, py, mapRows, tiles) {
     const ch = charAtPx(px, py, mapRows);
-    if (ch === null) return false;
+    if (ch === null) return null;
     const t = tiles[ch];
-    return !!(t && t.portal === true);
+    return (t && t.portal) || null;
   }
 
   // ---- 渲染（只在浏览器调用） ----
@@ -184,7 +189,7 @@ const MapKit = (() => {
     return cv;
   }
 
-  return { TILE, parseMap, isSolidAtPx, isDoorAt, buildCanvas };
+  return { TILE, parseMap, isSolidAtPx, isDoorAt, doorDestAt, buildCanvas };
 })();
 
 if (typeof module !== 'undefined') module.exports = MapKit;
