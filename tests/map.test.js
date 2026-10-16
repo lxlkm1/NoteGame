@@ -44,9 +44,9 @@ test('中庭碰撞：墙/大门D不可通行，棋盘/凳子/大门M/W可通行'
 test('房间碰撞：书架/桌子/洁具不可通行，出口门可通行', () => {
   assert.equal(isSolidAtPx(2 * TILE + 8, 3 * TILE + 8, reading.map, tiles), true);   // 书架
   assert.equal(isSolidAtPx(4 * TILE + 8, 10 * TILE + 8, reading.map, tiles), true);  // 桌子
-  assert.equal(isSolidAtPx(20 * TILE + 8, 29 * TILE + 8, reading.map, tiles), false); // 出口门（col 20-21）
+  assert.equal(isSolidAtPx(18 * TILE + 8, 29 * TILE + 8, reading.map, tiles), false); // 出口门（col 18-19）
   assert.equal(isSolidAtPx(2 * TILE + 8, 5 * TILE + 8, toilet.map, tiles), true);    // 洁具
-  assert.equal(isSolidAtPx(20 * TILE + 8, 29 * TILE + 8, toilet.map, tiles), false); // 出口门
+  assert.equal(isSolidAtPx(18 * TILE + 8, 29 * TILE + 8, toilet.map, tiles), false); // 出口门
 });
 
 test('门检测：portal 符号才是门，字符即目的地（W→卫生间 M→阅览室 m→中庭）', () => {
@@ -57,7 +57,7 @@ test('门检测：portal 符号才是门，字符即目的地（W→卫生间 M�
   // 字符即目的地
   assert.equal(doorDestAt(1 * TILE + 8, 8 * TILE + 8, ATRIUM_MAP, tiles), 'toilet');
   assert.equal(doorDestAt(37 * TILE + 8, 21 * TILE + 8, ATRIUM_MAP, tiles), 'reading');
-  assert.equal(doorDestAt(20 * TILE + 8, 29 * TILE + 8, reading.map, tiles), 'atrium'); // 房间出口
+  assert.equal(doorDestAt(18 * TILE + 8, 29 * TILE + 8, reading.map, tiles), 'atrium'); // 房间出口（col 18）
   assert.equal(doorDestAt(19 * TILE + 8, 27 * TILE + 8, ATRIUM_MAP, tiles), null);
 });
 

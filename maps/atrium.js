@@ -35,7 +35,7 @@
       "##qqqqqzqqzqqzqqzqqzqqzqqzqqzqqzqqqqq##",
       "##qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq##",
       "##qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq##",
-      "##################DD###################",
+      "###################DD##################",
     ],
     // 棋子凳子：39 列宽地图，棋盘 col 7-36，标准象棋 32 子
     chessSeats: {
@@ -73,7 +73,7 @@
       "31,26": "車",
     },
     // 门不再需要清单：W=卫生间 / M=阅览室（字符即目的地，见 tiles.js）
-    spawn: { col: 19, row: 27 }, // 出生点：大门口内侧（39 列 → col 19-20）
+    spawn: { col: 20, row: 28 }, // 出生点：大门口内侧（39 列 → col 19-20）
     decor: {
       light: { x: 2, y: 2, w: 35, h: 26, alpha: 0.1, color: "#ffd98a" }, // 挑空暖光
       mat: { col: 19, row: 28, w: 2 }, // 门口垫子
