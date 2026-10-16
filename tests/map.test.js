@@ -1,7 +1,13 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert');
-const { TILE, ATRIUM_MAP, ROOM_MAPS, parseMap, isSolidAtPx, isDoorAt } = require('../js/map.js');
+const tiles = require('../maps/tiles.js');
+const atrium = require('../maps/atrium.js');
+const reading = require('../maps/reading.js');
+const toilet = require('../maps/toilet.js');
+const { TILE, parseMap, isSolidAtPx, isDoorAt } = require('../js/map.js');
+
+const ATRIUM_MAP = atrium.map;
 
 test('中庭地图尺寸：30 行，每行 39 字符', () => {
   assert.equal(ATRIUM_MAP.length, 30);
@@ -9,12 +15,10 @@ test('中庭地图尺寸：30 行，每行 39 字符', () => {
 });
 
 test('房间地图尺寸一致', () => {
-  const reading = ROOM_MAPS.reading;
-  assert.equal(reading.length, 30);
-  for (const row of reading) assert.equal(row.length, 39);
-  const toilet = ROOM_MAPS.toilet;
-  assert.equal(toilet.length, 30);
-  for (const row of toilet) assert.equal(row.length, 39);
+  assert.equal(reading.map.length, 30);
+  for (const row of reading.map) assert.equal(row.length, 39);
+  assert.equal(toilet.map.length, 30);
+  for (const row of toilet.map) assert.equal(row.length, 39);
 });
 
 test('parseMap 返回网格且四角是墙', () => {
@@ -26,7 +30,7 @@ test('parseMap 返回网格且四角是墙', () => {
 });
 
 test('中庭碰撞：墙/大门不可通行，棋盘/凳子/大门M可通行', () => {
-  const solid = (c, r) => isSolidAtPx(c * TILE + 8, r * TILE + 8, ATRIUM_MAP);
+  const solid = (c, r) => isSolidAtPx(c * TILE + 8, r * TILE + 8, ATRIUM_MAP, tiles);
   assert.equal(solid(0, 0), true);    // 外墙
   assert.equal(solid(4, 3), true);    // 左内墙
   assert.equal(solid(19, 29), true);  // 大门D
@@ -37,31 +41,33 @@ test('中庭碰撞：墙/大门不可通行，棋盘/凳子/大门M可通行', (
 });
 
 test('房间碰撞：书架/桌子/洁具不可通行，出口门可通行', () => {
-  const reading = ROOM_MAPS.reading;
-  const toilet = ROOM_MAPS.toilet;
-  assert.equal(isSolidAtPx(2 * TILE + 8, 3 * TILE + 8, reading), true);   // 书架
-  assert.equal(isSolidAtPx(4 * TILE + 8, 10 * TILE + 8, reading), true);  // 桌子
-  assert.equal(isSolidAtPx(20 * TILE + 8, 29 * TILE + 8, reading), false); // 出口门（col 20-21）
-  assert.equal(isSolidAtPx(2 * TILE + 8, 5 * TILE + 8, toilet), true);    // 洁具
-  assert.equal(isSolidAtPx(20 * TILE + 8, 29 * TILE + 8, toilet), false); // 出口门
+  assert.equal(isSolidAtPx(2 * TILE + 8, 3 * TILE + 8, reading.map, tiles), true);   // 书架
+  assert.equal(isSolidAtPx(4 * TILE + 8, 10 * TILE + 8, reading.map, tiles), true);  // 桌子
+  assert.equal(isSolidAtPx(20 * TILE + 8, 29 * TILE + 8, reading.map, tiles), false); // 出口门（col 20-21）
+  assert.equal(isSolidAtPx(2 * TILE + 8, 5 * TILE + 8, toilet.map, tiles), true);    // 洁具
+  assert.equal(isSolidAtPx(20 * TILE + 8, 29 * TILE + 8, toilet.map, tiles), false); // 出口门
 });
 
-test('门检测：中庭大门M → 房间类型，房间门m → exit', () => {
-  assert.equal(isDoorAt(4 * TILE + 8, 8 * TILE + 8, ATRIUM_MAP), true);   // 左上大门（卫生间）
-  assert.equal(isDoorAt(4 * TILE + 8, 21 * TILE + 8, ATRIUM_MAP), true);  // 左下大门（阅览室）
-  assert.equal(isDoorAt(19 * TILE + 8, 27 * TILE + 8, ATRIUM_MAP), false); // 棋盘不是门
-  assert.equal(isDoorAt(20 * TILE + 8, 29 * TILE + 8, ROOM_MAPS.reading), true); // 房间出口（col 20）
+test('门检测：portal 符号才是门（中庭 M / 房间 m 是门，棋盘和 D 不是）', () => {
+  assert.equal(isDoorAt(4 * TILE + 8, 8 * TILE + 8, ATRIUM_MAP, tiles), true);   // 左上大门（卫生间）
+  assert.equal(isDoorAt(4 * TILE + 8, 21 * TILE + 8, ATRIUM_MAP, tiles), true);  // 左下大门（阅览室）
+  assert.equal(isDoorAt(19 * TILE + 8, 27 * TILE + 8, ATRIUM_MAP, tiles), false); // 棋盘不是门
+  assert.equal(isDoorAt(21 * TILE + 8, 29 * TILE + 8, ATRIUM_MAP, tiles), false); // 底边大门 D 不是 portal
+  assert.equal(isDoorAt(20 * TILE + 8, 29 * TILE + 8, reading.map, tiles), true); // 房间出口（col 20）
 });
 
 test('越界坐标视为不可通行', () => {
-  assert.equal(isSolidAtPx(-5, -5, ATRIUM_MAP), true);
-  assert.equal(isSolidAtPx(5000, 5000, ATRIUM_MAP), true);
+  assert.equal(isSolidAtPx(-5, -5, ATRIUM_MAP, tiles), true);
+  assert.equal(isSolidAtPx(5000, 5000, ATRIUM_MAP, tiles), true);
 });
 
 test('连通性：中庭出生点到所有猫位可达（BFS）', () => {
   const { grid } = parseMap(ATRIUM_MAP);
-  const walk = (c, r) => ' .cqz'.includes(grid[r][c]); // 地板/椅子/棋盘/凳子可走
-  const start = [19, 27];
+  const walk = (c, r) => { // 按 tiles 语义：非 solid 且非门（门另一头是别的场景）
+    const t = tiles[grid[r][c]];
+    return t && !t.solid && !t.portal;
+  };
+  const start = [atrium.spawn.col, atrium.spawn.row];
   const seen = new Set([start.join(',')]);
   const queue = [start];
   while (queue.length) {

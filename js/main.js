@@ -3,19 +3,20 @@
   'use strict';
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d');
-  const { TILE, ATRIUM_MAP, ROOM_MAPS, isSolidAtPx, isDoorAt, buildCanvas } = MapKit;
+  const { TILE, isSolidAtPx, isDoorAt, buildCanvas } = MapKit;
   const { drawSprite, PLAYER_FRAMES, PALETTE_PLAYER } = Sprites;
+  const TILES = MAPS.tiles;
 
   const SPEED = 70;          // px/s
-  // 场景：atrium（中庭）| reading（阅览室）| toilet（卫生间）；画布缓存
-  const canvases = {
-    atrium: buildCanvas(ATRIUM_MAP),
-    reading: buildCanvas(ROOM_MAPS.reading),
-    toilet: buildCanvas(ROOM_MAPS.toilet),
+  // 场景：atrium（中庭）| reading（阅览室）| toilet（卫生间）；配置 + 预渲染画布
+  const scenes = {
+    atrium: { data: MAPS.atrium, canvas: buildCanvas(MAPS.atrium, TILES) },
+    reading: { data: MAPS.reading, canvas: buildCanvas(MAPS.reading, TILES) },
+    toilet: { data: MAPS.toilet, canvas: buildCanvas(MAPS.toilet, TILES) },
   };
   let scene = 'atrium';
-  let currentMap = ATRIUM_MAP;
-  let atriumPos = { x: 19 * TILE, y: 27 * TILE };
+  let currentMap = scenes.atrium.data.map;
+  let atriumPos = { x: MAPS.atrium.spawn.col * TILE, y: MAPS.atrium.spawn.row * TILE };
 
   // ---- 键盘 ----
   const keys = new Set();
@@ -51,7 +52,8 @@
 
   // ---- 人物 ----
   const player = {
-    x: 19 * TILE, y: 27 * TILE, // 出生点：大门口内侧（39 列 → col 19-20）
+    x: MAPS.atrium.spawn.col * TILE,
+    y: MAPS.atrium.spawn.row * TILE, // 出生点读配置：大门口内侧
     dir: 'up',
     moving: false,
     animTimer: 0,
@@ -59,8 +61,8 @@
 
   function playerSolid(x, y) { // 脚部碰撞盒 (x+3, y+12, 10, 4)
     const l = x + 3, t = y + 12, r = l + 9, b = t + 3;
-    return isSolidAtPx(l, t, currentMap) || isSolidAtPx(r, t, currentMap) ||
-           isSolidAtPx(l, b, currentMap) || isSolidAtPx(r, b, currentMap);
+    return isSolidAtPx(l, t, currentMap, TILES) || isSolidAtPx(r, t, currentMap, TILES) ||
+           isSolidAtPx(l, b, currentMap, TILES) || isSolidAtPx(r, b, currentMap, TILES);
   }
 
   function updatePlayer(dt) {
@@ -128,27 +130,23 @@
     document.getElementById('progress').textContent = `撸猫 ${met} / 10`;
   }
 
-  function doorAtPlayer() { // 玩家脚部中心所在格是否为传送门
+  function doorAtPlayer() { // 玩家脚部中心所在格为传送门 → 返回当前场景的门配置或 null
+    if (!isDoorAt(player.x + 8, player.y + 15, currentMap, TILES)) return null;
     const cx = Math.floor((player.x + 8) / TILE);
     const cy = Math.floor((player.y + 15) / TILE);
-    if (cy < 0 || cy >= currentMap.length) return null;
-    const row = currentMap[cy];
-    if (cx < 0 || cx >= row.length || (row[cx] !== 'M' && row[cx] !== 'm')) return null;
-    if (scene === 'atrium') {
-      // 4 个大门：左侧 col 4, row 8-9（上）和 21-22（下），右侧 col 37 对称
-      if (cy >= 8 && cy <= 9) return 'toilet'; // 上方门 → 卫生间
-      if (cy >= 21 && cy <= 22) return 'reading'; // 下方门 → 阅览室
-      return null;
+    for (const door of scenes[scene].data.doors || []) {
+      if (door.cols.includes(cx) && door.rows.includes(cy)) return door;
     }
-    return 'exit'; // 房间里的门 → 退出
+    return null;
   }
 
-  function enterRoom(roomType) {
+  function enterRoom(name) {
     atriumPos = { x: player.x, y: player.y };   // 记住中庭位置
-    scene = roomType;
-    currentMap = ROOM_MAPS[roomType];
-    player.x = 17 * TILE;  // 房间正中央（36 列 → col 17-18 中间）
-    player.y = 27 * TILE;  // 站在出口门上方
+    scene = name;
+    currentMap = scenes[name].data.map;
+    const entry = scenes[name].data.entry;
+    player.x = entry.col * TILE;
+    player.y = entry.row * TILE;
     player.dir = 'down';
     dishes.length = 0;
     particles.length = 0;
@@ -156,7 +154,7 @@
 
   function exitRoom() {
     scene = 'atrium';
-    currentMap = ATRIUM_MAP;
+    currentMap = scenes.atrium.data.map;
     player.x = atriumPos.x;
     player.y = atriumPos.y;
     dishes.length = 0;
@@ -166,8 +164,11 @@
   window.addEventListener('keydown', (e) => {
     if (e.key.toLowerCase() !== 'e') return;
     const door = doorAtPlayer();
-    if (door === 'exit') { exitRoom(); return; }
-    if (door) { enterRoom(door); return; }
+    if (door) {
+      if (door.to === 'atrium') { exitRoom(); return; }
+      enterRoom(door.to);
+      return;
+    }
     if (scene !== 'atrium') return; // 房间里没有猫可喂
     const cat = nearestFeedableCat();
     if (!cat) return;
@@ -268,7 +269,7 @@
   }
 
   function render(dt) {
-    ctx.drawImage(canvases[scene], 0, 0);
+    ctx.drawImage(scenes[scene].canvas, 0, 0);
     if (scene === 'atrium') {
       drawDishes();
       for (const cat of cats) { // 猫转向玩家：仅 idle（wander 且未移动）时生效
@@ -292,7 +293,7 @@
   function drawDoorHint() { // 站在门前提示进出
     const door = doorAtPlayer();
     if (!door) return;
-    const label = door === 'exit' ? 'E 出门' : 'E 进入';
+    const label = door.to === 'atrium' ? 'E 出门' : 'E 进入';
     ctx.font = 'bold 8px monospace';
     ctx.textAlign = 'center';
     ctx.fillStyle = '#1a181f';
