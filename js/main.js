@@ -23,7 +23,7 @@
 
   // ---- 键盘 ----
   const keys = new Set();
-  const mobileLayout = window.matchMedia('(max-width: 700px) and (pointer: coarse)');
+  const mobileLayout = window.matchMedia('(hover: none) and (pointer: coarse)');
   function resizeViewport() {
     if (mobileLayout.matches) {
       const rect = canvas.getBoundingClientRect();

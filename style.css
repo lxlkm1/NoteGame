@@ -29,7 +29,7 @@ html, body {
 @media (max-width: 1000px) {
   #game { width: 624px; height: 480px; }
 }
-@media (max-width: 700px) and (pointer: coarse) {
+@media (hover: none) and (pointer: coarse) {
   html, body { height: 100%; overflow: hidden; }
   #game-wrap { width: 100vw; height: 100dvh; display: flex; align-items: flex-start; justify-content: center; }
   #game { width: 100%; height: calc(100dvh - 204px); margin-top: 34px; border-radius: 0; box-shadow: none; }
@@ -37,8 +37,13 @@ html, body {
   #hud .hint { color: #e8dcc8; }
 }
 #touch-controls { display: none; }
-@media (max-width: 700px) and (pointer: coarse) {
-  #touch-controls { position: absolute; bottom: max(12px, env(safe-area-inset-bottom)); left: 0; right: 0; height: 142px; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; box-sizing: border-box; touch-action: none; user-select: none; }
+#rotate-hint { display: none; }
+@media (hover: none) and (pointer: coarse) {
+  #game-wrap { height: 100dvh; }
+  #game { width: 100vw; height: 100dvh; margin: 0; }
+  #hud { top: max(8px, env(safe-area-inset-top)); left: max(12px, env(safe-area-inset-left)); }
+  #touch-controls { position: absolute; bottom: max(8px, env(safe-area-inset-bottom)); left: 0; right: 0; height: 142px; display: flex; align-items: center; justify-content: space-between; padding: 0 max(24px, env(safe-area-inset-right)) 0 max(24px, env(safe-area-inset-left)); box-sizing: border-box; touch-action: none; user-select: none; pointer-events: none; }
+  #touch-controls button { pointer-events: auto; }
   #dpad { display: grid; grid-template-columns: repeat(3, 46px); grid-template-rows: repeat(3, 42px); align-items: center; justify-items: center; }
   .control { width: 46px; height: 42px; border: 2px solid #c4a9b6; border-radius: 12px; background: #53445d; color: #fff2e1; font: bold 18px "Courier New", monospace; touch-action: none; -webkit-tap-highlight-color: transparent; }
   .control:active, .control.pressed { background: #946d89; }
@@ -47,4 +52,8 @@ html, body {
   .right { grid-column: 3; grid-row: 2; }
   .down { grid-column: 2; grid-row: 3; }
   #interact { width: 76px; height: 76px; border-radius: 50%; font-size: 16px; }
+}
+@media (hover: none) and (pointer: coarse) and (orientation: portrait) {
+  #game, #hud, #touch-controls { visibility: hidden; }
+  #rotate-hint { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 24px; box-sizing: border-box; color: #f5f2ec; font-size: 18px; text-align: center; }
 }
