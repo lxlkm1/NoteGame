@@ -48,18 +48,22 @@ vibe-game/
 
 ### 4.1 `maps/tiles.js`（图例）
 
+> ⚠️ 2026-10-16 后续修订：`portal` 从 `true` 改为**直接写目的地场景名**（字符即目的地），并新增 `'W'`（大门·卫生间）。门不再需要 `doors` 数组——改门位置只动地图字符串里的字母。
+
 ```js
 MAPS.tiles = {
-  '#': { name: '墙',       solid: true,  style: 'wall' },
-  'q': { name: '棋盘格',   solid: false, style: 'chessFloor' },
-  'z': { name: '棋子凳',   solid: false, style: 'chessSeat' },
-  'M': { name: '大门',     solid: false, style: 'bigDoor', portal: true },
-  'm': { name: '房间门',   solid: false, style: 'door',    portal: true },
-  'D': { name: '底边大门', solid: true,  style: 'door',    portal: false },
-  'B': { name: '书架',     solid: true,  style: 'bookshelf' },
-  'T': { name: '阅览桌',   solid: true,  style: 'table' },
-  'c': { name: '椅子',     solid: false, style: 'chair' },
-  'R': { name: '洁具',     solid: true,  style: 'toilet' },
+  '#': { name: '墙',         solid: true,  style: 'wall' },
+  '.': { name: '地板',       solid: false, style: 'floor' },
+  'q': { name: '棋盘格',     solid: false, style: 'chessFloor' },
+  'z': { name: '棋子凳',     solid: false, style: 'chessSeat' },
+  'M': { name: '大门·阅览室', solid: false, style: 'bigDoor', portal: 'reading' },
+  'W': { name: '大门·卫生间', solid: false, style: 'bigDoor', portal: 'toilet' },
+  'm': { name: '房间门',     solid: false, style: 'door',    portal: 'atrium' },
+  'D': { name: '底边大门',   solid: true,  style: 'door',    portal: false },
+  'B': { name: '书架',       solid: true,  style: 'bookshelf' },
+  'T': { name: '阅览桌',     solid: true,  style: 'table' },
+  'c': { name: '椅子',       solid: false, style: 'chair' },
+  'R': { name: '洁具',       solid: true,  style: 'toilet' },
 };
 ```
 
@@ -68,15 +72,7 @@ MAPS.tiles = {
 - `name: '中庭'`
 - `map`：现有 39×30 行**原样搬移**（不改布局）
 - `chessSeats`：现有 32 子坐标**原样搬移**
-- `doors`：
-  ```js
-  [
-    { cols: [4],  rows: [8, 9],   to: 'toilet'  },
-    { cols: [4],  rows: [21, 22], to: 'reading' },
-    { cols: [37], rows: [8, 9],   to: 'toilet'  },
-    { cols: [37], rows: [21, 22], to: 'reading' },
-  ]
-  ```
+- ~~`doors`~~（2026-10-16 修订：已删除，门目的地由地图字符本身编码，见 4.1 修订注）
 - `spawn: { col: 19, row: 27 }`
 - `decor`：挑空暖光 + 门口垫子（现在硬编码在 buildCanvas 里）
   ```js
@@ -87,7 +83,7 @@ MAPS.tiles = {
 ### 4.3 `maps/reading.js` / `maps/toilet.js`
 
 - `name`、`map`（现有 39×30 行原样搬移）
-- `doors: [{ cols: [20, 21], rows: [29], to: 'atrium' }]`（房间出口）
+- ~~`doors`~~（已删除：房间地图里的 `m` 字符即"回中庭"）
 - `entry: { col: 20, row: 27 }`（进入房间时玩家落点，出口门上方）
 
 ## 5. 引擎 API（js/map.js，重构后）
@@ -96,7 +92,8 @@ MAPS.tiles = {
 TILE                                        // = 16
 parseMap(mapRows) → { rows, cols, grid }    // 校验等宽
 isSolidAtPx(px, py, mapRows, tiles) → bool  // 越界 true；tiles 未定义字符视为 solid（防呆）
-isDoorAt(px, py, mapRows, tiles) → bool     // tiles[ch].portal === true
+isDoorAt(px, py, mapRows, tiles) → bool     // tiles[ch].portal 非空（truthy）
+doorDestAt(px, py, mapRows, tiles) → string|null  // 门的目的地场景名（2026-10-16 新增）
 buildCanvas(sceneData, tiles) → canvas      // drawTile 内部按 tiles[ch].style 分发
 ```
 
@@ -112,12 +109,12 @@ buildCanvas(sceneData, tiles) → canvas      // drawTile 内部按 tiles[ch].st
 
 ## 7. 测试
 
-- `tests/map.test.js`：require 场景配置 + tiles + 引擎，保留原有断言（尺寸/碰撞/连通性/门检测），适配新 API
+- `tests/map.test.js`：require 场景配置 + tiles + 引擎，保留原有断言（尺寸/碰撞/连通性/门检测含 doorDestAt 目的地），适配新 API
 - `tests/config.test.js`（新增 · 配置体检）：
   1. 每个场景 map 行宽一致
   2. 地图里每个符号都在 tiles 有定义
-  3. `doors` 指向的格子确实是 portal 符号
-  4. `doors.to` 是已知场景名
+  3. tiles 里每个 portal 目的地都是已知场景名（2026-10-16 修订）
+  4. 每张地图里出现的 portal 符号目的地均为已知场景（2026-10-16 修订）
   5. `spawn`/`entry` 落在非 solid 格
   6. `chessSeats` 的 key 都是 `z` 格，且数量与地图中 `z` 字符数一致（32）
 

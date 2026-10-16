@@ -5,7 +5,7 @@ const tiles = require('../maps/tiles.js');
 const atrium = require('../maps/atrium.js');
 const reading = require('../maps/reading.js');
 const toilet = require('../maps/toilet.js');
-const { TILE, parseMap, isSolidAtPx, isDoorAt } = require('../js/map.js');
+const { TILE, parseMap, isSolidAtPx, isDoorAt, doorDestAt } = require('../js/map.js');
 
 const ATRIUM_MAP = atrium.map;
 
@@ -50,7 +50,6 @@ test('房间碰撞：书架/桌子/洁具不可通行，出口门可通行', () 
 });
 
 test('门检测：portal 符号才是门，字符即目的地（W→卫生间 M→阅览室 m→中庭）', () => {
-  const { doorDestAt } = require('../js/map.js');
   assert.equal(isDoorAt(1 * TILE + 8, 8 * TILE + 8, ATRIUM_MAP, tiles), true);   // 左上大门 W
   assert.equal(isDoorAt(37 * TILE + 8, 21 * TILE + 8, ATRIUM_MAP, tiles), true); // 右下大门 M
   assert.equal(isDoorAt(19 * TILE + 8, 27 * TILE + 8, ATRIUM_MAP, tiles), false); // 棋盘不是门
