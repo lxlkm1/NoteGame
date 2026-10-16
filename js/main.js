@@ -24,6 +24,7 @@
   // ---- 键盘 ----
   const keys = new Set();
   const mobileLayout = window.matchMedia('(hover: none) and (pointer: coarse)');
+  const mobileZoom = 2.5;
   function resizeViewport() {
     if (mobileLayout.matches) {
       const rect = canvas.getBoundingClientRect();
@@ -46,7 +47,7 @@
   // ---- 音频：首次按键懒初始化 BGM + M 键静音 ----
   let audioInited = false;
   function updateSoundIcon() {
-    document.getElementById('sound').textContent = Sound.isMuted() ? '🔇' : '🔊';
+    document.getElementById('sound').textContent = Sound.isMuted() ? '🔇 音乐' : '🔊 音乐';
   }
   function initAudio() {
     if (audioInited) return;
@@ -249,8 +250,24 @@
     e.preventDefault();
     if (!audioInited) { initAudio(); return; }
     Sound.toggleMute();
+    if (!Sound.isMuted()) Sound.startBgm();
     updateSoundIcon();
   });
+  // iOS Safari may grant media playback only when the touch gesture finishes.
+  document.addEventListener('touchend', () => {
+    if (!mobileLayout.matches || Sound.isMuted()) return;
+    if (!audioInited) initAudio();
+    else Sound.startBgm();
+  }, { passive: true });
+  document.getElementById('fullscreen').addEventListener('click', async () => {
+    const wrap = document.getElementById('game-wrap');
+    try {
+      if (document.fullscreenElement) await document.exitFullscreen();
+      else if (wrap.requestFullscreen) await wrap.requestFullscreen();
+    } catch (err) { console.warn('Fullscreen unavailable:', err); }
+    resizeViewport();
+  });
+  document.addEventListener('fullscreenchange', resizeViewport);
 
   // ---- 循环 ----
   let lastT = 0;
@@ -370,13 +387,14 @@
   }
 
   function render(dt) {
-    const viewW = canvas.width / MapKit.ART_SCALE;
-    const viewH = canvas.height / MapKit.ART_SCALE;
+    const scale = MapKit.ART_SCALE * (mobileLayout.matches ? mobileZoom : 1);
+    const viewW = canvas.width / scale;
+    const viewH = canvas.height / scale;
     const worldW = currentMap[0].length * TILE;
     const worldH = currentMap.length * TILE;
     const cameraX = mobileLayout.matches ? Math.max(0, Math.min(worldW - viewW, player.x + 8 - viewW / 2)) : 0;
     const cameraY = mobileLayout.matches ? Math.max(0, Math.min(worldH - viewH, player.y + 8 - viewH / 2)) : 0;
-    ctx.setTransform(MapKit.ART_SCALE, 0, 0, MapKit.ART_SCALE, 0, 0);
+    ctx.setTransform(scale, 0, 0, scale, 0, 0);
     ctx.clearRect(0, 0, viewW, viewH);
     ctx.translate(-cameraX, -cameraY);
     ctx.drawImage(scenes[scene].canvas, 0, 0, worldW, worldH);

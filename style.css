@@ -8,6 +8,7 @@ html, body {
   font-family: "Courier New", monospace;
 }
 #game-wrap { position: relative; }
+#game-wrap:fullscreen { width: 100vw; height: 100dvh; background: #1a181f; }
 #game {
   width: 936px;
   height: 720px;
@@ -26,6 +27,8 @@ html, body {
 }
 #brand { font-weight: 700; letter-spacing: .06em; }
 #hud .hint { color: #8d8496; margin-left: 12px; font-size: 12px; }
+#hud button { background: transparent; border: 0; font-family: inherit; cursor: pointer; }
+#fullscreen { display: none; }
 @media (max-width: 1000px) {
   #game { width: 624px; height: 480px; }
 }
@@ -35,6 +38,7 @@ html, body {
   #game { width: 100%; height: calc(100dvh - 204px); margin-top: 34px; border-radius: 0; box-shadow: none; }
   #hud { top: 8px; left: 12px; z-index: 2; text-shadow: 1px 1px #1a181f; }
   #hud .hint { color: #e8dcc8; }
+  #fullscreen { display: inline; }
 }
 #touch-controls { display: none; }
 #rotate-hint { display: none; }

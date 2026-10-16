@@ -77,6 +77,7 @@ const Sound = (() => {
   }
 
   function startBgm() {
+    if (ctx && ctx.state === 'suspended') ctx.resume().catch(e => console.warn('Audio resume blocked:', e));
     if (bgmAudio && !bgmAudio.paused) return; // 已在播放
     if (bgmAudio) {
       bgmAudio.play().catch(e => console.warn('BGM autoplay blocked:', e));
