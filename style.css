@@ -45,13 +45,13 @@ html, body {
 #fullscreen-tip:not([hidden]) { position: absolute; z-index: 4; top: 42px; right: 12px; max-width: 260px; padding: 10px; background: #302c36; color: #f5f2ec; border: 1px solid #c4a9b6; font-size: 12px; }
 @media (hover: none) and (pointer: coarse) {
   #game-wrap { height: 100dvh; }
-  #game { width: 100vw; height: calc(100dvh - 142px - env(safe-area-inset-bottom)); margin: 0; }
+  #game { width: 100vw; height: 100dvh; margin: 0; }
   #hud { top: max(8px, env(safe-area-inset-top)); left: max(12px, env(safe-area-inset-left)); }
   #touch-controls { position: absolute; bottom: 0; left: 0; right: 0; height: calc(142px + env(safe-area-inset-bottom)); display: flex; align-items: center; justify-content: space-between; padding: 0 max(24px, env(safe-area-inset-right)) env(safe-area-inset-bottom) max(24px, env(safe-area-inset-left)); box-sizing: border-box; touch-action: none; user-select: none; pointer-events: none; }
   #touch-controls button { pointer-events: auto; }
   #dpad { display: grid; grid-template-columns: repeat(3, 46px); grid-template-rows: repeat(3, 42px); align-items: center; justify-items: center; }
-  .control { width: 46px; height: 42px; border: 2px solid #c4a9b6; border-radius: 12px; background: #53445d; color: #fff2e1; font: bold 18px "Courier New", monospace; touch-action: none; -webkit-tap-highlight-color: transparent; }
-  .control:active, .control.pressed { background: #946d89; }
+  .control { width: 46px; height: 42px; border: 2px solid #c4a9b6; border-radius: 12px; background: rgba(53, 41, 63, .72); color: #fff2e1; font: bold 18px "Courier New", monospace; touch-action: none; -webkit-tap-highlight-color: transparent; }
+  .control:active, .control.pressed { background: rgba(148, 109, 137, .88); }
   .up { grid-column: 2; grid-row: 1; }
   .left { grid-column: 1; grid-row: 2; }
   .right { grid-column: 3; grid-row: 2; }
