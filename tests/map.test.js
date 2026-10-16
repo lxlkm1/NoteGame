@@ -5,6 +5,7 @@ const tiles = require('../maps/tiles.js');
 const atrium = require('../maps/atrium.js');
 const reading = require('../maps/reading.js');
 const toilet = require('../maps/toilet.js');
+const outside = require('../maps/outside.js');
 const { TILE, parseMap, isSolidAtPx, isDoorAt, doorDestAt } = require('../js/map.js');
 
 const ATRIUM_MAP = atrium.map;
@@ -29,11 +30,11 @@ test('parseMap 返回网格且四角是墙', () => {
   assert.equal(grid[29][38], '#');
 });
 
-test('中庭碰撞：墙/大门D不可通行，棋盘/凳子/大门M/W可通行', () => {
+test('中庭碰撞：墙不可通行，棋盘/凳子/大门可通行', () => {
   const solid = (c, r) => isSolidAtPx(c * TILE + 8, r * TILE + 8, ATRIUM_MAP, tiles);
   assert.equal(solid(0, 0), true);    // 外墙
   assert.equal(solid(1, 3), true);    // 左墙
-  assert.equal(solid(19, 29), true);  // 大门D
+  assert.equal(solid(19, 29), false); // 室外入口 D
   assert.equal(solid(19, 27), false); // 棋盘（出生点）
   assert.equal(solid(19, 14), false); // 棋盘（可走）
   assert.equal(solid(7, 7), false);   // 棋子凳子（可走）
@@ -49,16 +50,29 @@ test('房间碰撞：书架/桌子/洁具不可通行，出口门可通行', () 
   assert.equal(isSolidAtPx(18 * TILE + 8, 29 * TILE + 8, toilet.map, tiles), false); // 出口门
 });
 
-test('门检测：portal 符号才是门，字符即目的地（W→卫生间 M→阅览室 m→中庭）', () => {
+test('门检测：portal 符号才是门，字符即目的地', () => {
   assert.equal(isDoorAt(1 * TILE + 8, 8 * TILE + 8, ATRIUM_MAP, tiles), true);   // 左上大门 W
   assert.equal(isDoorAt(37 * TILE + 8, 21 * TILE + 8, ATRIUM_MAP, tiles), true); // 右下大门 M
   assert.equal(isDoorAt(19 * TILE + 8, 27 * TILE + 8, ATRIUM_MAP, tiles), false); // 棋盘不是门
-  assert.equal(isDoorAt(19 * TILE + 8, 29 * TILE + 8, ATRIUM_MAP, tiles), false); // 底边大门 D 不是 portal
+  assert.equal(isDoorAt(19 * TILE + 8, 29 * TILE + 8, ATRIUM_MAP, tiles), true);
   // 字符即目的地
   assert.equal(doorDestAt(1 * TILE + 8, 8 * TILE + 8, ATRIUM_MAP, tiles), 'toilet');
   assert.equal(doorDestAt(37 * TILE + 8, 21 * TILE + 8, ATRIUM_MAP, tiles), 'reading');
+  assert.equal(doorDestAt(19 * TILE + 8, 29 * TILE + 8, ATRIUM_MAP, tiles), 'outside');
+  assert.equal(doorDestAt(19 * TILE + 8, 4 * TILE + 8, outside.map, tiles), 'atrium');
   assert.equal(doorDestAt(18 * TILE + 8, 29 * TILE + 8, reading.map, tiles), 'atrium'); // 房间出口（col 18）
   assert.equal(doorDestAt(19 * TILE + 8, 27 * TILE + 8, ATRIUM_MAP, tiles), null);
+});
+
+test('室外碰撞：草地和石板可走，树、长椅、路灯与外墙挡路', () => {
+  const solid = (c, r) => isSolidAtPx(c * TILE + 8, r * TILE + 8, outside.map, tiles);
+  assert.equal(solid(19, 6), false);
+  assert.equal(solid(3, 9), false);
+  assert.equal(solid(5, 10), true);
+  assert.equal(solid(13, 10), true);
+  assert.equal(solid(7, 13), true);
+  assert.equal(solid(10, 15), true); // 树丛
+  assert.equal(solid(3, 2), true);
 });
 
 test('越界坐标视为不可通行', () => {

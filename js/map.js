@@ -149,6 +149,59 @@ const MapKit = (() => {
       ctx.fillStyle = '#7d5a40';
       ctx.fillRect(x + 2, y + 3, 12, 3);
     },
+    facade(ctx, x, y, col, row) {
+      ctx.fillStyle = (col + row) % 2 ? '#514b64' : '#575169';
+      ctx.fillRect(x, y, TILE, TILE);
+      ctx.fillStyle = '#6b6476'; ctx.fillRect(x, y, TILE, 2);
+      if (row === 2 && col % 6 === 3) {
+        ctx.fillStyle = '#312b40'; ctx.fillRect(x + 1, y + 1, 14, 14);
+        ctx.fillStyle = '#e8bd75'; ctx.fillRect(x + 3, y + 3, 10, 10);
+        ctx.fillStyle = '#7d6070'; ctx.fillRect(x + 7, y + 3, 2, 10);
+      }
+    },
+    outsideDoor(ctx, x, y) {
+      ctx.fillStyle = '#3b2c36'; ctx.fillRect(x, y, TILE, TILE);
+      ctx.fillStyle = '#9d704a'; ctx.fillRect(x + 2, y, 12, 15);
+      ctx.fillStyle = '#e8c86e'; ctx.fillRect(x + 11, y + 8, 2, 2);
+    },
+    pavement(ctx, x, y, col, row) {
+      ctx.fillStyle = (col + row) % 2 ? '#6f6e78' : '#797984';
+      ctx.fillRect(x, y, TILE, TILE);
+      ctx.fillStyle = '#62616d'; ctx.fillRect(x, y + 15, TILE, 1);
+      ctx.fillRect(x + 15, y, 1, TILE);
+    },
+    grass(ctx, x, y, col, row) {
+      ctx.fillStyle = (col + row) % 2 ? '#3e6654' : '#426d58';
+      ctx.fillRect(x, y, TILE, TILE);
+      ctx.fillStyle = '#548066'; ctx.fillRect(x + 4, y + 5, 2, 3);
+      ctx.fillRect(x + 11, y + 11, 2, 2);
+    },
+    tree(ctx, x, y, col, row) {
+      STYLE_DRAW.grass(ctx, x, y, col, row);
+      ctx.fillStyle = '#594633'; ctx.fillRect(x + 7, y + 9, 3, 7);
+      ctx.fillStyle = '#244b3c'; ctx.fillRect(x + 2, y + 2, 12, 10);
+      ctx.fillStyle = '#367157'; ctx.fillRect(x + 4, y + 1, 8, 8);
+    },
+    shrub(ctx, x, y, col, row) {
+      STYLE_DRAW.grass(ctx, x, y, col, row);
+      ctx.fillStyle = '#244b3c'; ctx.fillRect(x + 1, y + 5, 14, 10);
+      ctx.fillStyle = '#367157'; ctx.fillRect(x + 2, y + 2, 12, 9);
+      ctx.fillStyle = '#4b8968'; ctx.fillRect(x + 4, y + 3, 4, 3);
+      ctx.fillRect(x + 10, y + 6, 3, 2);
+    },
+    lamp(ctx, x, y, col, row) {
+      STYLE_DRAW.grass(ctx, x, y, col, row);
+      ctx.fillStyle = '#2e3541'; ctx.fillRect(x + 7, y + 6, 2, 10);
+      ctx.fillStyle = '#f3d991'; ctx.fillRect(x + 4, y + 2, 8, 6);
+      ctx.fillStyle = '#ead089'; ctx.fillRect(x + 2, y + 3, 2, 4);
+      ctx.fillRect(x + 12, y + 3, 2, 4);
+    },
+    bench(ctx, x, y, col, row) {
+      STYLE_DRAW.grass(ctx, x, y, col, row);
+      ctx.fillStyle = '#604333'; ctx.fillRect(x + 2, y + 5, 12, 8);
+      ctx.fillStyle = '#a37b54'; ctx.fillRect(x + 2, y + 5, 12, 2);
+      ctx.fillRect(x + 2, y + 9, 12, 2);
+    },
   };
 
   function drawTile(ctx, ch, col, row, tiles, sceneData) {

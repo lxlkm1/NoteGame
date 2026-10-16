@@ -8,11 +8,12 @@
   const TILES = MAPS.tiles;
 
   const SPEED = 70;          // px/s
-  // 场景：atrium（中庭）| reading（阅览室）| toilet（卫生间）；配置 + 预渲染画布
+  // 场景配置 + 预渲染画布
   const scenes = {
     atrium: { data: MAPS.atrium, canvas: buildCanvas(MAPS.atrium, TILES) },
     reading: { data: MAPS.reading, canvas: buildCanvas(MAPS.reading, TILES) },
     toilet: { data: MAPS.toilet, canvas: buildCanvas(MAPS.toilet, TILES) },
+    outside: { data: MAPS.outside, canvas: buildCanvas(MAPS.outside, TILES) },
   };
   let scene = 'atrium';
   let currentMap = scenes.atrium.data.map;
@@ -97,6 +98,9 @@
   }
 
   const cats = Cats.createCats();
+  let mimi = null;
+  let mimiHearts = 0;
+  let mimiMet = false;
 
   const FEED_RANGE = 40;
   const dishes = [];   // {x, y}
@@ -126,8 +130,8 @@
   }
 
   function updateProgress() { // 撸猫进度：统计已投喂过的不同猫
-    const met = cats.filter((c) => c.hasMet).length;
-    document.getElementById('progress').textContent = `撸猫 ${met} / 10`;
+    const met = cats.filter((c) => c.hasMet).length + Number(mimiMet);
+    document.getElementById('progress').textContent = `撸猫 ${met} / 11`;
   }
 
   function doorAtPlayer() { // 玩家脚部中心所在格的字符即目的地（tiles portal），返回 { to } 或 null
@@ -136,22 +140,31 @@
   }
 
   function enterRoom(name) {
-    atriumPos = { x: player.x, y: player.y };   // 记住中庭位置
+    atriumPos = { x: player.x, y: name === 'outside' ? (MAPS.atrium.map.length - 2) * TILE : player.y };
     scene = name;
     currentMap = scenes[name].data.map;
     const entry = scenes[name].data.entry;
     player.x = entry.col * TILE;
     player.y = entry.row * TILE;
     player.dir = 'down';
+    if (name === 'outside') {
+      const site = Math.random() < 0.5 ? MAPS.outside.mimiSites.left : MAPS.outside.mimiSites.right;
+      mimi = Mimi.shouldAppear(Math.random()) ? Mimi.create(site, mimiHearts) : null;
+    }
+    Sound.setBgmTrack(name);
     dishes.length = 0;
     particles.length = 0;
   }
 
   function exitRoom() {
+    const cameFromOutside = scene === 'outside';
     scene = 'atrium';
     currentMap = scenes.atrium.data.map;
     player.x = atriumPos.x;
     player.y = atriumPos.y;
+    if (cameFromOutside) player.dir = 'up';
+    if (cameFromOutside) mimi = null;
+    Sound.setBgmTrack('atrium');
     dishes.length = 0;
     particles.length = 0;
   }
@@ -164,7 +177,11 @@
       enterRoom(door.to);
       return;
     }
-    if (scene !== 'atrium') return; // 房间里没有猫可喂
+    if (scene === 'outside') {
+      if (Mimi.offerFood(mimi, player, currentMap, TILES)) Sound.play('dish');
+      return;
+    }
+    if (scene !== 'atrium') return;
     const cat = nearestFeedableCat();
     if (!cat) return;
     // 碟落在猫与玩家之间、猫身前 14px
@@ -204,6 +221,16 @@
         if (cat.state === 'nap' && Math.random() < dt * 0.5) { // 睡觉偶尔冒 Z
           spawnText(cat.x + 14, cat.y - 2, 'z');
         }
+      }
+    } else if (scene === 'outside' && mimi) {
+      const before = mimi.hearts;
+      Mimi.update(mimi, dt, player, currentMap, TILES);
+      if (mimi.hearts > before) {
+        mimiHearts = mimi.hearts;
+        mimiMet = true;
+        spawnHearts(mimi.x + 8, mimi.y);
+        Sound.play('meow', { cat: mimi });
+        updateProgress();
       }
     }
     render(dt);
@@ -278,6 +305,22 @@
       actors.sort((a, b) => a.y - b.y);
       for (const a of actors) a.draw();
       drawCatOverlay();
+    } else if (scene === 'outside') {
+      if (mimi && mimi.food) drawSprite(ctx, Sprites.DISH, Sprites.PALETTE_DISH, mimi.food.x, mimi.food.y);
+      const actors = [{ y: player.y, draw: drawPlayer }];
+      if (mimi && mimi.state !== 'hidden') {
+        actors.push({ y: mimi.y, draw: () => Cats.drawCat(ctx, mimi, drawSprite, Sprites.MIMI_FRAMES, player) });
+      }
+      actors.sort((a, b) => a.y - b.y);
+      for (const actor of actors) actor.draw();
+      if (mimi && mimi.state !== 'hidden' && Math.hypot(player.x - mimi.x, player.y - mimi.y) < 112) {
+        ctx.fillStyle = '#f5f2ec'; ctx.font = '8px monospace';
+        ctx.fillText('咪咪', mimi.x, mimi.y - 7);
+      }
+      if (Mimi.canOfferFood(mimi, player, currentMap, TILES)) {
+        ctx.fillStyle = '#f5f2ec'; ctx.font = '8px monospace';
+        ctx.fillText('E 放食物', player.x - 8, player.y - 7);
+      }
     } else {
       drawPlayer();
     }
@@ -288,7 +331,8 @@
   function drawDoorHint() { // 站在门前提示进出
     const door = doorAtPlayer();
     if (!door) return;
-    const label = door.to === 'atrium' ? 'E 出门' : 'E 进入';
+    const label = door.to === 'atrium' ? (scene === 'outside' ? 'E 进馆' : 'E 出门') :
+                  door.to === 'outside' ? 'E 出馆' : 'E 进入';
     ctx.font = 'bold 8px monospace';
     ctx.textAlign = 'center';
     ctx.fillStyle = '#1a181f';

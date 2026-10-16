@@ -33,6 +33,8 @@ const Sound = (() => {
 
   // ---- 浏览器合成引擎（AudioContext 用于音效，<audio> 用于 BGM） ----
   let ctx = null, masterGain = null, sfxGain = null, bgmAudio = null;
+  const BGM_TRACKS = { indoor: 'assent/canon.mp3', outside: 'assent/Annies Wonderland.mp3' };
+  let bgmTrack = 'indoor';
 
   function applyMute() {
     if (ctx && masterGain) {
@@ -45,7 +47,12 @@ const Sound = (() => {
   }
 
   function init() {
-    if (ctx) return; // 幂等
+    if (ctx || bgmAudio) return; // 幂等
+    bgmAudio = document.getElementById('bgm');
+    if (bgmAudio) {
+      bgmAudio.volume = 0.3;
+      bgmAudio.muted = muted;
+    }
     const AC = (typeof window !== 'undefined' && (window.AudioContext || window.webkitAudioContext)) || null;
     if (!AC) return;
     ctx = new AC();
@@ -55,12 +62,18 @@ const Sound = (() => {
     sfxGain = ctx.createGain();
     sfxGain.gain.value = 1.0;
     sfxGain.connect(masterGain);
-    // 获取 BGM <audio> 元素
-    bgmAudio = document.getElementById('bgm');
-    if (bgmAudio) {
-      bgmAudio.volume = 0.3; // 降低音量
-      bgmAudio.muted = muted;
-    }
+  }
+
+  function setBgmTrack(sceneName) {
+    const next = sceneName === 'outside' ? 'outside' : 'indoor';
+    if (bgmTrack === next) return;
+    bgmTrack = next;
+    if (!bgmAudio) return;
+    const wasPlaying = !bgmAudio.paused;
+    bgmAudio.src = BGM_TRACKS[next];
+    bgmAudio.currentTime = 0;
+    bgmAudio.muted = muted;
+    if (wasPlaying) bgmAudio.play().catch(e => console.warn('BGM autoplay blocked:', e));
   }
 
   function startBgm() {
@@ -172,7 +185,7 @@ const Sound = (() => {
     };
   }
 
-  return { noteFreq, CAT_VOICES, init, play, startBgm, stopBgm, toggleMute, setMuted, isMuted, _debug };
+  return { noteFreq, CAT_VOICES, init, play, startBgm, stopBgm, setBgmTrack, toggleMute, setMuted, isMuted, _debug };
 })();
 
 if (typeof module !== 'undefined' && module.exports) module.exports = Sound;

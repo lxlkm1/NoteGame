@@ -6,8 +6,19 @@ const tiles = require('../maps/tiles.js');
 const atrium = require('../maps/atrium.js');
 const reading = require('../maps/reading.js');
 const toilet = require('../maps/toilet.js');
+const outside = require('../maps/outside.js');
 
-const SCENES = { atrium, reading, toilet };
+const SCENES = { atrium, reading, toilet, outside };
+
+test('中庭南门通室外，室外入口通中庭且落点可走', () => {
+  assert.equal(tiles[atrium.map[29][19]].portal, 'outside');
+  assert.equal(tiles[outside.map[4][19]].portal, 'atrium');
+  assert.equal(outside.map.length, 30);
+  assert.equal(outside.map[0].length, 39);
+  assert.equal(outside.entry.col, 19);
+  assert.equal(outside.entry.row, 6);
+  assert.equal(tiles[outside.map[outside.entry.row][outside.entry.col]].solid, false);
+});
 
 test('配置体检 1：每个场景 map 行宽一致', () => {
   for (const [name, scene] of Object.entries(SCENES)) {

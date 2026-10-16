@@ -244,6 +244,16 @@ const Sprites = (() => {
     ],
   };
 
+  // 奶牛猫的黑斑分布在背部和脸侧，复用原有动作帧。
+  const MIMI_FRAMES = Object.fromEntries(Object.entries(CAT_FRAMES).map(([name, frame]) => [
+    name,
+    frame.map((line, row) => [...line].map((ch, col) => {
+      const patch = (row >= 5 && row <= 10 && col >= 2 && col <= 5) ||
+                    (row >= 8 && row <= 12 && col >= 10 && col <= 13);
+      return patch && (ch === 'A' || ch === 'W') ? 'B' : ch;
+    }).join('')),
+  ]));
+
   const DISH = [ // 猫粮碟 10x4。K 碟沿 F 碟面 a 粮粒
     '..KKKKKK..',
     '.KFFFFFFF.',
@@ -262,7 +272,7 @@ const Sprites = (() => {
   ];
   return {
     drawSprite, PLAYER_FRAMES, PALETTE_PLAYER,
-    CAT_FRAMES, DISH, PALETTE_DISH, HEART,
+    CAT_FRAMES, MIMI_FRAMES, DISH, PALETTE_DISH, HEART,
   };
 })();
 

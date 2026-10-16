@@ -3,8 +3,28 @@ const test = require('node:test');
 const assert = require('node:assert');
 const {
   noteFreq, CAT_VOICES,
-  isMuted, toggleMute, setMuted, play,
+  isMuted, toggleMute, setMuted, play, init, startBgm, setBgmTrack,
 } = require('../js/audio.js');
+
+test('切换室外曲目并返回馆内时保留静音状态', async () => {
+  const audio = {
+    src: 'assent/canon.mp3', paused: true, muted: false, currentTime: 25,
+    volume: 1, play() { this.paused = false; return Promise.resolve(); },
+    pause() { this.paused = true; },
+  };
+  global.document = { getElementById: () => audio };
+  init(); startBgm(); setMuted(true);
+  setBgmTrack('outside');
+  assert.match(audio.src, /Annies Wonderland\.mp3$/);
+  assert.equal(audio.paused, false);
+  assert.equal(audio.currentTime, 0);
+  assert.equal(audio.muted, true);
+  setBgmTrack('atrium');
+  assert.match(audio.src, /canon\.mp3$/);
+  assert.equal(audio.paused, false);
+  setMuted(false);
+  delete global.document;
+});
 
 test('noteFreq：A4=440，C5≈523.25，F#5≈739.99', () => {
   assert.equal(noteFreq('A4'), 440);
