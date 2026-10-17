@@ -4,8 +4,8 @@ import { student } from './shared.js';
 
 // 亲昵动作规格：站位中心距 / 冒爱心间隔 / 持续时长
 const CUDDLE_ACTIONS = {
-  hug:  { dist: 10, heartInterval: 0.8, duration: 4 },
-  kiss: { dist: 6,  heartInterval: 0.4, duration: 5 },
+  hug:  { dist: 16, heartInterval: 0.8, duration: 4 },
+  kiss: { dist: 12, heartInterval: 0.4, duration: 5 },
 };
 
 function createCouple() {
@@ -26,6 +26,7 @@ function startCuddle(pair, rng) {
   const [a, b] = pair.members;
   b.x = a.x + spec.dist;
   a.facing = 'right'; b.facing = 'left';
+  a.action = pair.action; b.action = pair.action;
   a.moving = false; b.moving = false;
 }
 
@@ -53,6 +54,7 @@ export function updateCouple(world, dt, rng) {
     }
     if (pair.cuddleTimer <= 0) {
       pair.phase = 'down';
+      for (const member of pair.members) member.action = null;
       pair.members[1].x = 20 * TILE; // 回到伴侣身侧
     }
     return events;

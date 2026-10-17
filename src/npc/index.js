@@ -4,6 +4,7 @@ import { createStudyStudents, createCommuters, updateCommuter } from './student.
 import { createDuyu, updateDuyu, updateDuyuDialogue, drawDuyu } from './duyu.js';
 import { updateCouple } from './couple.js';
 import { drawPerson } from './shared.js';
+import { drawCouple } from './couple-render.js';
 
 function create(maps, rng = Math.random) {
   const study = createStudyStudents(maps);
@@ -50,6 +51,7 @@ function update(world, dt, cats = [], rng = Math.random) {
 
 function draw(ctx, npc) {
   if (npc.kind === 'duyu') { drawDuyu(ctx, npc); return; }
+  if (npc.kind === 'couple') { drawCouple(ctx, npc); return; }
   drawPerson(ctx, npc);
 }
 
