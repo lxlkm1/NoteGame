@@ -9,6 +9,13 @@ const ACTIONS = {
   kiss: { gap: 19, heartInterval: 0.45 },
   deepKiss: { gap: 17, heartInterval: 0.35 },
 };
+const LAWN_STAGES = {
+  lawnSit: { duration: 1.6, next: 'lawnLap' },
+  lawnLap: { duration: 2.2, next: 'lawnHold' },
+  lawnHold: { duration: 2.8, next: 'lawnHoldTight', hearts: 1.2 },
+  lawnHoldTight: { duration: 14, next: 'lawnRise', hearts: 0.9 },
+  lawnRise: { duration: 1.6, next: null },
+};
 
 export function createCouple(mapRows) {
   const girl = student('couple-a', 'outside', 19, 28, 'red', 'couple');
@@ -21,14 +28,21 @@ export function createCouple(mapRows) {
 
 function canStandTogether(mapRows, col, row) {
   if (row < 0 || row >= mapRows.length || col < 0 || col + 2 >= mapRows[0].length) return false;
-  return [col, col + 2].every(c => {
+  return [col, col + 1, col + 2].every(c => {
     const tile = TILES[mapRows[row][c]];
     return tile && !tile.solid;
   });
 }
 
+function isLawnSpot(mapRows, col, row) {
+  // 组合坐姿有裙摆、弯曲的腿和双臂，周围需留出完整的草地空间。
+  for (let r = row - 1; r <= row; r++) for (let c = col - 1; c <= col + 3; c++)
+    if (TILES[mapRows[r]?.[c]]?.style !== 'grass') return false;
+  return true;
+}
+
 // 在两人都可站立的地格上寻路，随机选择一处距离足够远的目的地。
-function walkRoute(pair, rng) {
+function walkRoute(pair, rng, lawnOnly = false) {
   const [girl] = pair.members;
   const start = { col: Math.round(girl.x / TILE), row: Math.round(girl.y / TILE) };
   const key = (col, row) => `${col},${row}`;
@@ -37,7 +51,8 @@ function walkRoute(pair, rng) {
   const far = [];
   for (let i = 0; i < queue.length; i++) {
     const point = queue[i];
-    if (Math.abs(point.col - start.col) + Math.abs(point.row - start.row) >= 6) far.push(point);
+    const distance = Math.abs(point.col - start.col) + Math.abs(point.row - start.row);
+    if (lawnOnly ? distance > 0 && isLawnSpot(pair.mapRows, point.col, point.row) : distance >= 6) far.push(point);
     for (const [dc, dr] of [[0, -1], [1, 0], [0, 1], [-1, 0]]) {
       const col = point.col + dc, row = point.row + dr;
       const nextKey = key(col, row);
@@ -61,6 +76,24 @@ function startWander(pair, rng) {
   pair.action = null;
   pair.route = walkRoute(pair, rng);
   for (const member of pair.members) { member.action = null; member.moving = false; }
+}
+
+function startLawnWalk(pair, rng) {
+  const route = walkRoute(pair, rng, true);
+  if (!route.length) return false;
+  pair.phase = 'seekLawn';
+  pair.action = null;
+  pair.route = route;
+  for (const member of pair.members) { member.action = null; member.moving = false; }
+  return true;
+}
+
+function startLawnPose(pair, phase, rng) {
+  pair.phase = phase;
+  pair.action = phase;
+  pair.timer = LAWN_STAGES[phase].duration + (phase === 'lawnHoldTight' ? rng() * 18 : 0);
+  pair.heartTimer = 0;
+  for (const member of pair.members) { member.action = phase; member.moving = false; }
 }
 
 function startApproach(pair) {
@@ -105,7 +138,9 @@ export function updateCouple(world, dt, rng) {
   girl.animTimer += dt;
   boy.animTimer += dt;
   switch (pair.phase) {
-    case 'wander': {
+    case 'wander':
+    case 'seekLawn': {
+      const seekingLawn = pair.phase === 'seekLawn';
       if (!pair.route.length) pair.route = walkRoute(pair, rng);
       const next = pair.route[0];
       if (!next) { pair.phase = 'pause'; pair.timer = 1 + rng() * 2; break; }
@@ -115,17 +150,47 @@ export function updateCouple(world, dt, rng) {
       boy.y += girl.y - beforeY;
       boy.facing = girl.facing;
       boy.moving = girl.moving;
-      if (!pair.route.length) { pair.phase = 'pause'; pair.timer = 1 + rng() * 2; }
+      if (!pair.route.length) {
+        if (seekingLawn) {
+          pair.phase = 'lawnApproach';
+          girl.facing = 'right'; girl.moving = false;
+          boy.facing = 'left'; boy.action = 'approach';
+        } else {
+          pair.phase = 'pause'; pair.timer = 1 + rng() * 2;
+        }
+      }
       break;
     }
     case 'pause':
       girl.moving = false; boy.moving = false;
       pair.timer -= dt;
       if (pair.timer <= 0) {
-        if (rng() < 0.65) startApproach(pair);
-        else startWander(pair, rng);
+        const choice = rng();
+        if (choice < 0.65) startApproach(pair);
+        else if (choice >= 0.85 || !startLawnWalk(pair, rng)) startWander(pair, rng);
       }
       break;
+    case 'lawnApproach':
+      if (moveTo(boy, girl.x + 20, girl.y, 18, dt)) startLawnPose(pair, 'lawnSit', rng);
+      break;
+    case 'lawnSit':
+    case 'lawnLap':
+    case 'lawnHold':
+    case 'lawnHoldTight':
+    case 'lawnRise': {
+      const stage = LAWN_STAGES[pair.phase];
+      pair.timer -= dt;
+      pair.heartTimer -= dt;
+      if (stage.hearts && pair.heartTimer <= 0) {
+        pair.heartTimer = stage.hearts;
+        events.push({ type: 'cuddle-heart', x: (girl.x + boy.x) / 2 + 8, y: girl.y - 26 });
+      }
+      if (pair.timer <= 0) {
+        if (stage.next) startLawnPose(pair, stage.next, rng);
+        else { startRelease(pair); pair.phase = 'lawnSeparate'; }
+      }
+      break;
+    }
     case 'approach':
       girl.moving = false;
       if (moveTo(boy, girl.x + ACTIONS.hug.gap, girl.y, 18, dt)) startAction(pair, 'hug', rng);
@@ -151,10 +216,11 @@ export function updateCouple(world, dt, rng) {
       break;
     }
     case 'release':
+    case 'lawnSeparate':
       girl.moving = false;
       pair.timer -= dt;
       if (moveTo(boy, girl.x + WALK_GAP, girl.y, 18, dt) && pair.timer <= 0) {
-        if (rng() < 0.7) startApproach(pair);
+        if (pair.phase === 'release' && rng() < 0.7) startApproach(pair);
         else startWander(pair, rng);
       }
       break;
