@@ -1,10 +1,10 @@
 // main.js —— 入口：创建游戏状态 G、接线输入与音频、跑游戏循环
-import { MAPS } from './maps/index.js';
-import TILES from './maps/tiles.js';
+import { MAPS } from './data/maps/index.js';
+import TILES from './data/maps/tiles.js';
 import { TILE } from './map.js';
-import * as Cats from './cats.js';
-import * as NPCs from './npcs.js';
-import * as Mimi from './mimi.js';
+import * as Cats from './npc/cats.js';
+import * as NPCs from './npc/index.js';
+import * as Mimi from './npc/mimi.js';
 import * as Sound from './audio.js';
 import { initViewport, initFullscreen, mobileLayout } from './viewport.js';
 import { keys, initKeyboard, bindTouchControls } from './input.js';

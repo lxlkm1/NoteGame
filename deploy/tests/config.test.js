@@ -2,11 +2,11 @@
 // 配置体检：用户改错 maps/ 配置时测试立刻报警，不用开浏览器
 import test from 'node:test';
 import assert from 'node:assert';
-import tiles from '../../src/maps/tiles.js';
-import atrium from '../../src/maps/atrium.js';
-import reading from '../../src/maps/reading.js';
-import toilet from '../../src/maps/toilet.js';
-import outside from '../../src/maps/outside.js';
+import tiles from '../../src/data/maps/tiles.js';
+import atrium from '../../src/data/maps/atrium.js';
+import reading from '../../src/data/maps/reading.js';
+import toilet from '../../src/data/maps/toilet.js';
+import outside from '../../src/data/maps/outside.js';
 
 const SCENES = { atrium, reading, toilet, outside };
 

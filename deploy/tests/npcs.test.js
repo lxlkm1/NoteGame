@@ -1,11 +1,11 @@
 'use strict';
 import test from 'node:test';
 import assert from 'node:assert';
-import * as NPCs from '../../src/npcs.js';
-import atrium from '../../src/maps/atrium.js';
-import reading from '../../src/maps/reading.js';
-import outside from '../../src/maps/outside.js';
-import tiles from '../../src/maps/tiles.js';
+import * as NPCs from '../../src/npc/index.js';
+import atrium from '../../src/data/maps/atrium.js';
+import reading from '../../src/data/maps/reading.js';
+import outside from '../../src/data/maps/outside.js';
+import tiles from '../../src/data/maps/tiles.js';
 
 const maps = { atrium, reading, outside };
 

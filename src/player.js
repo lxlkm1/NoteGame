@@ -1,7 +1,8 @@
 // player.js —— 玩家：移动、脚部碰撞、动画帧、绘制
 import { TILE, isSolidAtPx } from './map.js';
-import TILES from './maps/tiles.js';
-import { drawSprite, PLAYER_FRAMES, PALETTE_PLAYER } from './sprites.js';
+import TILES from './data/maps/tiles.js';
+import { drawSprite } from './sprites.js';
+import { PLAYER_FRAMES, PALETTE_PLAYER } from './data/sprites.js';
 
 const SPEED = 70;          // px/s
 

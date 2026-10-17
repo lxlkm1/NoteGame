@@ -2,9 +2,10 @@
 import test from 'node:test';
 import assert from 'node:assert';
 import {
-  noteFreq, CAT_VOICES,
+  noteFreq,
   isMuted, toggleMute, setMuted, play, init, startBgm, setBgmTrack,
 } from '../../src/audio.js';
+import { CAT_VOICES } from '../../src/data/audio.js';
 
 test('切换室外曲目并返回馆内时保留静音状态', async () => {
   const audio = {

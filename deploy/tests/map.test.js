@@ -1,12 +1,12 @@
 'use strict';
 import test from 'node:test';
 import assert from 'node:assert';
-import tiles from '../../src/maps/tiles.js';
-import atrium from '../../src/maps/atrium.js';
-import reading from '../../src/maps/reading.js';
-import toilet from '../../src/maps/toilet.js';
-import outside from '../../src/maps/outside.js';
-import { CAT_DEFS } from '../../src/cats.js';
+import tiles from '../../src/data/maps/tiles.js';
+import atrium from '../../src/data/maps/atrium.js';
+import reading from '../../src/data/maps/reading.js';
+import toilet from '../../src/data/maps/toilet.js';
+import outside from '../../src/data/maps/outside.js';
+import { CAT_DEFS } from '../../src/data/cats.js';
 import { TILE, ART_SCALE, parseMap, isSolidAtPx, isDoorAt, doorDestAt } from '../../src/map.js';
 
 test('绘制分辨率为每格 32 像素，碰撞格仍为 16 单位', () => {

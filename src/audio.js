@@ -1,4 +1,6 @@
 // audio.js —— 音效与 BGM（音效用 Web Audio 合成，BGM 用 <audio> 标签）
+// 音轨路径与猫咪嗓音等数据在 src/data/audio.js
+import { BGM_TRACKS, CAT_VOICES } from './data/audio.js';
 
 // ---- 音高换算（A4 = 440Hz，十二平均律） ----
 const semis = {C:0, 'C#':1, D:2, 'D#':3, E:4, F:5, 'F#':6, G:7, 'G#':8, A:9, 'A#':10, B:11};
@@ -8,12 +10,6 @@ function noteFreq(name) {
   const midi = (parseInt(m[2], 10) + 1) * 12 + semis[m[1]];
   return 440 * Math.pow(2, (midi - 69) / 12);
 }
-
-// ---- 10 只猫的专属嗓音（基频 Hz） ----
-const CAT_VOICES = {
-  momo: 450, meiqiu: 470, huihui: 540, tuantuan: 600, buding: 620,
-  naitang: 660, huajuan: 680, zhima: 700, tangyuan: 720, xueqiu: 760,
-};
 
 // ---- 静音状态机 ----
 let muted = false;
@@ -31,7 +27,6 @@ function setMuted(v) {
 
 // ---- 浏览器合成引擎（AudioContext 用于音效，<audio> 用于 BGM） ----
 let ctx = null, masterGain = null, sfxGain = null, bgmAudio = null;
-const BGM_TRACKS = { indoor: 'src/assent/canon.mp3', outside: 'src/assent/Annies Wonderland.mp3' };
 let bgmTrack = 'indoor';
 
 function applyMute() {
@@ -184,4 +179,4 @@ function _debug() {
   };
 }
 
-export { noteFreq, CAT_VOICES, init, play, startBgm, stopBgm, setBgmTrack, toggleMute, setMuted, isMuted, _debug };
+export { noteFreq, init, play, startBgm, stopBgm, setBgmTrack, toggleMute, setMuted, isMuted, _debug };

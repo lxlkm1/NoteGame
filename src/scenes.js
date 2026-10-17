@@ -1,10 +1,10 @@
 // scenes.js —— 场景表（含预渲染画布）与进出房间
-import { MAPS } from './maps/index.js';
+import { MAPS } from './data/maps/index.js';
 import { buildCanvas } from './tile-render.js';
 import { TILE } from './map.js';
 import * as Sound from './audio.js';
 import * as Bowls from './bowls.js';
-import * as Mimi from './mimi.js';
+import * as Mimi from './npc/mimi.js';
 
 export const scenes = {
   atrium: { data: MAPS.atrium, canvas: buildCanvas(MAPS.atrium, MAPS.tiles) },

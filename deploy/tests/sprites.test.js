@@ -1,7 +1,7 @@
 'use strict';
 import test from 'node:test';
 import assert from 'node:assert';
-import { PLAYER_FRAMES, DUYU_COW_FRAMES, DUYU_COW_PALETTE } from '../../src/sprites.js';
+import { PLAYER_FRAMES, DUYU_COW_FRAMES, DUYU_COW_PALETTE } from '../../src/data/sprites.js';
 
 test('人物帧齐全且每帧 16 行 × 每行 16 字符', () => {
   for (const name of ['down1', 'down2', 'up1', 'up2', 'side1', 'side2']) {
@@ -12,7 +12,7 @@ test('人物帧齐全且每帧 16 行 × 每行 16 字符', () => {
   }
 });
 
-import { CAT_FRAMES } from '../../src/sprites.js';
+import { CAT_FRAMES } from '../../src/data/sprites.js';
 
 test('猫帧齐全且每帧 16x16', () => {
   for (const name of ['idle1', 'idle2', 'walk1', 'walk2', 'eat', 'sleep']) {
@@ -23,7 +23,7 @@ test('猫帧齐全且每帧 16x16', () => {
   }
 });
 
-import { MIMI_FRAMES } from '../../src/sprites.js';
+import { MIMI_FRAMES } from '../../src/data/sprites.js';
 
 test('咪咪有独立的 16x16 帧及照片中的金眼、白口鼻和黑斑', () => {
   for (const name of ['idle1', 'idle2', 'walk1', 'walk2', 'eat', 'sleep']) {

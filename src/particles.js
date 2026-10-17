@@ -1,5 +1,6 @@
 // particles.js —— 爱心与文字粒子：{x, y, vx, vy, life, ttl, kind, text?}
-import { drawSprite, HEART } from './sprites.js';
+import { drawSprite } from './sprites.js';
+import { HEART } from './data/sprites.js';
 
 export function spawnHearts(particles, x, y) {
   for (let i = 0; i < 5; i++) {

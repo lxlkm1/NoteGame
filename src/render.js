@@ -1,11 +1,12 @@
 // render.js —— 渲染编排：场景贴图、角色按 y 排序、碗碟、名牌气泡、门提示、粒子
-import * as Cats from './cats.js';
-import * as NPCs from './npcs.js';
-import * as Mimi from './mimi.js';
+import * as Cats from './npc/cats.js';
+import * as NPCs from './npc/index.js';
+import * as Mimi from './npc/mimi.js';
 import * as Bowls from './bowls.js';
-import * as Sprites from './sprites.js';
+import { drawSprite } from './sprites.js';
+import { CAT_FRAMES, MIMI_FRAMES, DISH, PALETTE_DISH, HEART } from './data/sprites.js';
 import { ART_SCALE, TILE } from './map.js';
-import TILES from './maps/tiles.js';
+import TILES from './data/maps/tiles.js';
 import { mobileLayout, mobileZoom } from './viewport.js';
 import { drawPlayer } from './player.js';
 import { drawParticles } from './particles.js';
@@ -25,7 +26,7 @@ function drawDishes(ctx, G) {
     }
   }
   for (const d of G.dishes) {
-    Sprites.drawSprite(ctx, Sprites.DISH, Sprites.PALETTE_DISH, d.x, d.y);
+    drawSprite(ctx, DISH, PALETTE_DISH, d.x, d.y);
   }
 }
 
@@ -43,7 +44,7 @@ function drawCatOverlay(ctx, G) { // 气泡提示 + 名牌 + 心条
     ctx.fillText(cat.name, cat.x + 8, cat.y - 11);
     // 5 心条
     for (let i = 0; i < 5; i++) {
-      Sprites.drawSprite(ctx, Sprites.HEART, { A: i < cat.hearts ? '#ef6a8a' : '#4a4453' }, cat.x - 12 + i * 8, cat.y - 8);
+      drawSprite(ctx, HEART, { A: i < cat.hearts ? '#ef6a8a' : '#4a4453' }, cat.x - 12 + i * 8, cat.y - 8);
     }
     ctx.textAlign = 'left';
   }
@@ -92,16 +93,16 @@ export function render(canvas, ctx, G, dt) {
       const near = Math.hypot(cat.x + 8 - (G.player.x + 8), cat.y + 8 - (G.player.y + 8)) < 56;
       cat.facePlayer = idle && near;
     }
-    const actors = [...G.cats.map((c) => ({ y: c.y, draw: () => Cats.drawCat(ctx, c, Sprites.drawSprite, Sprites.CAT_FRAMES, G.player) })),
+    const actors = [...G.cats.map((c) => ({ y: c.y, draw: () => Cats.drawCat(ctx, c, drawSprite, CAT_FRAMES, G.player) })),
                     { y: G.player.y, draw: () => drawPlayer(ctx, G.player) }];
     for (const npc of NPCs.visible(G.npcs, G.scene)) {
-      actors.push({ y: npc.y, draw: () => NPCs.draw(ctx, npc, Sprites.drawSprite, Sprites) });
+      actors.push({ y: npc.y, draw: () => NPCs.draw(ctx, npc) });
     }
     if (G.mimi && G.mimi.state !== 'hidden') {
-      actors.push({ y: G.mimi.y, draw: () => Cats.drawCat(ctx, G.mimi, Sprites.drawSprite, Sprites.MIMI_FRAMES, G.player) });
+      actors.push({ y: G.mimi.y, draw: () => Cats.drawCat(ctx, G.mimi, drawSprite, MIMI_FRAMES, G.player) });
     }
     actors.sort((a, b) => a.y - b.y);
-    if (G.mimi && G.mimi.food) Sprites.drawSprite(ctx, Sprites.DISH, Sprites.PALETTE_DISH, G.mimi.food.x, G.mimi.food.y);
+    if (G.mimi && G.mimi.food) drawSprite(ctx, DISH, PALETTE_DISH, G.mimi.food.x, G.mimi.food.y);
     for (const actor of actors) actor.draw();
     drawCatOverlay(ctx, G);
     if (G.mimi && G.mimi.state !== 'hidden' && Math.hypot(G.player.x - G.mimi.x, G.player.y - G.mimi.y) < 112) {
@@ -118,7 +119,7 @@ export function render(canvas, ctx, G, dt) {
     }
   } else {
     const actors = NPCs.visible(G.npcs, G.scene).map(npc =>
-      ({ y: npc.y, draw: () => NPCs.draw(ctx, npc, Sprites.drawSprite, Sprites) }));
+      ({ y: npc.y, draw: () => NPCs.draw(ctx, npc) }));
     actors.push({ y: G.player.y, draw: () => drawPlayer(ctx, G.player) });
     actors.sort((a, b) => a.y - b.y);
     for (const actor of actors) actor.draw();

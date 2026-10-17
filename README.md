@@ -53,8 +53,8 @@ python3 -m http.server 8137
 | 路径 | 内容 |
 | --- | --- |
 | `index.html`、`style.css` | 页面与游戏界面 |
-| `src/` | 渲染、角色行为、互动与音频 |
-| `src/maps/` | 场景地图、格子类型与角色位置 |
+| `src/` | 游戏机制：渲染、角色行为、互动与音频 |
+| `src/data/` | 内容数据：场景地图（`data/maps/`）与音频配置（`data/audio.js`） |
 | `src/assent/` | 背景音乐 |
 | `deploy/` | 部署构建脚本与测试 |
 

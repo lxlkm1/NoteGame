@@ -1,9 +1,9 @@
 'use strict';
 import test from 'node:test';
 import assert from 'node:assert';
-import * as Mimi from '../../src/mimi.js';
-import outside from '../../src/maps/outside.js';
-import tiles from '../../src/maps/tiles.js';
+import * as Mimi from '../../src/npc/mimi.js';
+import outside from '../../src/data/maps/outside.js';
+import tiles from '../../src/data/maps/tiles.js';
 
 const site = outside.mimiSites.left;
 const player = (col, row, dir = 'left') => ({ x: col * 16, y: row * 16, dir });

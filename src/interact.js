@@ -1,10 +1,10 @@
 // interact.js —— E 键交互：进出房间、碗里放粮、投喂猫、给咪咪放食物
-import * as Cats from './cats.js';
-import * as Mimi from './mimi.js';
+import * as Cats from './npc/cats.js';
+import * as Mimi from './npc/mimi.js';
 import * as Bowls from './bowls.js';
 import * as Sound from './audio.js';
 import { doorDestAt } from './map.js';
-import TILES from './maps/tiles.js';
+import TILES from './data/maps/tiles.js';
 import { playerSolid } from './player.js';
 import { enterRoom, exitRoom } from './scenes.js';
 

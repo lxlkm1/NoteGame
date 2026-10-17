@@ -1,5 +1,5 @@
 // map.js —— 地图引擎：解析、碰撞、门检测（纯逻辑，无 DOM）
-// 纯逻辑无数据：地图布局 / 棋子 / 门 / 出生点 / 图例语义全部在 src/maps/ 配置里
+// 纯逻辑无数据：地图布局 / 棋子 / 门 / 出生点 / 图例语义全部在 src/data/maps/ 配置里
 // 地砖画法与预渲染在 tile-render.js
 const TILE = 16;
 const ART_SCALE = 2;

@@ -1,9 +1,10 @@
 'use strict';
 import test from 'node:test';
 import assert from 'node:assert';
-import { CAT_DEFS, createCats, updateCat, feed } from '../../src/cats.js';
-import outside from '../../src/maps/outside.js';
-import tiles from '../../src/maps/tiles.js';
+import { createCats, updateCat, feed } from '../../src/npc/cats.js';
+import { CAT_DEFS } from '../../src/data/cats.js';
+import outside from '../../src/data/maps/outside.js';
+import tiles from '../../src/data/maps/tiles.js';
 import { isSolidAtPx } from '../../src/map.js';
 
 test('十只普通猫出生在前庭的可走位置', () => {
