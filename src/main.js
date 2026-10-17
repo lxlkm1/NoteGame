@@ -86,6 +86,9 @@ function loop(t) {
       G.dishes.push({ catId: event.cat.id, x: event.x, y: event.y });
       Sound.play('dish');
     }
+    if (event.type === 'cuddle-heart') { // 情侣亲昵时冒爱心
+      spawnHearts(G.particles, event.x, event.y);
+    }
   }
   if (G.scene === 'outside') {
     for (const cat of G.cats) {

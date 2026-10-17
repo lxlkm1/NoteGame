@@ -24,15 +24,21 @@ export function moveTo(npc, x, y, speed, dt) {
   npc.x += dx / dist * step;
   npc.y += dy / dist * step;
   npc.moving = true;
-  npc.facing = Math.abs(dy) >= Math.abs(dx) ? (dy > 0 ? 'down' : 'up') : 'side';
+  npc.facing = Math.abs(dy) >= Math.abs(dx) ? (dy > 0 ? 'down' : 'up') : (dx > 0 ? 'right' : 'left');
   return step >= dist;
 }
 
-// 通用像素人绘制（小蠹鱼除外，她有自己的奶牛形象）
+// 通用像素人绘制（小蠹鱼除外，她有自己的奶牛形象）；left/right 用侧帧，left 翻转
 export function drawPerson(ctx, npc) {
-  const frame = npc.moving ? (Math.floor(npc.animTimer / 0.2) % 2 ? 'down1' : 'down2') : 'down1';
-  const frameName = npc.facing === 'up' && npc.moving ? 'up1' : frame;
-  drawSprite(ctx, PLAYER_FRAMES[frameName], COLORS[npc.color], npc.x, npc.y, false, 1.5);
+  let frameName, flip = false;
+  if (npc.facing === 'left' || npc.facing === 'right') {
+    frameName = npc.moving ? (Math.floor(npc.animTimer / 0.2) % 2 ? 'side1' : 'side2') : 'side1';
+    flip = npc.facing === 'left';
+  } else {
+    const frame = npc.moving ? (Math.floor(npc.animTimer / 0.2) % 2 ? 'down1' : 'down2') : 'down1';
+    frameName = npc.facing === 'up' && npc.moving ? 'up1' : frame;
+  }
+  drawSprite(ctx, PLAYER_FRAMES[frameName], COLORS[npc.color], npc.x, npc.y, flip, 1.5);
   if (!npc.moving && (npc.kind === 'study' || npc.phase === 'study')) { // 坐着读书：书页翻动
     ctx.fillStyle = '#e8dcc8'; ctx.fillRect(npc.x + 3, npc.y + 10, 10, 4);
     ctx.fillStyle = Math.floor(npc.animTimer / 1.3) % 2 ? '#8595a7' : '#a59070';

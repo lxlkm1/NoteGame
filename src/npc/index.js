@@ -23,9 +23,8 @@ function update(world, dt, cats = [], rng = Math.random) {
   for (const npc of world.study) if (npc.kind !== 'duyu') npc.animTimer += dt;
   updateDuyu(world.duyu, dt, rng);
   for (const npc of world.commuters) updateCommuter(npc, dt);
-  updateCouple(world, dt, rng);
+  const events = updateCouple(world, dt, rng); // cuddle-heart：情侣亲昵时冒爱心
   // 室外的通勤学生与情侣偶尔投喂普通猫（不计入玩家进度）
-  const events = [];
   const reserved = new Set();
   for (const npc of visible(world, 'outside')) {
     if (npc.kind === 'study') continue;
