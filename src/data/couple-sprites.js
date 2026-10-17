@@ -5,6 +5,7 @@ export const COUPLE_PALETTES = {
     S: '#efd0ba', s: '#dcb099', R: '#dfa3a0', M: '#b97578', E: '#483943',
     W: '#fbf5e9', w: '#ddd6cb', d: '#c7bfba', A: '#9bb0b9',
     C: '#e8ddd4', c: '#bdafa8', P: '#766a78', B: '#554954',
+    K: '#fff5e9', k: '#dc96a6', N: '#57404a',
   },
   boy: {
     Y: '#d9ac38', y: '#f9d65b', h: '#876027', Z: '#fff099',
@@ -52,12 +53,20 @@ function girlFrame(pose) {
   p.oval('S', 28, 30, 2, 5);
   p.rect('W', 12, 26, 3, 6);
   p.rect('W', 26, 26, 3, 6);
+  const catClip = (x, y) => {
+    p.rect('K', x, y, 1, 2); p.rect('K', x + 4, y, 1, 2); // 小猫尖耳
+    p.rect('K', x, y + 1, 5, 3);
+    p.rect('K', x + 1, y + 4, 3, 1);
+    p.rect('N', x + 1, y + 2, 1, 1); p.rect('N', x + 3, y + 2, 1, 1);
+    p.rect('k', x + 2, y + 3, 1, 1);
+  };
   if (up) {
     p.oval('L', 20, 15, 8, 10);
     p.oval('H', 20, 11, 8, 7);
     p.rect('F', 14, 8, 12, 2);
     p.rect('h', 18, 5, 4, 1);
     p.rect('L', 12, 18, 2, 7);
+    catClip(23, 9);
   } else if (side) {
     const lean = pose === 'kiss' ? 1 : pose === 'deepKiss' ? 2 : 0;
     p.oval('L', 19 + lean, 15, 8, 10);
@@ -70,6 +79,7 @@ function girlFrame(pose) {
     p.rect('R', 26 + lean, 21, 2, 1);
     p.rect('L', 11 + lean, 17, 2, 8);
     p.rect('A', 12 + lean, 19, 2, 2); // 发夹
+    catClip(12 + lean, 9);
     if (pose === 'hug') p.rect('S', 27, 28, 9, 2);
     if (pose === 'kiss' || pose === 'deepKiss') p.rect('M', 30, 25, 2, 1);
   } else {
@@ -88,6 +98,7 @@ function girlFrame(pose) {
     p.rect('s', 19, 22, 2, 1);
     p.rect('L', 12, 17, 2, 8);
     p.rect('L', 26, 17, 2, 8);
+    catClip(11, 9);
   }
   return p.result();
 }
@@ -97,13 +108,20 @@ function boyFrame(pose) {
   const side = ['side1', 'side2', 'approach', 'hug', 'kiss', 'deepKiss', 'release'].includes(pose);
   const up = pose.startsWith('up');
   const step = pose.endsWith('2');
+  const tiptoe = pose === 'kiss' || pose === 'deepKiss';
   // 非主流宽外套、紫色内衬、银链和磨损的宽裤脚。
   p.rect('P', step ? 12 : 11, 34, 6, 6);
   p.rect('P', step ? 27 : 25, 34, 6, 6);
   p.rect('W', 13, 37, 3, 1);
   p.rect('W', 27, 36, 3, 1);
-  p.rect('B', step ? 10 : 9, 39, 9, 3);
-  p.rect('B', step ? 26 : 25, 39, 9, 3);
+  if (tiptoe) {
+    // 两只鞋跟向上收，窄脚尖触地；身体仍使用同一脚部锚点。
+    p.rect('B', 14, 37, 5, 2); p.rect('B', 11, 39, 5, 1); p.rect('B', 9, 40, 4, 2);
+    p.rect('B', 27, 37, 5, 2); p.rect('B', 26, 39, 5, 1); p.rect('B', 25, 40, 4, 2);
+  } else {
+    p.rect('B', step ? 10 : 9, 39, 9, 3);
+    p.rect('B', step ? 26 : 25, 39, 9, 3);
+  }
   p.oval('J', 20, 28, 12, 8);
   p.rect('C', 9, 24, 22, 10);
   p.rect('V', 17, 25, 7, 8);

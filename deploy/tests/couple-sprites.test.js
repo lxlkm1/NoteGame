@@ -82,3 +82,22 @@ test('女生头部收窄，男生松手后手臂明显下垂', () => {
   const lowered = COUPLE_FRAMES.boy.release.slice(25, 32).flatMap(row => [...row.slice(0, 8)]).filter(pixel => pixel === 'S').length;
   assert.ok(raised >= lowered + 12, `拥抱与松手的手臂不够分明: ${raised}/${lowered}`);
 });
+
+test('小猫发饰在女生每个方向和亲昵姿态都可见', () => {
+  for (const pose of names) {
+    const head = COUPLE_FRAMES.girl[pose].slice(6, 17).join('');
+    assert.ok((head.match(/K/g) || []).length >= 12, `${pose} 缺少小猫脸`);
+    assert.ok(head.includes('k') && head.includes('N'), `${pose} 缺少猫鼻或眼睛`);
+  }
+});
+
+test('男生接吻时踮脚，鞋跟离地而脚尖仍触地', () => {
+  for (const pose of ['kiss', 'deepKiss']) {
+    const frame = COUPLE_FRAMES.boy[pose];
+    const ground = frame[41];
+    const heels = frame.slice(37, 40).join('');
+    assert.ok((ground.match(/B/g) || []).length <= 8, `${pose} 鞋底仍然平放`);
+    assert.ok((ground.match(/B/g) || []).length >= 2, `${pose} 脚尖没有落地`);
+    assert.ok((heels.match(/B/g) || []).length >= 6, `${pose} 鞋跟没有抬起`);
+  }
+});
