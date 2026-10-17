@@ -1,2 +1,9 @@
 _site/
 temp_*/
+
+# Claude Code 个人本地配置（权限白名单等）
+.claude/settings.local.json
+
+# token 消耗记录：个人数据，每次会话都变，不进仓库
+docs/token-log.md
+docs/token-log.state.json
