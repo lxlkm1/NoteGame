@@ -1,6 +1,6 @@
 import { COUPLE_FRAMES, COUPLE_PALETTES } from './couple-sprites.js';
 
-// 两人的坐姿共用一张画布，让前臂能真正环在白裙与肩膀前方。
+// 两人的坐姿共用一张画布，远臂先画在女生背后，近臂再环过腰前。
 export const COUPLE_LAWN_ANCHOR = { x: 40, y: 56 };
 
 const boyKeys = {
@@ -126,32 +126,28 @@ function seatedGirl(p, tight) {
   p.line('S', [[33 + dx, 44], [28 + dx, 49]], 1);
 }
 
-function embracingArms(p, tight) {
-  // 两条独立前臂在女孩前景收拢，袖口与手掌有明确分界。
-  const shoulderArm = tight
-    ? [[51, 39], [49, 42], [37, 43], [29, 41]]
-    : [[52, 40], [51, 44], [40, 45], [31, 44]];
-  const waistArm = tight
-    ? [[49, 45], [46, 49], [36, 50], [28, 48]]
-    : [[50, 46], [49, 51], [37, 52], [30, 50]];
-  for (const points of [shoulderArm, waistArm]) {
-    p.line('J', points, 2);
-    p.line('U', points, 1);
-  }
-  p.line('u', tight ? [[47, 43], [38, 43]] : [[48, 45], [40, 45]], 0);
-  p.line('u', tight ? [[44, 50], [37, 50]] : [[46, 52], [38, 52]], 0);
-  if (tight) {
-    p.oval('t', 26, 41, 3, 2);
-    p.rect('T', 24, 40, 6, 2);
-    p.rect('t', 24, 42, 2, 1);
-    p.oval('t', 26, 48, 3, 2);
-    p.rect('T', 23, 47, 6, 2);
-  } else {
-    p.oval('t', 28, 44, 3, 2);
-    p.rect('T', 26, 43, 6, 2);
-    p.oval('t', 28, 50, 3, 2);
-    p.rect('T', 25, 49, 6, 2);
-  }
+function farEmbracingArm(p, tight) {
+  // 远臂沿背后绕向远侧肩头；袖子和手掌都先画，随后由女生遮挡。
+  const points = tight
+    ? [[43, 37], [34, 36], [27, 38]]
+    : [[43, 38], [33, 38], [26, 40]];
+  p.line('J', points, 2);
+  p.line('U', points, 1);
+  p.oval('T', tight ? 27 : 26, tight ? 38 : 40, 2, 1);
+}
+
+function nearEmbracingArm(p, tight) {
+  // 画面前方只有这一条近臂，从肩膀连续弯至腰前；抱紧时肘部向内收。
+  const points = tight
+    ? [[51, 38], [48, 42], [39, 44], [30, 42]]
+    : [[53, 39], [52, 45], [42, 47], [31, 44]];
+  p.line('J', points, 2);
+  p.line('U', points, 1);
+  p.line('u', tight ? [[46, 43], [39, 44], [33, 43]] : [[49, 46], [42, 47], [35, 45]], 0);
+  const handX = tight ? 28 : 29;
+  const handY = tight ? 42 : 44;
+  p.oval('t', handX, handY, 3, 1);
+  p.rect('T', handX - 2, handY - 1, 5, 2);
 }
 
 function lawnFrame(pose) {
@@ -176,16 +172,14 @@ function lawnFrame(pose) {
   }
 
   const tight = pose === 'lawnHoldTight';
-  // 远侧的手臂在女生背后，近侧两条手臂在白裙前方。
-  p.line('J', [[42, 38], [31, 39], [23, 41]], 2);
+  farEmbracingArm(p, tight);
   seatedGirl(p, tight);
   if (pose === 'lawnLap') {
     p.line('J', [[53, 39], [56, 45], [57, 50]], 2);
     p.line('U', [[53, 39], [56, 45], [57, 50]], 1);
     p.oval('T', 57, 51, 3, 2);
-    p.oval('T', 25, 42, 2, 2);
   } else {
-    embracingArms(p, tight);
+    nearEmbracingArm(p, tight);
   }
   // 女生自己的双手始终留在膝头，动作读起来更安静、羞涩。
   const dx = tight ? 4 : 3;

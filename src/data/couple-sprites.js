@@ -6,6 +6,7 @@ export const COUPLE_PALETTES = {
     W: '#fbf5e9', w: '#ddd6cb', d: '#c7bfba', A: '#9bb0b9',
     C: '#e8ddd4', c: '#bdafa8', P: '#766a78', B: '#554954',
     K: '#fff5e9', k: '#dc96a6', N: '#57404a',
+    G: '#1f222e', g: '#30323d', T: '#ebc4a5', t: '#cfa184', // 环抱时背后的男生手臂
   },
   boy: {
     Y: '#d9ac38', y: '#f9d65b', h: '#876027', Z: '#fff099',
@@ -37,6 +38,14 @@ function girlFrame(pose) {
   const side = ['side1', 'side2', 'hug', 'kiss', 'deepKiss'].includes(pose);
   const up = pose.startsWith('up');
   const step = pose.endsWith('2');
+  if (['hug', 'kiss', 'deepKiss'].includes(pose)) {
+    const y = pose === 'hug' ? 28 : 25;
+    // 远臂先画，随后用女生头发、衣服和身体挡住，只露出外侧小段手掌。
+    p.rect('G', 10, y, 19, 4);
+    p.rect('g', 11, y + 1, 18, 2);
+    p.oval('t', 10, y + 1, 2, 2);
+    p.rect('T', 9, y, 3, 3);
+  }
   // 修长的腿与白裙：裙摆是最醒目的大块颜色。
   p.rect('S', step ? 14 : 15, 41, 3, 5);
   p.rect('S', step ? 25 : 24, 41, 3, 5);
@@ -112,6 +121,7 @@ function boyFrame(pose) {
   const up = pose.startsWith('up');
   const step = pose.endsWith('2');
   const tiptoe = pose === 'kiss' || pose === 'deepKiss';
+  const embracing = pose === 'hug' || tiptoe;
   // 非主流宽外套、紫色内衬、银链和磨损的宽裤脚。
   p.rect('P', step ? 12 : 11, 34, 6, 6);
   p.rect('P', step ? 27 : 25, 34, 6, 6);
@@ -130,8 +140,10 @@ function boyFrame(pose) {
   p.rect('c', 29, 26, 2, 7);
   p.rect('L', 19, 31, 5, 1);
   p.rect('L', 22, 32, 1, 2);
-  p.oval('S', 8, 32, 2, 3);
-  p.oval('S', 32, 32, 2, 3);
+  if (!embracing) {
+    if (pose !== 'approach') p.oval('S', 8, 32, 2, 3);
+    p.oval('S', 32, 32, 2, 3);
+  }
   if (up) {
     p.oval('h', 20, 15, 11, 9);
     p.oval('Y', 20, 13, 10, 8);
@@ -156,15 +168,13 @@ function boyFrame(pose) {
     p.rect('R', 10 + lean, 22, 2, 1);
     p.rect('L', 10 + lean, 23, 1, 2); // 耳钉
     if (pose === 'approach') { p.rect('S', 3, 27, 10, 2); p.rect('s', 3, 28, 3, 1); }
-    if (pose === 'hug' || pose === 'kiss' || pose === 'deepKiss') {
-      p.rect('c', 6, 26, 10, 4); // 前臂搭住肩膀
-      p.rect('S', 0, 27, 9, 3);
-      p.rect('s', 0, 29, 3, 1);
-      if (pose === 'hug') {
-        p.rect('c', 8, 32, 8, 4); // 另一只手臂揽住腰部
-        p.rect('S', 0, 33, 10, 3);
-        p.rect('s', 0, 35, 3, 1);
-      }
+    if (embracing) {
+      // 近臂从肩膀向下弯到腰前；远臂已在女生帧的身体后面。
+      p.rect('J', 9, 26, 7, 9);
+      p.rect('c', 11, 27, 4, 6);
+      p.rect('c', 6, 31, 9, 4);
+      p.rect('S', 0, 32, 8, 3);
+      p.rect('s', 0, 34, 3, 1);
     }
     if (pose === 'kiss') p.rect('M', 9, 19, 2, 1);
     if (pose === 'deepKiss') p.rect('M', 12, 19, 2, 1);

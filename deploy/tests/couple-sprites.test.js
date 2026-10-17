@@ -82,8 +82,8 @@ test('接吻时两人的嘴在同一位置', () => {
 test('女生头部收窄，男生松手后手臂明显下垂', () => {
   const headWidth = Math.max(...COUPLE_FRAMES.girl.down1.slice(5, 22).map(row => [...row.slice(6, 34)].filter(pixel => 'LHSFhAsRE'.includes(pixel)).length));
   assert.ok(headWidth <= 18, `女生头部过宽: ${headWidth}`);
-  const raised = COUPLE_FRAMES.boy.hug.slice(25, 32).flatMap(row => [...row.slice(0, 8)]).filter(pixel => pixel === 'S').length;
-  const lowered = COUPLE_FRAMES.boy.release.slice(25, 32).flatMap(row => [...row.slice(0, 8)]).filter(pixel => pixel === 'S').length;
+  const raised = COUPLE_FRAMES.boy.hug.slice(30, 35).flatMap(row => [...row.slice(0, 8)]).filter(pixel => pixel === 'S').length;
+  const lowered = COUPLE_FRAMES.boy.release.slice(30, 35).flatMap(row => [...row.slice(0, 8)]).filter(pixel => pixel === 'S').length;
   assert.ok(raised >= lowered + 12, `拥抱与松手的手臂不够分明: ${raised}/${lowered}`);
 });
 
@@ -108,12 +108,18 @@ test('男生接吻时踮脚，鞋跟离地而脚尖仍触地', () => {
   }
 });
 
-test('男生拥抱时双臂覆盖女生肩部和腰部', () => {
-  const gap = 16;
-  const frame = COUPLE_FRAMES.boy.hug;
-  for (const y of [27, 33]) {
-    const arm = [...frame[y]].flatMap((pixel, x) => pixel === 'S' && x + gap >= 17 && x + gap <= 27 ? [x] : []);
-    assert.ok(arm.length >= 5, `第 ${y} 行的手臂没有伸到女生身前`);
+test('站立环抱的远臂被女生身体遮住，近臂绕腰且没有多余下垂手掌', () => {
+  const girl = COUPLE_FRAMES.girl.hug, boy = COUPLE_FRAMES.boy.hug;
+  const colorAt = (x, y) => COUPLE_PALETTES.boy[boy[y - 6]?.[x - 16]] || COUPLE_PALETTES.girl[girl[y]?.[x]];
+  assert.equal(colorAt(20, 33), COUPLE_PALETTES.girl.W, '上半身不能再被第二条前景臂横穿');
+  assert.equal(colorAt(20, 39), COUPLE_PALETTES.boy.S, '近侧手臂应环过腰前');
+  for (let y = 26; y < 36; y++) for (let x = 14; x < 26; x++) {
+    if ('WwC'.includes(COUPLE_FRAMES.girl.side1[y][x]))
+      assert.equal(girl[y][x], COUPLE_FRAMES.girl.side1[y][x], '远臂必须位于女生衣服后面');
+  }
+  for (const pose of ['hug', 'kiss', 'deepKiss']) {
+    const danglingHand = COUPLE_FRAMES.boy[pose].slice(26, 36).map(row => row.slice(31, 35)).join('');
+    assert.ok(!danglingHand.includes('S'), `${pose} 不应保留第三只下垂的手`);
   }
   assert.equal(COUPLE_FRAMES.girl.hug[28].slice(31, 37).includes('S'), false, '女生应保持较安静的站姿');
 });

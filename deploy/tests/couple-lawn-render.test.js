@@ -19,6 +19,16 @@ test('草坪动作帧完整且每种动作有独立姿态和合法配色', () =>
   assert.equal(frames.size, poses.length);
 });
 
+test('坐姿拥抱前景只有一条袖子横过女生身体，远臂被白裙遮住', () => {
+  for (const pose of ['lawnHold', 'lawnHoldTight']) {
+    const frame = COUPLE_LAWN_FRAMES[pose];
+    // 沿女生身体中央从肩到裙摆取纵截面，不能出现两段分离的男生袖子。
+    const torsoColumn = frame.slice(38, 52).map(row => row[34]).join('');
+    assert.equal((torsoColumn.match(/[JUu]+/g) || []).length, 1, `${pose} 出现多条前景手臂`);
+    assert.ok(torsoColumn.startsWith('W'), `${pose} 远臂不应盖住肩前的白色衣服`);
+  }
+});
+
 test('坐姿组合只绘制一次，固定男生地面锚点且不镜像', () => {
   const originalDocument = globalThis.document;
   globalThis.document = { createElement: () => ({ getContext: () => ({ fillRect() {} }) }) };
