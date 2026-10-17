@@ -33,7 +33,7 @@ const Sound = (() => {
 
   // ---- 浏览器合成引擎（AudioContext 用于音效，<audio> 用于 BGM） ----
   let ctx = null, masterGain = null, sfxGain = null, bgmAudio = null;
-  const BGM_TRACKS = { indoor: 'assent/canon.mp3', outside: 'assent/Annies Wonderland.mp3' };
+  const BGM_TRACKS = { indoor: 'src/assent/canon.mp3', outside: 'src/assent/Annies Wonderland.mp3' };
   let bgmTrack = 'indoor';
 
   function applyMute() {

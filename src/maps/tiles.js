@@ -1,5 +1,5 @@
 // tiles.js —— 图例：符号 → 语义（名字 / 是否 solid / 画法 style / 传送门目的地 portal）
-// 语义在配置，画法实现在 js/map.js 引擎（按 style 分发）
+// 语义在配置，画法实现在 src/map.js 引擎（按 style 分发）
 // portal 直接写目的地场景名：改门位置 = 只在地图字符串里挪动对应字母，无需改任何其他地方
 (function (root) {
   root.MAPS = root.MAPS || {};

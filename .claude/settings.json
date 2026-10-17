@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/token-log.mjs\"",
+            "command": "node \"$CLAUDE_PROJECT_DIR/tools/token-log.mjs\"",
             "timeout": 30
           }
         ]

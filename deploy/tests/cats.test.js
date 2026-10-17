@@ -1,10 +1,10 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert');
-const { CAT_DEFS, createCats, updateCat, feed } = require('../js/cats.js');
-const outside = require('../maps/outside.js');
-const tiles = require('../maps/tiles.js');
-const { isSolidAtPx } = require('../js/map.js');
+const { CAT_DEFS, createCats, updateCat, feed } = require('../../src/cats.js');
+const outside = require('../../src/maps/outside.js');
+const tiles = require('../../src/maps/tiles.js');
+const { isSolidAtPx } = require('../../src/map.js');
 
 test('十只普通猫出生在前庭的可走位置', () => {
   const expected = [

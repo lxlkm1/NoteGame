@@ -5,6 +5,6 @@
   "private": true,
   "scripts": {
     "test": "node --test",
-    "build:pages": "node scripts/build-pages.mjs"
+    "build:pages": "node deploy/build-pages.mjs"
   }
 }

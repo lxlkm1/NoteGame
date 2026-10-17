@@ -1,7 +1,7 @@
 // token-log.mjs —— 增量统计本项目 Claude Code 会话的 token 消耗，追加到 docs/token-log.md
 // 用法：
-//   node scripts/token-log.mjs --task "任务名"   任务完成时记录（归入该任务）
-//   node scripts/token-log.mjs                   无任务名记录（SessionEnd hook 兜底，记为「未归属」）
+//   node tools/token-log.mjs --task "任务名"   任务完成时记录（归入该任务）
+//   node tools/token-log.mjs                   无任务名记录（SessionEnd hook 兜底，记为「未归属」）
 // 原理：Claude Code 把每次会话写在 ~/.claude/projects/<项目路径slug>/*.jsonl，
 // 每条 assistant 消息带 message.usage（四类 token）和 message.model。
 // 本脚本记住每个文件已解析的字节偏移（docs/token-log.state.json），只统计新增部分。
@@ -72,7 +72,7 @@ if (!existsSync(logFile)) {
   writeFileSync(logFile, [
     '# Token 消耗记录',
     '',
-    '由 `scripts/token-log.mjs` 自动生成：任务完成时以 `--task` 记录归属；会话结束时由 SessionEnd hook 兜底记录「（未归属）」。',
+    '由 `tools/token-log.mjs` 自动生成：任务完成时以 `--task` 记录归属；会话结束时由 SessionEnd hook 兜底记录「（未归属）」。',
     '',
     '| 记录时间 | 任务 | 模型 | 模式 | 输入 | 输出 | 缓存写 | 缓存读 |',
     '| --- | --- | --- | --- | ---: | ---: | ---: | ---: |',

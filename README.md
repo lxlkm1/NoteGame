@@ -30,7 +30,7 @@ python3 -m http.server 8137
 
 ## 部署到 GitHub Pages
 
-仓库已配置 GitHub Actions 工作流。推送到 `main` 后，它会运行测试、生成 `_site/`，并部署游戏文件。发布目录只包含 `index.html`、`style.css`、`js/`、`maps/` 和 `assent/`；本地参考图、文档和测试不会进入网站。
+仓库已配置 GitHub Actions 工作流。推送到 `main` 后，它会运行测试、生成 `_site/`，并部署游戏文件。发布目录只包含 `index.html`、`style.css`、`src/` 和 `assent/`；本地参考图、文档和测试不会进入网站。
 
 首次发布时，在 GitHub 仓库的 **Settings → Pages → Build and deployment** 中把 **Source** 设为 **GitHub Actions**。如果首次推送先于这项设置，可在 **Actions → Deploy game to GitHub Pages** 中手动重新运行。发布前请确认背景音乐的公开使用权限。
 
@@ -41,9 +41,9 @@ python3 -m http.server 8137
 | 路径 | 内容 |
 | --- | --- |
 | `index.html`、`style.css` | 页面与游戏界面 |
-| `maps/` | 场景地图、格子类型与角色位置 |
-| `js/` | 渲染、角色行为、互动与音频 |
-| `assent/` | 背景音乐 |
-| `tests/` | 地图、角色行为和音频测试 |
+| `src/` | 渲染、角色行为、互动与音频 |
+| `src/maps/` | 场景地图、格子类型与角色位置 |
+| `src/assent/` | 背景音乐 |
+| `deploy/` | 部署构建脚本与测试 |
 
 地图为 39×30 格，每格以 32×32 绘制像素呈现；移动和碰撞保留每格 16 单位的世界坐标。

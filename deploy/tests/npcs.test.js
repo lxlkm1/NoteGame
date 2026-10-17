@@ -1,11 +1,11 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert');
-const NPCs = require('../js/npcs.js');
-const atrium = require('../maps/atrium.js');
-const reading = require('../maps/reading.js');
-const outside = require('../maps/outside.js');
-const tiles = require('../maps/tiles.js');
+const NPCs = require('../../src/npcs.js');
+const atrium = require('../../src/maps/atrium.js');
+const reading = require('../../src/maps/reading.js');
+const outside = require('../../src/maps/outside.js');
+const tiles = require('../../src/maps/tiles.js');
 
 const maps = { atrium, reading, outside };
 

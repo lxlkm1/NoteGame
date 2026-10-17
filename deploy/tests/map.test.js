@@ -1,13 +1,13 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert');
-const tiles = require('../maps/tiles.js');
-const atrium = require('../maps/atrium.js');
-const reading = require('../maps/reading.js');
-const toilet = require('../maps/toilet.js');
-const outside = require('../maps/outside.js');
-const { CAT_DEFS } = require('../js/cats.js');
-const { TILE, ART_SCALE, parseMap, isSolidAtPx, isDoorAt, doorDestAt } = require('../js/map.js');
+const tiles = require('../../src/maps/tiles.js');
+const atrium = require('../../src/maps/atrium.js');
+const reading = require('../../src/maps/reading.js');
+const toilet = require('../../src/maps/toilet.js');
+const outside = require('../../src/maps/outside.js');
+const { CAT_DEFS } = require('../../src/cats.js');
+const { TILE, ART_SCALE, parseMap, isSolidAtPx, isDoorAt, doorDestAt } = require('../../src/map.js');
 
 test('绘制分辨率为每格 32 像素，碰撞格仍为 16 单位', () => {
   assert.equal(TILE, 16);

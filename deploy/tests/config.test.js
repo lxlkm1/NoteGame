@@ -2,11 +2,11 @@
 // 配置体检：用户改错 maps/ 配置时测试立刻报警，不用开浏览器
 const test = require('node:test');
 const assert = require('node:assert');
-const tiles = require('../maps/tiles.js');
-const atrium = require('../maps/atrium.js');
-const reading = require('../maps/reading.js');
-const toilet = require('../maps/toilet.js');
-const outside = require('../maps/outside.js');
+const tiles = require('../../src/maps/tiles.js');
+const atrium = require('../../src/maps/atrium.js');
+const reading = require('../../src/maps/reading.js');
+const toilet = require('../../src/maps/toilet.js');
+const outside = require('../../src/maps/outside.js');
 
 const SCENES = { atrium, reading, toilet, outside };
 

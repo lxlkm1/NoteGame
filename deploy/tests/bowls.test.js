@@ -1,9 +1,9 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert');
-const Bowls = require('../js/bowls.js');
-const outside = require('../maps/outside.js');
-const tiles = require('../maps/tiles.js');
+const Bowls = require('../../src/bowls.js');
+const outside = require('../../src/maps/outside.js');
+const tiles = require('../../src/maps/tiles.js');
 
 test('前庭每次生成左右两个位置随机且可走的碗', () => {
   const a = Bowls.create(() => 0);
