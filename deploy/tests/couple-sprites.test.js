@@ -1,23 +1,34 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { COUPLE_FRAMES, COUPLE_PALETTES } from '../../src/data/couple-sprites.js';
-import { selectCoupleFrame } from '../../src/npc/couple-render.js';
+import { selectCoupleFrame, couplePlacement } from '../../src/npc/couple-render.js';
 
 const names = ['down1', 'down2', 'up1', 'up2', 'side1', 'side2', 'hug', 'kiss'];
 
-test('情侣各方向与亲昵帧均为完整的 24×24 像素图', () => {
+test('女生 32×36、男生 32×32，所有动作帧尺寸一致', () => {
   for (const person of ['girl', 'boy']) {
+    const height = person === 'girl' ? 36 : 32;
     for (const name of names) {
       const frame = COUPLE_FRAMES[person][name];
-      assert.equal(frame.length, 24, `${person}/${name} 行数`);
+      assert.equal(frame.length, height, `${person}/${name} 行数`);
       for (const row of frame) {
-        assert.equal(row.length, 24, `${person}/${name} 列数`);
+        assert.equal(row.length, 32, `${person}/${name} 列数`);
         for (const pixel of row) {
           assert.ok(pixel === '.' || COUPLE_PALETTES[person][pixel], `${person}/${name} 未定义颜色 ${pixel}`);
         }
       }
     }
   }
+});
+
+test('两人的脚落在同一地面，女生头顶高于男生', () => {
+  const girl = couplePlacement({ id: 'couple-a', x: 100, y: 200 });
+  const boy = couplePlacement({ id: 'couple-b', x: 100, y: 200 });
+  assert.equal(girl.x + girl.width / 2, 108);
+  assert.equal(boy.x + boy.width / 2, 108);
+  assert.equal(girl.y + girl.height, 216);
+  assert.equal(boy.y + boy.height, 216);
+  assert.ok(girl.y < boy.y);
 });
 
 test('正面帧保留刘海、裙子和黄发特征', () => {

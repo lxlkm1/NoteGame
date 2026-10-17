@@ -116,7 +116,7 @@ test('小情侣靠近猫时也可能投喂', () => {
   assert.equal(events[0].cat, cat);
 });
 
-test('小情侣散步到顶部后停下拥抱：面对面、间距 16px、冒爱心、然后离开', () => {
+test('小情侣散步到顶部后停下拥抱：面对面、间距 22px、头顶冒爱心、然后离开', () => {
   const world = NPCs.create(maps, () => 0.1); // rng 0.1：出现情侣，动作选 hug
   for (let i = 0; i < 25 && !world.couple; i++) NPCs.update(world, 1, [], () => 0.1);
   assert.ok(world.couple);
@@ -128,9 +128,10 @@ test('小情侣散步到顶部后停下拥抱：面对面、间距 16px、冒爱
   assert.equal(b.facing, 'left');
   assert.equal(a.action, 'hug');
   assert.equal(b.action, 'hug');
-  assert.equal(b.x - a.x, 16);
+  assert.equal(b.x - a.x, 22);
   const events = NPCs.update(world, 1, [], () => 0.1); // cuddle 第一帧即冒爱心
   assert.ok(events.some(e => e.type === 'cuddle-heart'));
+  assert.equal(events.find(e => e.type === 'cuddle-heart').y, a.y - 22);
   for (let i = 0; i < 40 && world.couple; i++) NPCs.update(world, 1, [], () => 0.1);
   assert.equal(world.couple, null);
   assert.equal(a.action, null);
@@ -144,7 +145,7 @@ test('小情侣接吻比拥抱站得更近、爱心更密', () => {
   assert.equal(world.couple.action, 'kiss');
   assert.equal(world.couple.members[0].action, 'kiss');
   assert.equal(world.couple.members[1].action, 'kiss');
-  assert.equal(world.couple.members[1].x - world.couple.members[0].x, 12);
+  assert.equal(world.couple.members[1].x - world.couple.members[0].x, 20);
   // 同样的步进节奏下，kiss 的爱心事件多于 hug（间隔 0.4s vs 0.8s）
   let kissHearts = 0;
   for (let i = 0; i < 4; i++) {

@@ -1,4 +1,4 @@
-// 情侣专用像素画绘制：原生 24×24 图像，脚部和普通 NPC 对齐。
+// 情侣专用像素画绘制：不同身高的原生像素图，脚部和普通 NPC 对齐。
 import { COUPLE_FRAMES, COUPLE_PALETTES } from '../data/couple-sprites.js';
 
 const cache = new Map();
@@ -19,10 +19,10 @@ function bitmap(person, name) {
   const matrix = COUPLE_FRAMES[person][name];
   const palette = COUPLE_PALETTES[person];
   const canvas = document.createElement('canvas');
-  canvas.width = 24;
-  canvas.height = 24;
+  canvas.width = matrix[0].length;
+  canvas.height = matrix.length;
   const pen = canvas.getContext('2d');
-  for (let y = 0; y < 24; y++) for (let x = 0; x < 24; x++) {
+  for (let y = 0; y < canvas.height; y++) for (let x = 0; x < canvas.width; x++) {
     const color = palette[matrix[y][x]];
     if (!color) continue;
     pen.fillStyle = color;
@@ -32,15 +32,25 @@ function bitmap(person, name) {
   return canvas;
 }
 
+export function couplePlacement(npc) {
+  const person = npc.id === 'couple-a' ? 'girl' : 'boy';
+  const frame = COUPLE_FRAMES[person].down1;
+  const width = frame[0].length, height = frame.length;
+  return {
+    x: Math.round(npc.x + 8 - width / 2),
+    y: Math.round(npc.y + 16 - height),
+    width, height,
+  };
+}
+
 export function drawCouple(ctx, npc) {
   const { person, name, flip } = selectCoupleFrame(npc);
   const sprite = bitmap(person, name);
-  const x = Math.round(npc.x - 4);
-  const y = Math.round(npc.y - 8);
+  const { x, y, width } = couplePlacement(npc);
   ctx.imageSmoothingEnabled = false;
   if (flip) {
     ctx.save();
-    ctx.translate(x + 24, y);
+    ctx.translate(x + width, y);
     ctx.scale(-1, 1);
     ctx.drawImage(sprite, 0, 0);
     ctx.restore();
