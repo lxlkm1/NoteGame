@@ -59,3 +59,26 @@ test('靠近、拥抱、接吻、深吻和松手显示各自姿态', () => {
   for (const action of ['approach', 'release'])
     assert.equal(selectCoupleFrame({ id: 'couple-b', action, facing: 'left', moving: false }).name, action);
 });
+
+test('接吻时两人的嘴在同一位置', () => {
+  for (const [pose, gap] of [['kiss', 23], ['deepKiss', 21]]) {
+    const girl = couplePlacement({ id: 'couple-a', x: 100, y: 200 });
+    const boy = couplePlacement({ id: 'couple-b', x: 100 + gap, y: 200 });
+    const mouth = (person, placement) => {
+      const frame = COUPLE_FRAMES[person][pose];
+      const points = frame.flatMap((row, y) => [...row].flatMap((pixel, x) => pixel === 'M' ? [{ x: placement.x + x, y: placement.y + y }] : []));
+      assert.ok(points.length, `${person}/${pose} 缺少嘴部`);
+      return points[0];
+    };
+    const a = mouth('girl', girl), b = mouth('boy', boy);
+    assert.ok(Math.abs(a.x - b.x) <= 1 && Math.abs(a.y - b.y) <= 1, `${pose} 嘴部未对齐: ${JSON.stringify({ a, b })}`);
+  }
+});
+
+test('女生头部收窄，男生松手后手臂明显下垂', () => {
+  const headWidth = Math.max(...COUPLE_FRAMES.girl.down1.slice(5, 22).map(row => [...row.slice(6, 34)].filter(pixel => 'LHSFhAsRE'.includes(pixel)).length));
+  assert.ok(headWidth <= 18, `女生头部过宽: ${headWidth}`);
+  const raised = COUPLE_FRAMES.boy.hug.slice(25, 32).flatMap(row => [...row.slice(0, 8)]).filter(pixel => pixel === 'S').length;
+  const lowered = COUPLE_FRAMES.boy.release.slice(25, 32).flatMap(row => [...row.slice(0, 8)]).filter(pixel => pixel === 'S').length;
+  assert.ok(raised >= lowered + 12, `拥抱与松手的手臂不够分明: ${raised}/${lowered}`);
+});

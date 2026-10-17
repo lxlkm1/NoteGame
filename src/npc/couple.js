@@ -5,7 +5,7 @@ import { student, moveTo } from './shared.js';
 
 const WALK_GAP = 32;
 const ACTIONS = {
-  hug: { gap: 26, heartInterval: 0.8 },
+  hug: { gap: 22, heartInterval: 0.8 },
   kiss: { gap: 23, heartInterval: 0.45 },
   deepKiss: { gap: 21, heartInterval: 0.35 },
 };
@@ -93,7 +93,7 @@ function startRelease(pair) {
   const [girl, boy] = pair.members;
   pair.phase = 'release';
   pair.action = null;
-  pair.timer = 1.2;
+  pair.timer = 2;
   girl.action = null; girl.moving = false;
   boy.action = 'release'; boy.moving = true;
 }

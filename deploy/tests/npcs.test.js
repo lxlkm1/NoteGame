@@ -164,7 +164,11 @@ test('女生停下后男生主动靠近，并能连续拥抱、接吻、深吻�
     }
     if (pair.phase === 'kiss') sawKiss = true;
     if (pair.phase === 'deepKiss') sawDeepKiss = true;
-    if (pair.phase === 'release') sawRelease = true;
+    if (pair.phase === 'release') {
+      if (!sawRelease) assert.ok(pair.timer >= 1.9, '松开手臂后应停留足够时间让动作可见');
+      sawRelease = true;
+      assert.equal(boy.action, 'release');
+    }
     if (sawSecondApproach) break;
   }
   assert.ok(sawApproach && sawHug && sawKiss && sawDeepKiss && sawRelease && sawSecondApproach);

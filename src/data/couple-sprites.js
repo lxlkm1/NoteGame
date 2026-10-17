@@ -2,13 +2,13 @@
 export const COUPLE_PALETTES = {
   girl: {
     H: '#443440', F: '#614853', L: '#2c2935', h: '#86646b',
-    S: '#efd0ba', s: '#dcb099', R: '#dfa3a0', E: '#483943',
+    S: '#efd0ba', s: '#dcb099', R: '#dfa3a0', M: '#b97578', E: '#483943',
     W: '#fbf5e9', w: '#ddd6cb', d: '#c7bfba', A: '#9bb0b9',
     C: '#e8ddd4', c: '#bdafa8', P: '#766a78', B: '#554954',
   },
   boy: {
     Y: '#d9ac38', y: '#f9d65b', h: '#876027', Z: '#fff099',
-    S: '#ebc4a5', s: '#cfa184', E: '#2e292b', R: '#a67569',
+    S: '#ebc4a5', s: '#cfa184', E: '#2e292b', R: '#a67569', M: '#9d635d',
     C: '#30323d', c: '#5c6070', J: '#1f222e', V: '#885276',
     L: '#c5c4c8', P: '#424450', B: '#24252d', W: '#ddd7cf',
   },
@@ -53,41 +53,41 @@ function girlFrame(pose) {
   p.rect('W', 12, 26, 3, 6);
   p.rect('W', 26, 26, 3, 6);
   if (up) {
-    p.oval('L', 20, 13, 10, 12);
-    p.oval('H', 20, 11, 9, 9);
-    p.rect('F', 13, 8, 14, 2);
-    p.rect('h', 17, 5, 6, 1);
-    p.rect('L', 10, 18, 3, 8);
+    p.oval('L', 20, 15, 8, 10);
+    p.oval('H', 20, 11, 8, 7);
+    p.rect('F', 14, 8, 12, 2);
+    p.rect('h', 18, 5, 4, 1);
+    p.rect('L', 12, 18, 2, 7);
   } else if (side) {
     const lean = pose === 'kiss' ? 1 : pose === 'deepKiss' ? 2 : 0;
-    p.oval('L', 18 + lean, 14, 10, 12);
-    p.oval('H', 20 + lean, 10, 9, 8);
-    p.oval('S', 23 + lean, 16, 6, 6);
-    p.rect('F', 22 + lean, 7, 7, 3);
-    p.rect('F', 26 + lean, 10, 3, 2);
-    p.rect('h', 16 + lean, 5, 6, 1);
-    p.rect('E', 27 + lean, 16, 1, 1);
-    p.rect('R', 25 + lean, 19, 2, 1);
-    p.rect('L', 10 + lean, 15, 3, 11);
+    p.oval('L', 19 + lean, 15, 8, 10);
+    p.oval('H', 20 + lean, 11, 8, 7);
+    p.oval('S', 23 + lean, 18, 5, 6);
+    p.rect('F', 21 + lean, 8, 7, 3);
+    p.rect('F', 25 + lean, 11, 2, 2);
+    p.rect('h', 18 + lean, 5, 4, 1);
+    p.rect('E', 26 + lean, 17, 1, 1);
+    p.rect('R', 26 + lean, 21, 2, 1);
+    p.rect('L', 11 + lean, 17, 2, 8);
     p.rect('A', 12 + lean, 19, 2, 2); // 发夹
     if (pose === 'hug') p.rect('S', 27, 28, 9, 2);
-    if (pose === 'kiss' || pose === 'deepKiss') p.rect('R', 29 + lean, 19, 2, 1);
+    if (pose === 'kiss' || pose === 'deepKiss') p.rect('M', 30, 25, 2, 1);
   } else {
-    p.oval('L', 20, 14, 10, 12);
-    p.oval('H', 20, 10, 10, 8);
-    p.oval('S', 20, 16, 7, 6);
-    p.rect('F', 13, 8, 14, 3);
-    p.rect('F', 14, 11, 4, 2);
-    p.rect('F', 22, 11, 4, 2);
-    p.rect('h', 17, 5, 6, 1);
-    p.rect('A', 10, 12, 3, 2);
-    p.rect('E', 16, 17, 1, 1);
-    p.rect('E', 24, 17, 1, 1);
-    p.rect('R', 13, 19, 2, 1);
-    p.rect('R', 25, 19, 2, 1);
-    p.rect('s', 19, 21, 2, 1);
-    p.rect('L', 10, 15, 3, 11);
-    p.rect('L', 28, 15, 3, 11);
+    p.oval('L', 20, 15, 8, 10);
+    p.oval('H', 20, 11, 8, 7);
+    p.oval('S', 20, 17, 6, 6);
+    p.rect('F', 14, 8, 12, 3);
+    p.rect('F', 15, 11, 3, 2);
+    p.rect('F', 22, 11, 3, 2);
+    p.rect('h', 18, 5, 4, 1);
+    p.rect('A', 12, 13, 2, 2);
+    p.rect('E', 17, 18, 1, 1);
+    p.rect('E', 23, 18, 1, 1);
+    p.rect('R', 14, 20, 2, 1);
+    p.rect('R', 24, 20, 2, 1);
+    p.rect('s', 19, 22, 2, 1);
+    p.rect('L', 12, 17, 2, 8);
+    p.rect('L', 26, 17, 2, 8);
   }
   return p.result();
 }
@@ -136,13 +136,21 @@ function boyFrame(pose) {
     p.rect('E', 10 + lean, 17, 7, 1);
     p.rect('E', 12 + lean, 18, 4, 1);
     p.rect('E', 13 + lean, 20, 2, 1);
-    p.rect('R', 10 + lean, 23, 3, 1);
+    p.rect('R', 10 + lean, 22, 2, 1);
     p.rect('L', 10 + lean, 23, 1, 2); // 耳钉
     if (pose === 'approach') { p.rect('S', 3, 27, 10, 2); p.rect('s', 3, 28, 3, 1); }
-    if (pose === 'hug') { p.rect('S', 1, 28, 14, 3); p.rect('s', 1, 30, 4, 1); }
-    if (pose === 'kiss') p.rect('S', 7, 24, 3, 1);
-    if (pose === 'deepKiss') { p.rect('R', 7 + lean, 23, 3, 1); p.rect('S', 6, 25, 2, 1); }
-    if (pose === 'release') { p.rect('S', 8, 32, 3, 5); p.rect('s', 8, 36, 3, 1); }
+    if (pose === 'hug' || pose === 'kiss' || pose === 'deepKiss') {
+      p.rect('c', 7, 26, 9, 4); // 外套袖子跟着手臂前伸
+      p.rect('S', 0, 27, 9, 3);
+      p.rect('s', 0, 29, 3, 1);
+    }
+    if (pose === 'kiss') p.rect('M', 7, 19, 2, 1);
+    if (pose === 'deepKiss') p.rect('M', 9, 19, 2, 1);
+    if (pose === 'release') {
+      p.rect('c', 6, 29, 4, 7); // 松手后手臂垂下
+      p.rect('S', 7, 35, 3, 4);
+      p.rect('s', 7, 38, 3, 1);
+    }
   } else {
     p.oval('h', 20, 14, 11, 9);
     p.oval('S', 20, 18, 7, 6);
