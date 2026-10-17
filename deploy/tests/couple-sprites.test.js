@@ -61,13 +61,17 @@ test('靠近、拥抱、接吻、深吻和松手显示各自姿态', () => {
 });
 
 test('接吻时两人的嘴在同一位置', () => {
-  for (const [pose, gap] of [['kiss', 23], ['deepKiss', 21]]) {
+  for (const [pose, gap] of [['kiss', 19], ['deepKiss', 17]]) {
     const girl = couplePlacement({ id: 'couple-a', x: 100, y: 200 });
     const boy = couplePlacement({ id: 'couple-b', x: 100 + gap, y: 200 });
     const mouth = (person, placement) => {
       const frame = COUPLE_FRAMES[person][pose];
       const points = frame.flatMap((row, y) => [...row].flatMap((pixel, x) => pixel === 'M' ? [{ x: placement.x + x, y: placement.y + y }] : []));
       assert.ok(points.length, `${person}/${pose} 缺少嘴部`);
+      assert.ok(points.some(({ x, y }) => {
+        const localX = x - placement.x, localY = y - placement.y;
+        return [[-1, 0], [1, 0], [0, -1], [0, 1]].some(([dx, dy]) => frame[localY + dy]?.[localX + dx] === 'S');
+      }), `${person}/${pose} 嘴部脱离脸部轮廓`);
       return points[0];
     };
     const a = mouth('girl', girl), b = mouth('boy', boy);
@@ -94,10 +98,22 @@ test('小猫发饰在女生每个方向和亲昵姿态都可见', () => {
 test('男生接吻时踮脚，鞋跟离地而脚尖仍触地', () => {
   for (const pose of ['kiss', 'deepKiss']) {
     const frame = COUPLE_FRAMES.boy[pose];
+    const firstHairRow = rows => rows.findIndex(row => row.includes('Y'));
+    assert.ok(firstHairRow(frame) <= firstHairRow(COUPLE_FRAMES.boy.hug) - 2, `${pose} 身体没有随着踮脚升高`);
     const ground = frame[41];
     const heels = frame.slice(37, 40).join('');
     assert.ok((ground.match(/B/g) || []).length <= 8, `${pose} 鞋底仍然平放`);
     assert.ok((ground.match(/B/g) || []).length >= 2, `${pose} 脚尖没有落地`);
     assert.ok((heels.match(/B/g) || []).length >= 6, `${pose} 鞋跟没有抬起`);
   }
+});
+
+test('男生拥抱时双臂覆盖女生肩部和腰部', () => {
+  const gap = 16;
+  const frame = COUPLE_FRAMES.boy.hug;
+  for (const y of [27, 33]) {
+    const arm = [...frame[y]].flatMap((pixel, x) => pixel === 'S' && x + gap >= 17 && x + gap <= 27 ? [x] : []);
+    assert.ok(arm.length >= 5, `第 ${y} 行的手臂没有伸到女生身前`);
+  }
+  assert.equal(COUPLE_FRAMES.girl.hug[28].slice(31, 37).includes('S'), false, '女生应保持较安静的站姿');
 });

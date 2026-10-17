@@ -159,6 +159,7 @@ test('女生停下后男生主动靠近，并能连续拥抱、接吻、深吻�
       sawHug = true;
       assert.equal(girl.action, 'hug');
       assert.equal(boy.action, 'hug');
+      assert.ok(boy.x - girl.x <= 18, '男生拥抱时应贴近女生');
       assert.ok(pair.timer >= 0);
       assert.ok(events.every(e => e.type !== 'cuddle-heart' || e.y < girl.y - 25));
     }

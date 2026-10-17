@@ -26,7 +26,10 @@ function canvas(width, height) {
       for (let col = Math.max(0, Math.floor(cx - rx)); col <= Math.min(width - 1, Math.ceil(cx + rx)); col++)
         if (((col - cx) / rx) ** 2 + ((row - cy) / ry) ** 2 <= 1) pixels[row][col] = key;
   };
-  return { rect, oval, result: () => pixels.map(row => row.join('')) };
+  const shiftUp = amount => {
+    for (let row = 0; row < height; row++) pixels[row] = pixels[row + amount] || Array(width).fill('.');
+  };
+  return { rect, oval, shiftUp, result: () => pixels.map(row => row.join('')) };
 }
 
 function girlFrame(pose) {
@@ -80,8 +83,8 @@ function girlFrame(pose) {
     p.rect('L', 11 + lean, 17, 2, 8);
     p.rect('A', 12 + lean, 19, 2, 2); // 发夹
     catClip(12 + lean, 9);
-    if (pose === 'hug') p.rect('S', 27, 28, 9, 2);
-    if (pose === 'kiss' || pose === 'deepKiss') p.rect('M', 30, 25, 2, 1);
+    if (pose === 'kiss') p.rect('M', 28, 22, 2, 1);
+    if (pose === 'deepKiss') p.rect('M', 29, 22, 2, 1);
   } else {
     p.oval('L', 20, 15, 8, 10);
     p.oval('H', 20, 11, 8, 7);
@@ -114,11 +117,7 @@ function boyFrame(pose) {
   p.rect('P', step ? 27 : 25, 34, 6, 6);
   p.rect('W', 13, 37, 3, 1);
   p.rect('W', 27, 36, 3, 1);
-  if (tiptoe) {
-    // 两只鞋跟向上收，窄脚尖触地；身体仍使用同一脚部锚点。
-    p.rect('B', 14, 37, 5, 2); p.rect('B', 11, 39, 5, 1); p.rect('B', 9, 40, 4, 2);
-    p.rect('B', 27, 37, 5, 2); p.rect('B', 26, 39, 5, 1); p.rect('B', 25, 40, 4, 2);
-  } else {
+  if (!tiptoe) {
     p.rect('B', step ? 10 : 9, 39, 9, 3);
     p.rect('B', step ? 26 : 25, 39, 9, 3);
   }
@@ -142,7 +141,7 @@ function boyFrame(pose) {
     p.rect('Z', 22, 6, 3, 1);
     p.rect('h', 10, 19, 4, 3);
   } else if (side) {
-    const lean = pose === 'kiss' ? -1 : pose === 'deepKiss' ? -2 : 0;
+    const lean = pose === 'kiss' ? -1 : pose === 'deepKiss' ? -2 : pose === 'hug' ? 2 : 0;
     p.oval('h', 20 + lean, 15, 11, 9);
     p.oval('Y', 20 + lean, 12, 11, 8);
     p.oval('S', 15 + lean, 18, 6, 5);
@@ -158,12 +157,17 @@ function boyFrame(pose) {
     p.rect('L', 10 + lean, 23, 1, 2); // 耳钉
     if (pose === 'approach') { p.rect('S', 3, 27, 10, 2); p.rect('s', 3, 28, 3, 1); }
     if (pose === 'hug' || pose === 'kiss' || pose === 'deepKiss') {
-      p.rect('c', 7, 26, 9, 4); // 外套袖子跟着手臂前伸
+      p.rect('c', 6, 26, 10, 4); // 前臂搭住肩膀
       p.rect('S', 0, 27, 9, 3);
       p.rect('s', 0, 29, 3, 1);
+      if (pose === 'hug') {
+        p.rect('c', 8, 32, 8, 4); // 另一只手臂揽住腰部
+        p.rect('S', 0, 33, 10, 3);
+        p.rect('s', 0, 35, 3, 1);
+      }
     }
-    if (pose === 'kiss') p.rect('M', 7, 19, 2, 1);
-    if (pose === 'deepKiss') p.rect('M', 9, 19, 2, 1);
+    if (pose === 'kiss') p.rect('M', 9, 19, 2, 1);
+    if (pose === 'deepKiss') p.rect('M', 12, 19, 2, 1);
     if (pose === 'release') {
       p.rect('c', 6, 29, 4, 7); // 松手后手臂垂下
       p.rect('S', 7, 35, 3, 4);
@@ -187,6 +191,12 @@ function boyFrame(pose) {
     p.rect('E', 25, 20, 2, 1);
     p.rect('R', 20, 23, 4, 1);
     p.rect('L', 11, 22, 1, 2);
+  }
+  if (tiptoe) {
+    p.shiftUp(3); // 踮脚时从头到躯干一起升高，嘴部仍与女生对齐。
+    p.rect('P', 12, 35, 4, 3); p.rect('P', 27, 35, 4, 3);
+    p.rect('B', 13, 37, 5, 2); p.rect('B', 10, 39, 5, 1); p.rect('B', 8, 40, 4, 2);
+    p.rect('B', 27, 37, 5, 2); p.rect('B', 25, 39, 5, 1); p.rect('B', 23, 40, 4, 2);
   }
   return p.result();
 }

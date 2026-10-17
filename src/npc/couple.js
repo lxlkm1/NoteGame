@@ -5,9 +5,9 @@ import { student, moveTo } from './shared.js';
 
 const WALK_GAP = 32;
 const ACTIONS = {
-  hug: { gap: 22, heartInterval: 0.8 },
-  kiss: { gap: 23, heartInterval: 0.45 },
-  deepKiss: { gap: 21, heartInterval: 0.35 },
+  hug: { gap: 16, heartInterval: 0.8 },
+  kiss: { gap: 19, heartInterval: 0.45 },
+  deepKiss: { gap: 17, heartInterval: 0.35 },
 };
 
 export function createCouple(mapRows) {
