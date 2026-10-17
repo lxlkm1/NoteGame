@@ -1,44 +1,61 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#1a181f">
-<title>NoteGame｜图书馆的夜晚</title>
-<meta name="description" content="NoteGame 把日记与回忆中的人、动物和场景，做成可以亲自走进去的互动小游戏。">
-<link rel="stylesheet" href="style.css?v=mobile-map-2">
-</head>
-<body>
-<div id="game-wrap">
-  <canvas id="game" width="1248" height="960"></canvas>
-  <audio id="bgm" src="src/assent/canon.mp3" loop preload="auto"></audio>
-  <div id="hud"><span id="brand">NoteGame</span> <span id="progress" class="hint">撸猫 0 / 11</span> <button id="sound" class="hint" aria-label="播放或关闭音乐">🔊 音乐</button><button id="fullscreen" class="hint" aria-label="切换全屏">⛶ 全屏</button></div>
-  <div id="touch-controls" aria-label="触屏游戏操作">
-    <div id="dpad" aria-label="方向键">
-      <button class="control up" data-key="arrowup" aria-label="向上">▲</button>
-      <button class="control left" data-key="arrowleft" aria-label="向左">◀</button>
-      <button class="control right" data-key="arrowright" aria-label="向右">▶</button>
-      <button class="control down" data-key="arrowdown" aria-label="向下">▼</button>
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <meta name="theme-color" content="#1a181f" />
+    <title>NoteGame</title>
+    <meta
+      name="description"
+      content="NoteGame 把日记与回忆中的人、动物和场景，做成可以亲自走进去的互动小游戏。"
+    />
+    <link rel="stylesheet" href="style.css?v=mobile-map-2" />
+  </head>
+  <body>
+    <div id="game-wrap">
+      <canvas id="game" width="1248" height="960"></canvas>
+      <audio id="bgm" src="src/assent/canon.mp3" loop preload="auto"></audio>
+      <div id="hud">
+        <span id="brand">NoteGame</span>
+        <span id="progress" class="hint">撸猫 0 / 11</span>
+        <button id="sound" class="hint" aria-label="播放或关闭音乐">
+          🔊 音乐</button
+        ><button id="fullscreen" class="hint" aria-label="切换全屏">
+          ⛶ 全屏
+        </button>
+      </div>
+      <div id="touch-controls" aria-label="触屏游戏操作">
+        <div id="dpad" aria-label="方向键">
+          <button class="control up" data-key="arrowup" aria-label="向上">
+            ▲
+          </button>
+          <button class="control left" data-key="arrowleft" aria-label="向左">
+            ◀
+          </button>
+          <button class="control right" data-key="arrowright" aria-label="向右">
+            ▶
+          </button>
+          <button class="control down" data-key="arrowdown" aria-label="向下">
+            ▼
+          </button>
+        </div>
+        <button id="interact" class="control" aria-label="交互或投喂">
+          交互
+        </button>
+      </div>
+      <div id="rotate-hint" role="status">
+        请将手机横过来，开始游玩 NoteGame
+      </div>
+      <div id="fullscreen-tip" role="status" hidden></div>
     </div>
-    <button id="interact" class="control" aria-label="交互或投喂">交互</button>
-  </div>
-  <div id="rotate-hint" role="status">请将手机横过来，开始游玩 NoteGame</div>
-  <div id="fullscreen-tip" role="status" hidden></div>
-</div>
-<script src="src/maps/tiles.js"></script>
-<script src="src/maps/atrium.js"></script>
-<script src="src/maps/reading.js"></script>
-<script src="src/maps/toilet.js"></script>
-<script src="src/maps/outside.js"></script>
-<script src="src/sprites.js"></script>
-<script src="src/map.js"></script>
-<script src="src/cats.js"></script>
-  <script src="src/mimi.js"></script>
-  <script src="src/bowls.js"></script>
-<script src="src/npcs.js"></script>
-<script src="src/audio.js"></script>
-<script src="src/main.js"></script>
-</body>
+    <script type="module" src="src/main.js"></script>
+  </body>
 </html>

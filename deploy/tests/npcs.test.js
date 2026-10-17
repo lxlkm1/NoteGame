@@ -1,11 +1,11 @@
 'use strict';
-const test = require('node:test');
-const assert = require('node:assert');
-const NPCs = require('../../src/npcs.js');
-const atrium = require('../../src/maps/atrium.js');
-const reading = require('../../src/maps/reading.js');
-const outside = require('../../src/maps/outside.js');
-const tiles = require('../../src/maps/tiles.js');
+import test from 'node:test';
+import assert from 'node:assert';
+import * as NPCs from '../../src/npcs.js';
+import atrium from '../../src/maps/atrium.js';
+import reading from '../../src/maps/reading.js';
+import outside from '../../src/maps/outside.js';
+import tiles from '../../src/maps/tiles.js';
 
 const maps = { atrium, reading, outside };
 

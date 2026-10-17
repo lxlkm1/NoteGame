@@ -3,6 +3,7 @@
   "description": "把日记与回忆中的人、动物和场景，做成可以亲自走进去的互动小游戏。",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "test": "node --test",
     "build:pages": "node deploy/build-pages.mjs"

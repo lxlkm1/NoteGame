@@ -1,7 +1,7 @@
 'use strict';
-const test = require('node:test');
-const assert = require('node:assert');
-const { PLAYER_FRAMES } = require('../../src/sprites.js');
+import test from 'node:test';
+import assert from 'node:assert';
+import { PLAYER_FRAMES, DUYU_COW_FRAMES, DUYU_COW_PALETTE } from '../../src/sprites.js';
 
 test('人物帧齐全且每帧 16 行 × 每行 16 字符', () => {
   for (const name of ['down1', 'down2', 'up1', 'up2', 'side1', 'side2']) {
@@ -12,7 +12,7 @@ test('人物帧齐全且每帧 16 行 × 每行 16 字符', () => {
   }
 });
 
-const { CAT_FRAMES } = require('../../src/sprites.js');
+import { CAT_FRAMES } from '../../src/sprites.js';
 
 test('猫帧齐全且每帧 16x16', () => {
   for (const name of ['idle1', 'idle2', 'walk1', 'walk2', 'eat', 'sleep']) {
@@ -23,7 +23,7 @@ test('猫帧齐全且每帧 16x16', () => {
   }
 });
 
-const { MIMI_FRAMES } = require('../../src/sprites.js');
+import { MIMI_FRAMES } from '../../src/sprites.js';
 
 test('咪咪有独立的 16x16 帧及照片中的金眼、白口鼻和黑斑', () => {
   for (const name of ['idle1', 'idle2', 'walk1', 'walk2', 'eat', 'sleep']) {
@@ -38,7 +38,6 @@ test('咪咪有独立的 16x16 帧及照片中的金眼、白口鼻和黑斑', (
 });
 
 test('小蠹鱼用 32px 牛形象，坐姿朝电脑，走动帧保留眼罩与粉鼻', () => {
-  const { DUYU_COW_FRAMES, DUYU_COW_PALETTE } = require('../../src/sprites.js');
   for (const name of ['typing1', 'typing2', 'walk1', 'walk2']) {
     const frame = DUYU_COW_FRAMES[name];
     assert.equal(frame.length, 32);

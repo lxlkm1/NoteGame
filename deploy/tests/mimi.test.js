@@ -1,9 +1,9 @@
 'use strict';
-const test = require('node:test');
-const assert = require('node:assert');
-const Mimi = require('../../src/mimi.js');
-const outside = require('../../src/maps/outside.js');
-const tiles = require('../../src/maps/tiles.js');
+import test from 'node:test';
+import assert from 'node:assert';
+import * as Mimi from '../../src/mimi.js';
+import outside from '../../src/maps/outside.js';
+import tiles from '../../src/maps/tiles.js';
 
 const site = outside.mimiSites.left;
 const player = (col, row, dir = 'left') => ({ x: col * 16, y: row * 16, dir });

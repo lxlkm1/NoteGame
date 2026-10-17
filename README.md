@@ -32,7 +32,7 @@ NoteGame 是一个持续创作的个人游戏项目。它以真实的记忆为�
 
 ## 本地运行
 
-项目是纯 HTML、Canvas 和原生 JavaScript，无需安装运行依赖。可以直接打开 `index.html`，或在项目目录启动本地服务器：
+项目是纯 HTML、Canvas 和原生 JavaScript（ES Modules），无需安装运行依赖。浏览器对 ES Modules 有限制，双击打开 `index.html` 无法运行，需要在项目目录启动本地服务器：
 
 ```bash
 python3 -m http.server 8137
