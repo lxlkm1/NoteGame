@@ -50,12 +50,16 @@ python3 -m http.server 8137
 
 ## 项目结构
 
+代码按「数据 / 角色 / 机制 / 编排」四层组织：
+
 | 路径 | 内容 |
 | --- | --- |
 | `index.html`、`style.css` | 页面与游戏界面 |
-| `src/` | 游戏机制：渲染、角色行为、互动与音频 |
-| `src/data/` | 内容数据：场景地图（`data/maps/`）与音频配置（`data/audio.js`） |
+| `src/data/` | 内容数据：场景地图（`maps/`）、音频配置（`audio.js`）、猫定义（`cats.js`）、像素画（`sprites.js`） |
+| `src/npc/` | 非玩家角色：同学（`student.js`）、小蠹鱼（`duyu.js`）、小情侣（`couple.js`）、普通猫与咪咪（`cats.js`、`mimi.js`） |
+| `src/` 其余模块 | 游戏机制与编排：地图引擎（`map.js`）、渲染（`tile-render.js`、`render.js`）、互动（`interact.js`）、场景（`scenes.js`）、玩家（`player.js`）、输入（`input.js`）、音频（`audio.js`） |
 | `src/assent/` | 背景音乐 |
 | `deploy/` | 部署构建脚本与测试 |
+| `tools/` | 本地工具脚本 |
 
 地图为 39×30 格，每格以 32×32 绘制像素呈现；移动和碰撞保留每格 16 单位的世界坐标。
