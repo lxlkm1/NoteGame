@@ -1,76 +1,163 @@
-// couple.js —— 小情侣：偶尔成对出现在前庭，散步到上方会停下拥抱或接吻，再继续离开
+// 前庭情侣：常驻、结伴散步；男生主动靠近，亲昵后可能立刻再次拥抱。
 import { TILE } from '../map.js';
-import { student } from './shared.js';
+import TILES from '../data/maps/tiles.js';
+import { student, moveTo } from './shared.js';
 
-// 亲昵动作规格：站位中心距 / 冒爱心间隔 / 持续时长
-const CUDDLE_ACTIONS = {
-  hug:  { dist: 22, heartInterval: 0.8, duration: 4 },
-  kiss: { dist: 20, heartInterval: 0.4, duration: 5 },
+const WALK_GAP = 32;
+const ACTIONS = {
+  hug: { gap: 26, heartInterval: 0.8 },
+  kiss: { gap: 23, heartInterval: 0.45 },
+  deepKiss: { gap: 21, heartInterval: 0.35 },
 };
 
-function createCouple() {
-  const members = [student('couple-a', 'outside', 19, 28, 'red', 'couple'),
-                   student('couple-b', 'outside', 20, 28, 'green', 'couple')];
-  members[0].feedCooldown = 8;
-  members[1].feedCooldown = 11;
-  return { y: 28 * TILE, phase: 'up', members };
+export function createCouple(mapRows) {
+  const girl = student('couple-a', 'outside', 19, 28, 'red', 'couple');
+  const boy = student('couple-b', 'outside', 21, 28, 'green', 'couple');
+  girl.feedCooldown = 8;
+  boy.feedCooldown = 11;
+  return { members: [girl, boy], mapRows, phase: 'wander', route: [], timer: 0,
+    heartTimer: 0, action: null };
 }
 
-// 到达顶部 → 随机选拥抱或接吻，两人面对面贴近
-function startCuddle(pair, rng) {
-  pair.action = rng() < 0.5 ? 'hug' : 'kiss';
-  const spec = CUDDLE_ACTIONS[pair.action];
-  pair.phase = 'cuddle';
-  pair.cuddleTimer = spec.duration;
-  pair.heartTimer = 0; // 立刻冒第一颗爱心
-  const [a, b] = pair.members;
-  b.x = a.x + spec.dist;
-  a.facing = 'right'; b.facing = 'left';
-  a.action = pair.action; b.action = pair.action;
-  a.moving = false; b.moving = false;
+function canStandTogether(mapRows, col, row) {
+  if (row < 0 || row >= mapRows.length || col < 0 || col + 2 >= mapRows[0].length) return false;
+  return [col, col + 2].every(c => {
+    const tile = TILES[mapRows[row][c]];
+    return tile && !tile.solid;
+  });
 }
 
-// 返回本帧产生的事件（cuddle-heart：在两人中间上方冒爱心）
+// 在两人都可站立的地格上寻路，随机选择一处距离足够远的目的地。
+function walkRoute(pair, rng) {
+  const [girl] = pair.members;
+  const start = { col: Math.round(girl.x / TILE), row: Math.round(girl.y / TILE) };
+  const key = (col, row) => `${col},${row}`;
+  const seen = new Map([[key(start.col, start.row), null]]);
+  const queue = [start];
+  const far = [];
+  for (let i = 0; i < queue.length; i++) {
+    const point = queue[i];
+    if (Math.abs(point.col - start.col) + Math.abs(point.row - start.row) >= 6) far.push(point);
+    for (const [dc, dr] of [[0, -1], [1, 0], [0, 1], [-1, 0]]) {
+      const col = point.col + dc, row = point.row + dr;
+      const nextKey = key(col, row);
+      if (seen.has(nextKey) || !canStandTogether(pair.mapRows, col, row)) continue;
+      seen.set(nextKey, point);
+      queue.push({ col, row });
+    }
+  }
+  if (!far.length) return [];
+  const destination = far[Math.min(far.length - 1, Math.floor(rng() * far.length))];
+  const route = [];
+  for (let point = destination; point && (point.col !== start.col || point.row !== start.row);
+    point = seen.get(key(point.col, point.row))) {
+    route.unshift({ x: point.col * TILE, y: point.row * TILE });
+  }
+  return route;
+}
+
+function startWander(pair, rng) {
+  pair.phase = 'wander';
+  pair.action = null;
+  pair.route = walkRoute(pair, rng);
+  for (const member of pair.members) { member.action = null; member.moving = false; }
+}
+
+function startApproach(pair) {
+  const [girl, boy] = pair.members;
+  pair.phase = 'approach';
+  pair.action = null;
+  girl.facing = 'right'; girl.moving = false; girl.action = null;
+  boy.facing = 'left'; boy.moving = true; boy.action = 'approach';
+}
+
+function duration(action, rng) {
+  const long = rng() < 0.28;
+  if (action === 'hug') return long ? 30 + rng() * 30 : 5 + rng() * 5;
+  if (action === 'kiss') return long ? 20 + rng() * 20 : 4 + rng() * 6;
+  return 8 + rng() * 18;
+}
+
+function startAction(pair, action, rng) {
+  const [girl, boy] = pair.members;
+  pair.phase = action;
+  pair.action = action;
+  pair.timer = duration(action, rng);
+  pair.heartTimer = 0;
+  girl.action = action; boy.action = action;
+  girl.facing = 'right'; boy.facing = 'left';
+  girl.moving = false; boy.moving = false;
+}
+
+function startRelease(pair) {
+  const [girl, boy] = pair.members;
+  pair.phase = 'release';
+  pair.action = null;
+  pair.timer = 1.2;
+  girl.action = null; girl.moving = false;
+  boy.action = 'release'; boy.moving = true;
+}
+
 export function updateCouple(world, dt, rng) {
   const events = [];
-  if (!world.couple) {
-    world.coupleTimer -= dt;
-    if (world.coupleTimer <= 0) {
-      if (rng() < 0.35) world.couple = createCouple();
-      world.coupleTimer = 22 + rng() * 15;
-    }
-    return events;
-  }
   const pair = world.couple;
-  if (pair.phase === 'cuddle') {
-    const spec = CUDDLE_ACTIONS[pair.action];
-    for (const member of pair.members) member.animTimer += dt;
-    pair.cuddleTimer -= dt;
-    pair.heartTimer -= dt;
-    if (pair.heartTimer <= 0) {
-      pair.heartTimer = spec.heartInterval;
-      const [a, b] = pair.members;
-      events.push({ type: 'cuddle-heart', x: (a.x + b.x) / 2 + 8, y: pair.y - 22 });
+  const [girl, boy] = pair.members;
+  girl.animTimer += dt;
+  boy.animTimer += dt;
+  switch (pair.phase) {
+    case 'wander': {
+      if (!pair.route.length) pair.route = walkRoute(pair, rng);
+      const next = pair.route[0];
+      if (!next) { pair.phase = 'pause'; pair.timer = 1 + rng() * 2; break; }
+      const beforeX = girl.x, beforeY = girl.y;
+      if (moveTo(girl, next.x, next.y, 20, dt)) pair.route.shift();
+      boy.x += girl.x - beforeX;
+      boy.y += girl.y - beforeY;
+      boy.facing = girl.facing;
+      boy.moving = girl.moving;
+      if (!pair.route.length) { pair.phase = 'pause'; pair.timer = 1 + rng() * 2; }
+      break;
     }
-    if (pair.cuddleTimer <= 0) {
-      pair.phase = 'down';
-      for (const member of pair.members) member.action = null;
-      pair.members[1].x = 20 * TILE; // 回到伴侣身侧
+    case 'pause':
+      girl.moving = false; boy.moving = false;
+      pair.timer -= dt;
+      if (pair.timer <= 0) {
+        if (rng() < 0.65) startApproach(pair);
+        else startWander(pair, rng);
+      }
+      break;
+    case 'approach':
+      girl.moving = false;
+      if (moveTo(boy, girl.x + ACTIONS.hug.gap, girl.y, 18, dt)) startAction(pair, 'hug', rng);
+      break;
+    case 'hug':
+    case 'kiss':
+    case 'deepKiss': {
+      const spec = ACTIONS[pair.phase];
+      // 接吻时男生再靠近，女生站在原地。
+      moveTo(boy, girl.x + spec.gap, girl.y, 18, dt);
+      boy.facing = 'left'; boy.moving = false;
+      pair.timer -= dt;
+      pair.heartTimer -= dt;
+      if (pair.heartTimer <= 0) {
+        pair.heartTimer = spec.heartInterval;
+        events.push({ type: 'cuddle-heart', x: (girl.x + boy.x) / 2 + 8, y: girl.y - 38 });
+      }
+      if (pair.timer <= 0) {
+        if (pair.phase === 'hug' && rng() < 0.7) startAction(pair, 'kiss', rng);
+        else if (pair.phase === 'kiss' && rng() < 0.3) startAction(pair, 'deepKiss', rng);
+        else startRelease(pair);
+      }
+      break;
     }
-    return events;
-  }
-  const target = pair.phase === 'up' ? 10 * TILE : 28 * TILE;
-  const delta = Math.sign(target - pair.y) * Math.min(20 * dt, Math.abs(target - pair.y));
-  pair.y += delta;
-  for (const member of pair.members) {
-    member.y = pair.y;
-    member.moving = true;
-    member.facing = pair.phase === 'up' ? 'up' : 'down';
-    member.animTimer += dt;
-  }
-  if (Math.abs(pair.y - target) < 0.5) {
-    if (pair.phase === 'up') startCuddle(pair, rng);
-    else world.couple = null;
+    case 'release':
+      girl.moving = false;
+      pair.timer -= dt;
+      if (moveTo(boy, girl.x + WALK_GAP, girl.y, 18, dt) && pair.timer <= 0) {
+        if (rng() < 0.7) startApproach(pair);
+        else startWander(pair, rng);
+      }
+      break;
   }
   return events;
 }

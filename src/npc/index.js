@@ -2,7 +2,7 @@
 // 各角色实现：cats.js（普通猫）/ mimi.js（咪咪）/ student.js（同学）/ duyu.js（小蠹鱼）/ couple.js（情侣）
 import { createStudyStudents, createCommuters, updateCommuter } from './student.js';
 import { createDuyu, updateDuyu, updateDuyuDialogue, drawDuyu } from './duyu.js';
-import { updateCouple } from './couple.js';
+import { createCouple, updateCouple } from './couple.js';
 import { drawPerson } from './shared.js';
 import { drawCouple } from './couple-render.js';
 
@@ -10,7 +10,7 @@ function create(maps, rng = Math.random) {
   const study = createStudyStudents(maps);
   const duyu = createDuyu(maps, rng);
   study.push(duyu);
-  return { study, duyu, commuters: createCommuters(rng), couple: null, coupleTimer: 18 };
+  return { study, duyu, commuters: createCommuters(rng), couple: createCouple(maps.outside.map) };
 }
 
 function visible(world, scene) {

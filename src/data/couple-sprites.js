@@ -1,16 +1,16 @@
-// 情侣独立原生像素画：女生 32×36、男生 32×32。字符对应调色板颜色。
+// 情侣独立原生像素画：女生 40×48、男生 40×42。字符对应调色板颜色。
 export const COUPLE_PALETTES = {
   girl: {
-    H: '#47303a', F: '#67414a', L: '#2c2631', h: '#865b60',
-    S: '#f0c5ab', s: '#dba88f', R: '#dc8f91', E: '#382d32', W: '#fff3df',
-    C: '#c97991', c: '#e5a9b8', D: '#ad5978', d: '#db839e',
-    P: '#65566b', B: '#493d4a',
+    H: '#443440', F: '#614853', L: '#2c2935', h: '#86646b',
+    S: '#efd0ba', s: '#dcb099', R: '#dfa3a0', E: '#483943',
+    W: '#fbf5e9', w: '#ddd6cb', d: '#c7bfba', A: '#9bb0b9',
+    C: '#e8ddd4', c: '#bdafa8', P: '#766a78', B: '#554954',
   },
   boy: {
-    Y: '#d8aa3a', y: '#f6d45f', h: '#8b622a', Z: '#fff09a',
-    S: '#eac19e', s: '#cf9e7e', E: '#342b2a', R: '#a96b63',
-    C: '#3d404a', c: '#686b72', J: '#252932', W: '#e2d5ba',
-    P: '#4d4a54', B: '#292a31',
+    Y: '#d9ac38', y: '#f9d65b', h: '#876027', Z: '#fff099',
+    S: '#ebc4a5', s: '#cfa184', E: '#2e292b', R: '#a67569',
+    C: '#30323d', c: '#5c6070', J: '#1f222e', V: '#885276',
+    L: '#c5c4c8', P: '#424450', B: '#24252d', W: '#ddd7cf',
   },
 };
 
@@ -29,126 +29,145 @@ function canvas(width, height) {
 }
 
 function girlFrame(pose) {
-  const p = canvas(32, 36);
-  const side = ['side1', 'side2', 'hug', 'kiss'].includes(pose);
+  const p = canvas(40, 48);
+  const side = ['side1', 'side2', 'hug', 'kiss', 'deepKiss'].includes(pose);
   const up = pose.startsWith('up');
   const step = pose.endsWith('2');
-  // 收窄上身与裙摆，拉长腿，脚底始终在第 36 行。
-  p.rect('S', step ? 11 : 12, 29, 3, 5);
-  p.rect('S', step ? 20 : 19, 29, 3, 5);
-  p.rect('B', step ? 10 : 11, 34, 5, 2);
-  p.rect('B', step ? 19 : 18, 34, 5, 2);
-  p.oval('D', 16, 26, 9, 5);
-  p.rect('d', 10, 27, 12, 1);
-  p.rect('D', 8, 29, 16, 1);
-  p.oval('C', 16, 20, 6, 5);
-  p.rect('c', 13, 17, 6, 1);
-  p.rect('s', 14, 16, 4, 2);
-  p.oval('S', 9, 21, 2, 4);
-  p.oval('S', 23, 21, 2, 4);
+  // 修长的腿与白裙：裙摆是最醒目的大块颜色。
+  p.rect('S', step ? 14 : 15, 41, 3, 5);
+  p.rect('S', step ? 25 : 24, 41, 3, 5);
+  p.rect('B', step ? 13 : 14, 46, 5, 2);
+  p.rect('B', step ? 24 : 23, 46, 5, 2);
+  p.oval('w', 20, 38, 12, 6);
+  p.oval('W', 20, 37, 11, 6);
+  p.rect('w', 10, 40, 20, 2);
+  p.rect('W', 9, 41, 22, 1);
+  p.rect('d', 10, 43, 20, 1);
+  p.oval('W', 20, 29, 7, 7);
+  p.rect('w', 14, 33, 2, 5);
+  p.rect('C', 17, 23, 6, 2); // 米色小翻领
+  p.rect('A', 19, 25, 2, 2); // 淡蓝色领结
+  p.rect('s', 18, 21, 4, 3);
+  p.oval('S', 12, 30, 2, 5);
+  p.oval('S', 28, 30, 2, 5);
+  p.rect('W', 12, 26, 3, 6);
+  p.rect('W', 26, 26, 3, 6);
   if (up) {
-    p.oval('L', 16, 10, 8, 9);
-    p.oval('H', 16, 9, 7, 7);
-    p.rect('F', 11, 6, 10, 2);
-    p.rect('h', 13, 5, 5, 1);
-    p.rect('L', 9, 15, 3, 5);
+    p.oval('L', 20, 13, 10, 12);
+    p.oval('H', 20, 11, 9, 9);
+    p.rect('F', 13, 8, 14, 2);
+    p.rect('h', 17, 5, 6, 1);
+    p.rect('L', 10, 18, 3, 8);
   } else if (side) {
-    const lean = pose === 'kiss' ? 2 : 0;
-    p.oval('L', 15 + lean, 10, 8, 9);
-    p.oval('H', 16 + lean, 8, 7, 6);
-    p.oval('S', 19 + lean, 12, 5, 5);
-    p.rect('F', 19 + lean, 5, 5, 3);
-    p.rect('F', 22 + lean, 8, 3, 2);
-    p.rect('h', 14 + lean, 4, 6, 1);
-    p.rect('E', 22 + lean, 12, 1, 2);
-    p.rect('R', 20 + lean, 15, 2, 1);
-    p.rect('L', 8 + lean, 11, 3, 10);
-    if (pose === 'hug') { p.rect('S', 22, 20, 8, 2); p.rect('s', 28, 21, 2, 1); }
-    if (pose === 'kiss') p.rect('S', 25, 15, 2, 1);
+    const lean = pose === 'kiss' ? 1 : pose === 'deepKiss' ? 2 : 0;
+    p.oval('L', 18 + lean, 14, 10, 12);
+    p.oval('H', 20 + lean, 10, 9, 8);
+    p.oval('S', 23 + lean, 16, 6, 6);
+    p.rect('F', 22 + lean, 7, 7, 3);
+    p.rect('F', 26 + lean, 10, 3, 2);
+    p.rect('h', 16 + lean, 5, 6, 1);
+    p.rect('E', 27 + lean, 16, 1, 1);
+    p.rect('R', 25 + lean, 19, 2, 1);
+    p.rect('L', 10 + lean, 15, 3, 11);
+    p.rect('A', 12 + lean, 19, 2, 2); // 发夹
+    if (pose === 'hug') p.rect('S', 27, 28, 9, 2);
+    if (pose === 'kiss' || pose === 'deepKiss') p.rect('R', 29 + lean, 19, 2, 1);
   } else {
-    p.oval('L', 16, 11, 8, 9);
-    p.oval('H', 16, 8, 8, 6);
-    p.oval('S', 16, 12, 6, 5);
-    p.rect('F', 10, 6, 12, 2);
-    p.rect('F', 11, 8, 4, 2);
-    p.rect('F', 18, 8, 3, 2);
-    p.rect('h', 13, 4, 6, 1);
-    p.rect('E', 12, 13, 1, 1);
-    p.rect('E', 20, 13, 1, 1);
-    p.rect('R', 10, 15, 2, 1);
-    p.rect('R', 21, 15, 2, 1);
-    p.rect('s', 15, 16, 2, 1);
-    p.rect('L', 8, 12, 2, 8);
-    p.rect('L', 23, 12, 2, 8);
+    p.oval('L', 20, 14, 10, 12);
+    p.oval('H', 20, 10, 10, 8);
+    p.oval('S', 20, 16, 7, 6);
+    p.rect('F', 13, 8, 14, 3);
+    p.rect('F', 14, 11, 4, 2);
+    p.rect('F', 22, 11, 4, 2);
+    p.rect('h', 17, 5, 6, 1);
+    p.rect('A', 10, 12, 3, 2);
+    p.rect('E', 16, 17, 1, 1);
+    p.rect('E', 24, 17, 1, 1);
+    p.rect('R', 13, 19, 2, 1);
+    p.rect('R', 25, 19, 2, 1);
+    p.rect('s', 19, 21, 2, 1);
+    p.rect('L', 10, 15, 3, 11);
+    p.rect('L', 28, 15, 3, 11);
   }
   return p.result();
 }
 
 function boyFrame(pose) {
-  const p = canvas(32, 32);
-  const side = ['side1', 'side2', 'hug', 'kiss'].includes(pose);
+  const p = canvas(40, 42);
+  const side = ['side1', 'side2', 'approach', 'hug', 'kiss', 'deepKiss', 'release'].includes(pose);
   const up = pose.startsWith('up');
   const step = pose.endsWith('2');
-  // 宽松外套、插兜与外八站姿；头顶比女生低四个地图像素。
-  p.rect('P', step ? 10 : 9, 25, 5, 5);
-  p.rect('P', step ? 21 : 19, 25, 5, 5);
-  p.rect('B', step ? 8 : 7, 29, 8, 3);
-  p.rect('B', step ? 20 : 19, 29, 8, 3);
-  p.oval('J', 16, 20, 10, 6);
-  p.rect('C', 8, 17, 16, 7);
-  p.rect('J', 14, 17, 4, 8);
-  p.rect('c', 10, 18, 2, 5);
-  p.rect('c', 21, 18, 2, 5);
-  p.oval('S', 7, 22, 2, 3);
-  p.oval('S', 25, 22, 2, 3);
+  // 非主流宽外套、紫色内衬、银链和磨损的宽裤脚。
+  p.rect('P', step ? 12 : 11, 34, 6, 6);
+  p.rect('P', step ? 27 : 25, 34, 6, 6);
+  p.rect('W', 13, 37, 3, 1);
+  p.rect('W', 27, 36, 3, 1);
+  p.rect('B', step ? 10 : 9, 39, 9, 3);
+  p.rect('B', step ? 26 : 25, 39, 9, 3);
+  p.oval('J', 20, 28, 12, 8);
+  p.rect('C', 9, 24, 22, 10);
+  p.rect('V', 17, 25, 7, 8);
+  p.rect('J', 12, 25, 5, 10);
+  p.rect('J', 24, 25, 5, 10);
+  p.rect('c', 10, 26, 2, 7);
+  p.rect('c', 29, 26, 2, 7);
+  p.rect('L', 19, 31, 5, 1);
+  p.rect('L', 22, 32, 1, 2);
+  p.oval('S', 8, 32, 2, 3);
+  p.oval('S', 32, 32, 2, 3);
   if (up) {
-    p.oval('h', 16, 10, 9, 7);
-    p.oval('Y', 16, 9, 8, 6);
-    p.rect('y', 11, 4, 5, 2);
-    p.rect('Y', 20, 3, 3, 4);
-    p.rect('Y', 22, 6, 4, 2);
-    p.rect('Z', 18, 5, 3, 1);
-    p.rect('h', 9, 14, 3, 2);
+    p.oval('h', 20, 15, 11, 9);
+    p.oval('Y', 20, 13, 10, 8);
+    p.rect('Y', 25, 5, 4, 6);
+    p.rect('Y', 13, 6, 3, 5);
+    p.rect('y', 15, 7, 6, 2);
+    p.rect('Z', 22, 6, 3, 1);
+    p.rect('h', 10, 19, 4, 3);
   } else if (side) {
-    const lean = pose === 'kiss' ? -1 : 0;
-    p.oval('h', 16 + lean, 10, 9, 7);
-    p.oval('Y', 16 + lean, 8, 9, 6);
-    p.oval('S', 12 + lean, 13, 5, 4);
-    p.rect('Y', 6 + lean, 7, 8, 3);
-    p.rect('y', 7 + lean, 5, 5, 2);
-    p.rect('Y', 14 + lean, 2, 3, 4);
-    p.rect('Y', 22 + lean, 5, 4, 2);
-    p.rect('Z', 12 + lean, 4, 4, 1);
-    p.rect('E', 7 + lean, 11, 6, 1); // 压低的眉毛
-    p.rect('E', 8 + lean, 12, 4, 1);
-    p.rect('E', 9 + lean, 13, 2, 1);
-    p.rect('R', 8 + lean, 16, 3, 1);
-    if (pose === 'hug') { p.rect('S', 1, 21, 8, 2); p.rect('s', 1, 22, 3, 1); }
-    if (pose === 'kiss') p.rect('S', 5, 16, 2, 1);
+    const lean = pose === 'kiss' ? -1 : pose === 'deepKiss' ? -2 : 0;
+    p.oval('h', 20 + lean, 15, 11, 9);
+    p.oval('Y', 20 + lean, 12, 11, 8);
+    p.oval('S', 15 + lean, 18, 6, 5);
+    p.rect('Y', 8 + lean, 11, 9, 3);
+    p.rect('Y', 16 + lean, 4, 4, 7);
+    p.rect('Y', 27 + lean, 7, 4, 5);
+    p.rect('y', 10 + lean, 8, 6, 2);
+    p.rect('Z', 22 + lean, 6, 4, 1);
+    p.rect('E', 10 + lean, 17, 7, 1);
+    p.rect('E', 12 + lean, 18, 4, 1);
+    p.rect('E', 13 + lean, 20, 2, 1);
+    p.rect('R', 10 + lean, 23, 3, 1);
+    p.rect('L', 10 + lean, 23, 1, 2); // 耳钉
+    if (pose === 'approach') { p.rect('S', 3, 27, 10, 2); p.rect('s', 3, 28, 3, 1); }
+    if (pose === 'hug') { p.rect('S', 1, 28, 14, 3); p.rect('s', 1, 30, 4, 1); }
+    if (pose === 'kiss') p.rect('S', 7, 24, 3, 1);
+    if (pose === 'deepKiss') { p.rect('R', 7 + lean, 23, 3, 1); p.rect('S', 6, 25, 2, 1); }
+    if (pose === 'release') { p.rect('S', 8, 32, 3, 5); p.rect('s', 8, 36, 3, 1); }
   } else {
-    p.oval('h', 16, 10, 9, 7);
-    p.oval('S', 16, 13, 6, 5);
-    p.oval('Y', 16, 7, 9, 5);
-    p.rect('Y', 11, 2, 3, 5);
-    p.rect('Y', 19, 1, 4, 6);
-    p.rect('y', 8, 5, 6, 2);
-    p.rect('Y', 7, 9, 5, 2);
-    p.rect('Y', 22, 6, 5, 3);
-    p.rect('Z', 17, 3, 5, 1);
-    p.rect('E', 9, 11, 5, 1);
-    p.rect('E', 11, 12, 4, 1);
-    p.rect('E', 19, 12, 4, 1);
-    p.rect('E', 21, 11, 5, 1);
-    p.rect('E', 11, 13, 2, 1);
-    p.rect('E', 20, 13, 2, 1);
-    p.rect('s', 15, 15, 3, 1);
-    p.rect('R', 16, 17, 3, 1); // 紧抿的嘴
+    p.oval('h', 20, 14, 11, 9);
+    p.oval('S', 20, 18, 7, 6);
+    p.oval('Y', 20, 11, 11, 7);
+    p.rect('Y', 13, 4, 4, 7);
+    p.rect('Y', 23, 3, 5, 8);
+    p.rect('Y', 8, 13, 6, 3);
+    p.rect('Y', 29, 10, 4, 4);
+    p.rect('y', 11, 8, 7, 2);
+    p.rect('Z', 23, 6, 4, 1);
+    p.rect('E', 12, 17, 6, 1);
+    p.rect('E', 14, 18, 4, 1);
+    p.rect('E', 23, 18, 4, 1);
+    p.rect('E', 25, 17, 6, 1);
+    p.rect('E', 15, 20, 2, 1);
+    p.rect('E', 25, 20, 2, 1);
+    p.rect('R', 20, 23, 4, 1);
+    p.rect('L', 11, 22, 1, 2);
   }
   return p.result();
 }
 
-const poses = ['down1', 'down2', 'up1', 'up2', 'side1', 'side2', 'hug', 'kiss'];
+const girlPoses = ['down1', 'down2', 'up1', 'up2', 'side1', 'side2', 'hug', 'kiss', 'deepKiss'];
+const boyPoses = [...girlPoses, 'approach', 'release'];
 export const COUPLE_FRAMES = {
-  girl: Object.fromEntries(poses.map(pose => [pose, girlFrame(pose)])),
-  boy: Object.fromEntries(poses.map(pose => [pose, boyFrame(pose)])),
+  girl: Object.fromEntries(girlPoses.map(pose => [pose, girlFrame(pose)])),
+  boy: Object.fromEntries(boyPoses.map(pose => [pose, boyFrame(pose)])),
 };

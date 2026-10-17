@@ -79,17 +79,41 @@ test('进出馆学生跨越前门，在中庭和前庭之间切换场景', () =>
   assert.equal(outbound.scene, 'outside');
 });
 
-test('小情侣定时随机出现，最多一对，且会一起离开', () => {
-  const world = NPCs.create(maps, () => 0.1);
-  for (let i = 0; i < 25; i++) NPCs.update(world, 1, [], () => 0.1);
-  assert.ok(world.couple);
-  assert.equal(world.couple.members.length, 2);
-  assert.equal(NPCs.visible(world, 'outside').filter(n => n.kind === 'couple').length, 2);
-  for (let i = 0; i < 100; i++) NPCs.update(world, 1, [], () => 0.1);
-  assert.ok(NPCs.visible(world, 'outside').filter(n => n.kind === 'couple').length <= 2);
-  const empty = NPCs.create(maps, () => 0.9);
-  for (let i = 0; i < 25; i++) NPCs.update(empty, 1, [], () => 0.9);
-  assert.equal(empty.couple, null);
+test('情侣在前庭必定出现且始终只有一对', () => {
+  for (const chance of [0, 0.5, 0.99]) {
+    const world = NPCs.create(maps, () => chance);
+    assert.ok(world.couple);
+    assert.equal(world.couple.members.length, 2);
+    assert.equal(NPCs.visible(world, 'outside').filter(n => n.kind === 'couple').length, 2);
+    for (let i = 0; i < 500; i++) NPCs.update(world, 0.1, [], () => chance);
+    assert.ok(world.couple);
+    assert.equal(NPCs.visible(world, 'outside').filter(n => n.kind === 'couple').length, 2);
+  }
+});
+
+test('情侣在前庭随机散步，两人脚下始终是可走地块', () => {
+  const world = NPCs.create(maps, () => 0.9);
+  const visited = new Set();
+  for (let i = 0; i < 1000; i++) {
+    NPCs.update(world, 0.1, [], () => 0.9);
+    const [girl, boy] = world.couple.members;
+    visited.add(`${Math.round(girl.x)},${Math.round(girl.y)}`);
+    for (const member of [girl, boy]) {
+      const col = Math.floor((member.x + 8) / 16);
+      const row = Math.floor((member.y + 15) / 16);
+      const tile = outside.map[row]?.[col];
+      assert.ok(tile && !tiles[tile].solid, `${member.id} 走进障碍 ${col},${row}`);
+    }
+  }
+  assert.ok(visited.size > 20, `散步位置太少：${visited.size}`);
+});
+
+test('不同随机值会选择不同的散步目的地', () => {
+  const left = NPCs.create(maps, () => 0.1);
+  const right = NPCs.create(maps, () => 0.9);
+  NPCs.update(left, 0.1, [], () => 0.1);
+  NPCs.update(right, 0.1, [], () => 0.9);
+  assert.notDeepEqual(left.couple.route.at(-1), right.couple.route.at(-1));
 });
 
 test('室外学生接近猫时按概率提出一次投喂，冷却阻止连续投喂', () => {
@@ -104,52 +128,64 @@ test('室外学生接近猫时按概率提出一次投喂，冷却阻止连续�
   assert.equal(second.filter(e => e.type === 'feed').length, 0);
 });
 
-test('小情侣靠近猫时也可能投喂', () => {
+test('情侣靠近猫时仍可投喂', () => {
   const world = NPCs.create(maps, () => 0.1);
-  NPCs.update(world, 18, [], () => 0.1);
   const member = world.couple.members[0];
   member.feedCooldown = 0;
   const cat = { x: member.x, y: member.y, state: 'nap', id: 'xueqiu' };
   const events = NPCs.update(world, 0.05, [cat], () => 0.1);
-  assert.equal(events.length, 1);
-  assert.equal(events[0].npcId, member.id);
-  assert.equal(events[0].cat, cat);
+  assert.equal(events.filter(e => e.type === 'feed').length, 1);
+  assert.equal(events.find(e => e.type === 'feed').npcId, member.id);
 });
 
-test('小情侣散步到顶部后停下拥抱：面对面、间距 22px、头顶冒爱心、然后离开', () => {
-  const world = NPCs.create(maps, () => 0.1); // rng 0.1：出现情侣，动作选 hug
-  for (let i = 0; i < 25 && !world.couple; i++) NPCs.update(world, 1, [], () => 0.1);
-  assert.ok(world.couple);
-  for (let i = 0; i < 30 && world.couple.phase !== 'cuddle'; i++) NPCs.update(world, 1, [], () => 0.1);
-  assert.equal(world.couple.phase, 'cuddle');
-  assert.equal(world.couple.action, 'hug');
-  const [a, b] = world.couple.members;
-  assert.equal(a.facing, 'right');
-  assert.equal(b.facing, 'left');
-  assert.equal(a.action, 'hug');
-  assert.equal(b.action, 'hug');
-  assert.equal(b.x - a.x, 22);
-  const events = NPCs.update(world, 1, [], () => 0.1); // cuddle 第一帧即冒爱心
-  assert.ok(events.some(e => e.type === 'cuddle-heart'));
-  assert.equal(events.find(e => e.type === 'cuddle-heart').y, a.y - 22);
-  for (let i = 0; i < 40 && world.couple; i++) NPCs.update(world, 1, [], () => 0.1);
-  assert.equal(world.couple, null);
-  assert.equal(a.action, null);
-  assert.equal(b.action, null);
-});
-
-test('小情侣接吻比拥抱站得更近、爱心更密', () => {
+test('女生停下后男生主动靠近，并能连续拥抱、接吻、深吻、松手再靠近', () => {
   const world = NPCs.create(maps, () => 0.1);
-  for (let i = 0; i < 25 && !world.couple; i++) NPCs.update(world, 1, [], () => 0.1);
-  for (let i = 0; i < 30 && world.couple.phase !== 'cuddle'; i++) NPCs.update(world, 1, [], () => 0.9); // rng 0.9：动作选 kiss
-  assert.equal(world.couple.action, 'kiss');
-  assert.equal(world.couple.members[0].action, 'kiss');
-  assert.equal(world.couple.members[1].action, 'kiss');
-  assert.equal(world.couple.members[1].x - world.couple.members[0].x, 20);
-  // 同样的步进节奏下，kiss 的爱心事件多于 hug（间隔 0.4s vs 0.8s）
-  let kissHearts = 0;
-  for (let i = 0; i < 4; i++) {
-    kissHearts += NPCs.update(world, 0.5, [], () => 0.9).filter(e => e.type === 'cuddle-heart').length;
+  let sawApproach = false, sawHug = false, sawKiss = false;
+  let sawDeepKiss = false, sawRelease = false, sawSecondApproach = false;
+  let firstApproachX = null;
+  for (let i = 0; i < 3000; i++) {
+    const pair = world.couple;
+    const [girl, boy] = pair.members;
+    const before = { girlX: girl.x, girlY: girl.y, boyX: boy.x };
+    const events = NPCs.update(world, 0.1, [], () => 0.1);
+    if (pair.phase === 'approach') {
+      if (sawRelease) sawSecondApproach = true;
+      else sawApproach = true;
+      if (firstApproachX === null) firstApproachX = before.boyX;
+      if (before.girlX === girl.x && before.girlY === girl.y)
+        assert.ok(boy.x <= firstApproachX, '男生应主动向女生靠近');
+    }
+    if (pair.phase === 'hug') {
+      sawHug = true;
+      assert.equal(girl.action, 'hug');
+      assert.equal(boy.action, 'hug');
+      assert.ok(pair.timer >= 0);
+      assert.ok(events.every(e => e.type !== 'cuddle-heart' || e.y < girl.y - 25));
+    }
+    if (pair.phase === 'kiss') sawKiss = true;
+    if (pair.phase === 'deepKiss') sawDeepKiss = true;
+    if (pair.phase === 'release') sawRelease = true;
+    if (sawSecondApproach) break;
   }
-  assert.ok(kissHearts >= 4, `kiss 爱心密度不足：${kissHearts}`);
+  assert.ok(sawApproach && sawHug && sawKiss && sawDeepKiss && sawRelease && sawSecondApproach);
+  assert.ok(world.couple);
+});
+
+test('拥抱可以持续较长时间，女生在亲昵阶段保持原地', () => {
+  const world = NPCs.create(maps, () => 0);
+  for (let i = 0; i < 2000 && world.couple.phase !== 'hug'; i++) NPCs.update(world, 0.1, [], () => 0);
+  assert.equal(world.couple.phase, 'hug');
+  const girl = world.couple.members[0];
+  const start = { x: girl.x, y: girl.y };
+  for (let i = 0; i < 150; i++) NPCs.update(world, 0.1, [], () => 0);
+  assert.equal(world.couple.phase, 'hug');
+  assert.deepEqual({ x: girl.x, y: girl.y }, start);
+});
+
+test('接吻也可能持续较长时间，然后才转入下一动作', () => {
+  const world = NPCs.create(maps, () => 0.1);
+  for (let i = 0; i < 3000 && world.couple.phase !== 'kiss'; i++) NPCs.update(world, 0.1, [], () => 0.1);
+  assert.equal(world.couple.phase, 'kiss');
+  for (let i = 0; i < 150; i++) NPCs.update(world, 0.1, [], () => 0.1);
+  assert.equal(world.couple.phase, 'kiss');
 });
