@@ -440,7 +440,17 @@ async function main() {
 main();
 ```
 
-原来模块顶层的 `const G = {...}` 整段删除（内容移入 main()）。`initKeyboard` / `bindTouchControls` / 声音按钮绑定保持在模块顶层不动——回调里的 `interact(G)` 等只会在用户操作时才执行，那时 `G` 已赋值。
+原来模块顶层的 `const G = {...}` 整段删除（内容移入 main()）。`initKeyboard` / `bindTouchControls` / 声音按钮绑定保持在模块顶层不动，但要加**加载期守卫**——用户在图片加载完成前按键时 `G` 还是 `null`，必须挡掉：
+
+```js
+initKeyboard((e) => {
+  if (e.repeat) return; // 忽略系统自动重复，避免 M 键长按导致静音反复切换
+  if (!G) return; // 资源加载完成前的按键直接忽略
+  const k = e.key.toLowerCase();
+  // ……其余原样……
+});
+bindTouchControls({ onInteract: () => { if (G) interact(G); }, onGesture: initAudio });
+```
 
 - [ ] **Step 3: index.html 加 loading 元素**
 
