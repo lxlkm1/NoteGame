@@ -90,6 +90,8 @@ src/assent/img/
 
 ## 特殊情况处理
 
+- **地图可编辑性（硬约束，不可改变）**：地图字符串文件（`src/data/maps/*.js`）是地图布局的唯一事实来源。改布局的流程永远是：编辑字符串网格 → 重跑 `python tools/export.py` → 场景 PNG 更新。运行时碰撞/portal/solid 判定全部从字符串读取，与 PNG 内容无关（现状即如此，改造不改变这一点）
+
 - **左向朝向**：不出图；运行时 `ctx.scale(-1,1)` 镜像 side 帧的逻辑保留（情侣男女各自基准朝向例外，按现状）
 - **zdw 抓猫**：手臂 `pixelLine` 连续插值保留代码；`ZDW_MIMI_FRAME`（被抓的猫）导出 PNG，`translate+rotate` 逻辑保留
 - **文字类 UI**（猫名牌/心条数字/门提示/对话气泡/文字粒子）：保留 fillText；气泡底框本期不换图
