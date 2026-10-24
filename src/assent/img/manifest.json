@@ -1,0 +1,22 @@
+{
+  "scenes/atrium": {
+    "path": "img/scenes/atrium.png",
+    "w": 1248,
+    "h": 960
+  },
+  "scenes/reading": {
+    "path": "img/scenes/reading.png",
+    "w": 1248,
+    "h": 960
+  },
+  "scenes/toilet": {
+    "path": "img/scenes/toilet.png",
+    "w": 1248,
+    "h": 960
+  },
+  "scenes/outside": {
+    "path": "img/scenes/outside.png",
+    "w": 1248,
+    "h": 960
+  }
+}
