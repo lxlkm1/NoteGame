@@ -98,16 +98,20 @@ export function render(canvas, ctx, G, dt) {
     for (const npc of NPCs.visible(G.npcs, G.scene)) {
       actors.push({ y: npc.y, draw: () => NPCs.draw(ctx, npc) });
     }
-    if (G.mimi && G.mimi.state !== 'hidden') {
+    if (G.mimi && !['hidden', 'held'].includes(G.mimi.state)) {
       actors.push({ y: G.mimi.y, draw: () => Cats.drawCat(ctx, G.mimi, drawSprite, MIMI_FRAMES, G.player) });
     }
     actors.sort((a, b) => a.y - b.y);
     if (G.mimi && G.mimi.food) drawSprite(ctx, DISH, PALETTE_DISH, G.mimi.food.x, G.mimi.food.y);
     for (const actor of actors) actor.draw();
     drawCatOverlay(ctx, G);
-    if (G.mimi && G.mimi.state !== 'hidden' && Math.hypot(G.player.x - G.mimi.x, G.player.y - G.mimi.y) < 112) {
+    if (G.mimi && !['hidden', 'held'].includes(G.mimi.state) && Math.hypot(G.player.x - G.mimi.x, G.player.y - G.mimi.y) < 112) {
       ctx.fillStyle = '#f5f2ec'; ctx.font = '8px monospace';
       ctx.fillText('咪咪', G.mimi.x, G.mimi.y - 7);
+    }
+    if (G.mimi?.fearTimer > 0 && G.mimi.state === 'fleeing') {
+      ctx.fillStyle = '#ffe1a0'; ctx.font = 'bold 9px monospace';
+      ctx.fillText('!', G.mimi.x + 6, G.mimi.y - 8);
     }
     if (Mimi.canOfferFood(G.mimi, G.player, G.currentMap, TILES)) {
       ctx.fillStyle = '#f5f2ec'; ctx.font = '8px monospace';

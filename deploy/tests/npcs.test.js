@@ -2,12 +2,40 @@
 import test from 'node:test';
 import assert from 'node:assert';
 import * as NPCs from '../../src/npc/index.js';
+import * as Mimi from '../../src/npc/mimi.js';
 import atrium from '../../src/data/maps/atrium.js';
 import reading from '../../src/data/maps/reading.js';
 import outside from '../../src/data/maps/outside.js';
 import tiles from '../../src/data/maps/tiles.js';
 
 const maps = { atrium, reading, outside };
+
+test('zdw 按概率出现在正确场景，且不参与普通猫投喂', () => {
+  const world = NPCs.create(maps, () => 0.1);
+  assert.ok(world.zdw);
+  assert.ok(NPCs.visible(world, 'outside').includes(world.zdw));
+  assert.ok(!NPCs.visible(world, 'atrium').includes(world.zdw));
+  const absent = NPCs.create(maps, () => 0.9);
+  assert.ok(!NPCs.visible(absent, 'outside').includes(absent.zdw));
+  const cat = { id: 'xueqiu', state: 'wander', x: world.zdw.x, y: world.zdw.y };
+  const events = NPCs.update(world, 0.05, [cat], () => 0.1);
+  assert.ok(events.every(event => event.npcId !== 'zdw'));
+});
+
+test('NPC 聚合更新会把当前咪咪交给 zdw，切换场景后解除持有', () => {
+  const world = NPCs.create(maps, () => 0.1);
+  assert.ok(world.zdw);
+  const mimi = Mimi.create(outside.mimiSites.left);
+  world.zdw.x = mimi.x + 8; world.zdw.y = mimi.y;
+  for (let i = 0; i < 30 && mimi.state !== 'held'; i++) {
+    NPCs.update(world, 0.05, [], () => 0.1, mimi);
+  }
+  assert.equal(mimi.state, 'held');
+  assert.equal(world.zdw.heldMimi, mimi);
+  NPCs.update(world, 0.05, [], () => 0.1, null);
+  assert.notEqual(mimi.state, 'held');
+  assert.equal(world.zdw.heldMimi, null);
+});
 
 test('阅览室四名学生、中庭两名学生都坐在可走座位上', () => {
   const world = NPCs.create(maps, () => 0.1);

@@ -81,7 +81,8 @@ function loop(t) {
   lastT = t;
   updatePlayer(G.player, dt, keys, G.currentMap);
   NPCs.updateDuyuDialogue(G.npcs, G.player, G.scene, dt);
-  for (const event of NPCs.update(G.npcs, dt, G.scene === 'outside' ? G.cats : [])) {
+  for (const event of NPCs.update(G.npcs, dt, G.scene === 'outside' ? G.cats : [], Math.random,
+    G.scene === 'outside' ? G.mimi : null)) {
     if (event.type === 'feed' && Cats.feed(event.cat, event.x, event.y, 'npc')) {
       G.dishes.push({ catId: event.cat.id, x: event.x, y: event.y });
       Sound.play('dish');
@@ -116,7 +117,7 @@ function loop(t) {
     }
     if (G.mimi) {
       const before = G.mimi.hearts;
-      Mimi.update(G.mimi, dt, G.player, G.currentMap, TILES, Math.random, G.bowls);
+      Mimi.update(G.mimi, dt, G.player, G.currentMap, TILES, Math.random, G.bowls, G.npcs.zdw);
       if (G.mimi.hearts > before) {
         G.mimiHearts = G.mimi.hearts;
         G.mimiMet = true;

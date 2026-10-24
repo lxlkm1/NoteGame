@@ -100,3 +100,66 @@ test('碗中已有猫粮时，咪咪会主动发现并优先赶去', () => {
   assert.equal(mimi.state, 'approaching');
   assert.equal(mimi.food.bowl, bowl);
 });
+
+test('zdw 靠近时咪咪优先逃向草丛，即使正在吃碗里的粮', () => {
+  const mimi = Mimi.create(site, 2);
+  const bowl = { x: mimi.x, y: mimi.y, filled: true };
+  Mimi.offerBowlFood(mimi, bowl);
+  mimi.state = 'eating'; mimi.stateTimer = 0.01;
+  const zdw = { id: 'zdw', scene: 'outside', x: mimi.x + 32, y: mimi.y };
+  for (let i = 0; i < 60; i++) {
+    Mimi.update(mimi, 0.05, player(30, 18), outside.map, tiles, () => 0.5, [bowl], zdw);
+  }
+  assert.equal(mimi.state, 'hidden');
+  assert.equal(mimi.hearts, 2);
+  assert.equal(bowl.filled, true);
+  Mimi.offerBowlFood(mimi, bowl);
+  assert.equal(mimi.state, 'hidden', '互动放粮也不能解除对 zdw 的恐惧');
+});
+
+test('图书馆内的 zdw 不会隔着场景吓到咪咪', () => {
+  const mimi = Mimi.create(site);
+  Mimi.update(mimi, 0.05, player(30, 18), outside.map, tiles, () => 0.5, [],
+    { id: 'zdw', scene: 'atrium', x: mimi.x, y: mimi.y });
+  assert.equal(mimi.state, 'waiting');
+});
+
+test('被抓期间咪咪不移动、不吃粮、不发疯，不能被投喂状态覆盖', () => {
+  assert.equal(typeof Mimi.capture, 'function');
+  const mimi = Mimi.create(site, 2);
+  const bowl = { x: mimi.x, y: mimi.y, filled: true };
+  Mimi.offerBowlFood(mimi, bowl);
+  mimi.frenzyTimer = 0;
+  assert.equal(Mimi.capture(mimi, { id: 'zdw' }), true);
+  const point = { x: mimi.x, y: mimi.y };
+  for (let i = 0; i < 100; i++) {
+    Mimi.update(mimi, 0.05, player(30, 18), outside.map, tiles, () => 0.1, [bowl]);
+  }
+  assert.equal(mimi.state, 'held');
+  assert.equal(mimi.heldBy, 'zdw');
+  assert.deepEqual({ x: mimi.x, y: mimi.y }, point);
+  assert.equal(mimi.hearts, 2);
+  assert.equal(bowl.filled, true);
+  assert.equal(Mimi.offerBowlFood(mimi, bowl), false);
+  mimi.food = null;
+  assert.equal(Mimi.offerFood(mimi, player(19, 18), outside.map, tiles), false);
+});
+
+test('放下后咪咪先逃回草丛，恐惧消退后仍可吃粮增加好感', () => {
+  assert.equal(typeof Mimi.release, 'function');
+  const mimi = Mimi.create(site, 2);
+  const bowl = { x: 14 * 16, y: 17 * 16, filled: true };
+  Mimi.offerBowlFood(mimi, bowl);
+  Mimi.capture(mimi, { id: 'zdw' });
+  Mimi.release(mimi, { x: 14 * 16, y: 16 * 16 });
+  assert.equal(mimi.state, 'fleeing');
+  assert.equal(mimi.heldBy, null);
+  let hid = false;
+  for (let i = 0; i < 400 && bowl.filled; i++) {
+    Mimi.update(mimi, 0.05, player(30, 18), outside.map, tiles, () => 0.5, [bowl]);
+    hid ||= mimi.state === 'hidden';
+  }
+  assert.equal(hid, true);
+  assert.equal(bowl.filled, false);
+  assert.equal(mimi.hearts, 3);
+});

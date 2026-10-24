@@ -14,6 +14,7 @@ function create(site, hearts = 0) {
     x: site.spawn.col * TILE, y: site.spawn.row * TILE,
     spawn: site.spawn, hide: site.hide,
     state: 'waiting', stateTimer: 0, hearts, hasMet: hearts > 0,
+    heldBy: null, fearTimer: 0,
     food: null, path: [], pathGoal: null,
     moving: false, dir: 1, walkTimer: 0, blinkTimer: 0, facePlayer: false,
     frenzyTimer: 18 + Math.random() * 12, frenzyTurns: 0, frenzyTarget: null,
@@ -28,7 +29,7 @@ function walkable(col, row, map, tiles) {
 }
 
 function canOfferFood(mimi, player, map, tiles) {
-  if (!mimi || mimi.food || mimi.state === 'eating') return false;
+  if (!mimi || mimi.food || mimi.state === 'eating' || mimi.state === 'held') return false;
   const d = distance(mimi, player);
   if (d < FOOD_MIN || d > FOOD_MAX) return false;
   const [dx, dy] = DIR[player.dir] || DIR.down;
@@ -46,8 +47,9 @@ function offerFood(mimi, player, map, tiles) {
 }
 
 function offerBowlFood(mimi, bowl) {
-  if (!mimi || mimi.state === 'eating') return false;
+  if (!mimi || mimi.state === 'eating' || mimi.state === 'held') return false;
   mimi.food = { x: bowl.x, y: bowl.y, bowl };
+  if (mimi.fearTimer > 0) return true;
   mimi.state = 'approaching';
   mimi.pathGoal = null;
   mimi.path = [];
@@ -109,13 +111,50 @@ function flee(mimi) {
   mimi.path = [];
 }
 
+// 被 zdw 抓住后，位置与猫的绘制由持有者管理，保留食物和好感。
+function capture(mimi, holder) {
+  if (!mimi || mimi.state === 'held') return false;
+  mimi.heldBy = holder.id;
+  mimi.state = 'held';
+  mimi.stateTimer = 0;
+  mimi.moving = false;
+  mimi.facePlayer = false;
+  mimi.path = []; mimi.pathGoal = null; mimi.frenzyTarget = null;
+  return true;
+}
+
+function release(mimi, point) {
+  if (!mimi || mimi.state !== 'held') return false;
+  mimi.x = point.x; mimi.y = point.y;
+  mimi.heldBy = null;
+  mimi.fearTimer = 3;
+  mimi.frenzyTimer = 18;
+  flee(mimi);
+  return true;
+}
+
+function retreat(mimi, dt, map, tiles) {
+  if (moveTo(mimi, { x: mimi.hide.col * TILE, y: mimi.hide.row * TILE }, 48, dt, map, tiles)) {
+    mimi.state = 'hidden';
+    mimi.stateTimer = 7;
+  }
+}
+
 function playerFarFromFood(mimi, player) {
   return mimi.food && distance(player, mimi.food) > FEAR_RANGE && distance(player, mimi) > FEAR_RANGE;
 }
 
-function update(mimi, dt, player, map, tiles, rng = Math.random, bowls = []) {
+function update(mimi, dt, player, map, tiles, rng = Math.random, bowls = [], threat = null) {
   mimi.blinkTimer += dt;
   mimi.moving = false;
+  if (mimi.state === 'held') return;
+  mimi.fearTimer = Math.max(0, mimi.fearTimer - dt);
+  if (threat?.scene === 'outside' && distance(mimi, threat) < 6 * TILE) mimi.fearTimer = 3;
+  if (mimi.fearTimer > 0) {
+    if (mimi.state !== 'hidden' && mimi.state !== 'fleeing') flee(mimi);
+    if (mimi.state === 'fleeing') retreat(mimi, dt, map, tiles);
+    return;
+  }
   if (mimi.state !== 'eating' && !(mimi.food && mimi.food.bowl && mimi.food.bowl.filled)) {
     const fullBowl = bowls.find(bowl => bowl.filled);
     if (fullBowl) offerBowlFood(mimi, fullBowl);
@@ -135,10 +174,7 @@ function update(mimi, dt, player, map, tiles, rng = Math.random, bowls = []) {
   }
 
   if (mimi.state === 'fleeing') {
-    if (moveTo(mimi, { x: mimi.hide.col * TILE, y: mimi.hide.row * TILE }, 48, dt, map, tiles)) {
-      mimi.state = 'hidden';
-      mimi.stateTimer = 7;
-    }
+    retreat(mimi, dt, map, tiles);
   } else if (mimi.state === 'hidden') {
     if (playerFarFromFood(mimi, player)) {
       mimi.state = 'approaching'; mimi.pathGoal = null;
@@ -182,4 +218,4 @@ function update(mimi, dt, player, map, tiles, rng = Math.random, bowls = []) {
   }
 }
 
-export { shouldAppear, create, canOfferFood, offerFood, offerBowlFood, update };
+export { shouldAppear, create, canOfferFood, offerFood, offerBowlFood, capture, release, update };
