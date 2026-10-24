@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="zh">
+  <head><meta charset="UTF-8" /><title>NoteGame 资产导出</title></head>
+  <body>
+    <p>资产导出页：渲染 canvas 挂到 window.__EXPORTS__，由 tools/export.py 采集。</p>
+    <script type="module">
+      // 不 import scenes.js（模块加载即预渲染且带音频副作用），直接复用底层渲染函数
+      import { MAPS } from '../src/data/maps/index.js';
+      import { buildCanvas } from '../src/tile-render.js';
+      import { TILE, ART_SCALE, parseMap } from '../src/map.js';
+
+      const SCENES = ['atrium', 'reading', 'toilet', 'outside'];
+      window.__EXPORTS__ = {};
+      window.__EXPECTED__ = {};
+      for (const name of SCENES) {
+        const { rows, cols } = parseMap(MAPS[name].map);
+        window.__EXPECTED__['scenes/' + name] = { w: cols * TILE * ART_SCALE, h: rows * TILE * ART_SCALE };
+        window.__EXPORTS__['scenes/' + name] = buildCanvas(MAPS[name], MAPS.tiles);
+      }
+
+      // 校验模式：若 img/ 下已有导出的 PNG，则与刚渲染的 canvas 逐像素对比；
+      // 首次导出前 manifest.json 不存在，__DIFF__ 保持 null
+      window.__DIFF__ = null;
+      try {
+        const res = await fetch('../src/assent/img/manifest.json');
+        if (res.ok) {
+          const manifest = await res.json();
+          const diffs = {};
+          for (const name of SCENES) {
+            const key = 'scenes/' + name;
+            if (!manifest[key]) { diffs[key] = 'manifest 缺 key'; continue; }
+            const image = new Image();
+            await new Promise((resolve) => {
+              image.onload = resolve; image.onerror = resolve;
+              image.src = '../src/assent/' + manifest[key].path;
+            });
+            if (!image.width) { diffs[key] = '图片加载失败'; continue; }
+            const cv = document.createElement('canvas');
+            cv.width = image.width; cv.height = image.height;
+            const c = cv.getContext('2d', { willReadFrequently: true });
+            c.drawImage(image, 0, 0);
+            const a = c.getImageData(0, 0, cv.width, cv.height).data;
+            const src = window.__EXPORTS__[key];
+            const c2 = src.getContext('2d', { willReadFrequently: true });
+            const b = c2.getImageData(0, 0, src.width, src.height).data;
+            let n = 0;
+            for (let i = 0; i < a.length; i += 4) {
+              if (a[i] !== b[i] || a[i + 1] !== b[i + 1] || a[i + 2] !== b[i + 2] || a[i + 3] !== b[i + 3]) n++;
+            }
+            diffs[key] = n;
+          }
+          window.__DIFF__ = diffs;
+        }
+      } catch (e) { /* 首次导出：manifest 不存在，跳过校验 */ }
+
+      window.__EXPORTS_READY__ = true;
+    </script>
+  </body>
+</html>
