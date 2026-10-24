@@ -65,8 +65,8 @@ src/assent/img/
 | 文件 | 改动 |
 |---|---|
 | `src/assets.js`（新增） | 预加载器：fetch manifest → Promise.all 加载全部 PNG → `Map<key, Image>`；导出 `img(key)` 查询 |
-| `src/sprites.js` | `drawSprite(ctx, key, x, y, flip, scale)` 内部改查 Image；运行时烘焙逻辑（detailedSprite 缓存等）移除——该逻辑只被导出页使用 |
-| `src/tile-render.js` | `buildCanvas(sceneName)` 改为 drawImage 场景整图 PNG；`STYLE_DRAW`/`drawTileDetails` 保留但只被导出页引用 |
+| `src/sprites.js` | `drawSprite(ctx, key, x, y, flip, scale)` 内部改查 Image；`detailedSprite` 等烘焙逻辑在阶段三搬到 `tools/export-lib/` 供导出页专用 |
+| `src/tile-render.js` | `buildCanvas(sceneName)` 改为 drawImage 场景整图 PNG；原逐格绘制实现（`STYLE_DRAW`/`drawTileDetails`）在阶段三搬到 `tools/export-lib/` |
 | `src/main.js` | 启动改 async：显示 loading 提示 → await assets.load → 预渲染场景 → 启动 loop |
 | 8 个调用方（player.js / cats.js / mimi.js / shared.js / duyu.js / couple-render.js / zdw-render.js / render.js） | 每处 `drawSprite(ctx, 矩阵, 调色板, …)` 改为 `drawSprite(ctx, 'key', …)`，每处几行 |
 
@@ -76,7 +76,7 @@ src/assent/img/
 
 ### `tools/export.html`
 
-- import 游戏现有的 `sprites.js` / `tile-render.js` / `data/*.js`（跑真实渲染代码，零重写）
+- import 游戏现有的 `sprites.js` / `tile-render.js` / `data/*.js`（跑真实渲染代码，零重写；阶段三这些渲染函数搬到 `tools/export-lib/` 后改为从那里 import）
 - 每个精灵帧调 `detailedSprite()`/`bitmap()` 得到 canvas；每个场景调 `buildCanvas()` 得到整图 canvas
 - 情侣 hug/kiss 分层帧按运行时渲染顺序（远臂→女生身体→近臂）合成到同一 canvas 再导出
 - 全部挂到 `window.__EXPORTS__ = { key: canvas }`
@@ -93,7 +93,7 @@ src/assent/img/
 - **左向朝向**：不出图；运行时 `ctx.scale(-1,1)` 镜像 side 帧的逻辑保留（情侣男女各自基准朝向例外，按现状）
 - **zdw 抓猫**：手臂 `pixelLine` 连续插值保留代码；`ZDW_MIMI_FRAME`（被抓的猫）导出 PNG，`translate+rotate` 逻辑保留
 - **文字类 UI**（猫名牌/心条数字/门提示/对话气泡/文字粒子）：保留 fillText；气泡底框本期不换图
-- **爱心图案**：导出 heart.png，心条与爱心粒子共用；满/空双色由调用方传 tint 或导出两张（实现时定，倾向导出 heart-full/heart-empty 两张）
+- **爱心图案**：导出 `heart-full.png`（#ef6a8a）/ `heart-empty.png`（#4a4453）两张，心条按好感度选图；爱心粒子用 heart-full
 - **粒子运动/渐隐、影子、暖光**：运动逻辑保留代码；暖光层和门垫已烘焙进场景整图
 - **锚点**：全部沿用现有约定（drawSprite 底边居中、草坪帧 `COUPLE_LAWN_ANCHOR(40,56)`、被抓猫 `ZDW_MIMI_PAW(4,1)`），保证 y 排序遮挡和碰撞视觉不错位
 - **像素风三件套**：所有 2d 上下文 `imageSmoothingEnabled=false`；CSS `image-rendering: pixelated` 保留；绘制坐标 `Math.round` 取整
