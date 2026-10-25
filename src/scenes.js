@@ -1,17 +1,18 @@
-// scenes.js —— 场景表（含预渲染画布）与进出房间
+// scenes.js —— 场景表（素材图组装）与进出房间
 import { MAPS } from './data/maps/index.js';
-import { buildCanvas } from './tile-render.js';
+import { buildSceneFromTiles } from './tile-render.js';
 import { TILE } from './map.js';
 import * as Sound from './audio.js';
 import * as Bowls from './bowls.js';
 import * as Mimi from './npc/mimi.js';
 
-export const scenes = {
-  atrium: { data: MAPS.atrium, canvas: buildCanvas(MAPS.atrium, MAPS.tiles) },
-  reading: { data: MAPS.reading, canvas: buildCanvas(MAPS.reading, MAPS.tiles) },
-  toilet: { data: MAPS.toilet, canvas: buildCanvas(MAPS.toilet, MAPS.tiles) },
-  outside: { data: MAPS.outside, canvas: buildCanvas(MAPS.outside, MAPS.tiles) },
-};
+export const scenes = {}; // initScenes() 在资产加载后填充；import 方持有同一对象引用
+
+export function initScenes() {
+  for (const name of ['atrium', 'reading', 'toilet', 'outside']) {
+    scenes[name] = { data: MAPS[name], canvas: buildSceneFromTiles(MAPS[name], MAPS.tiles) };
+  }
+}
 
 // G：main.js 持有的游戏状态（player / scene / currentMap / atriumPos / bowls / mimi / mimiHearts / particles）
 export function enterRoom(G, name) {

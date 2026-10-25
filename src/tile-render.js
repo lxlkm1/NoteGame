@@ -1,4 +1,4 @@
-// tile-render.js —— 地砖画法（STYLE_DRAW 按 style 分发）+ 场景预渲染 buildCanvas（仅浏览器调用）
+// tile-render.js —— 地砖画法（STYLE_DRAW 按 style 分发）+ 场景预渲染（buildSceneFromTiles 运行时 / buildCanvasLegacy 导出用）
 // buildCanvasLegacy 仅供 tools/export.html 导出素材用；运行时场景组装走 buildSceneFromTiles
 import { TILE, ART_SCALE, parseMap } from './map.js';
 import { tileKey } from './tile-key.js';
@@ -352,6 +352,4 @@ function buildSceneFromTiles(sceneData, tiles) {
   return cv;
 }
 
-const buildCanvas = buildCanvasLegacy; // 兼容别名，Task 6 切换 scenes.js 后移除
-
-export { buildCanvasLegacy, buildSceneFromTiles, buildCanvas };
+export { buildCanvasLegacy, buildSceneFromTiles };

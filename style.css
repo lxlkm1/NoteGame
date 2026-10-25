@@ -62,3 +62,18 @@ html, body {
   #game, #hud, #touch-controls { visibility: hidden; }
   #rotate-hint { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 24px; box-sizing: border-box; color: #f5f2ec; font-size: 18px; text-align: center; }
 }
+/* 资源加载占位：图片预加载完成前盖住画布 */
+#loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #1a181f;
+  color: #e8e0d0;
+  font: 14px/1 monospace;
+  z-index: 50;
+}
+#loading[hidden] {
+  display: none;
+}

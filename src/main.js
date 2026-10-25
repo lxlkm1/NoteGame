@@ -9,7 +9,8 @@ import * as Sound from './audio.js';
 import { initViewport, initFullscreen, mobileLayout } from './viewport.js';
 import { keys, initKeyboard, bindTouchControls } from './input.js';
 import { createPlayer, updatePlayer } from './player.js';
-import { scenes } from './scenes.js';
+import { scenes, initScenes } from './scenes.js';
+import * as Assets from './assets.js';
 import { interact, updateProgress } from './interact.js';
 import { spawnHearts, spawnText } from './particles.js';
 import { render } from './render.js';
@@ -18,20 +19,7 @@ const canvas = document.getElementById('game');
 const ctx = initViewport(canvas);
 
 // ---- 游戏状态（各模块通过 G 读写） ----
-const G = {
-  scene: 'atrium',
-  currentMap: scenes.atrium.data.map,
-  atriumPos: { x: MAPS.atrium.spawn.col * TILE, y: MAPS.atrium.spawn.row * TILE },
-  player: createPlayer(MAPS.atrium.spawn),
-  cats: Cats.createCats(), // 普通猫固定生活在室外
-  npcs: NPCs.create(MAPS),
-  mimi: null,
-  mimiHearts: 0,
-  mimiMet: false,
-  bowls: [],
-  dishes: [],   // {catId, x, y}
-  particles: [], // 见 particles.js
-};
+let G = null; // main() 在素材加载完成后才初始化；加载期输入回调须判空
 
 // ---- 音频：首次按键/触摸懒初始化 BGM + M 键与按钮静音 ----
 let audioInited = false;
@@ -48,6 +36,7 @@ function initAudio() {
 
 initKeyboard((e) => {
   if (e.repeat) return; // 忽略系统自动重复，避免 M 键长按导致静音反复切换
+  if (!G) return; // 资源加载完成前的按键直接忽略
   const k = e.key.toLowerCase();
   if (k === 'm') {
     if (!audioInited) { Sound.init(); Sound.startBgm(); audioInited = true; }
@@ -58,7 +47,7 @@ initKeyboard((e) => {
   if (k === 'e') interact(G);
   initAudio();
 });
-bindTouchControls({ onInteract: () => interact(G), onGesture: initAudio });
+bindTouchControls({ onInteract: () => { if (G) interact(G); }, onGesture: initAudio });
 document.getElementById('sound').addEventListener('pointerdown', (e) => {
   e.preventDefault();
   if (!audioInited) { initAudio(); return; }
@@ -131,4 +120,24 @@ function loop(t) {
   requestAnimationFrame(loop);
 }
 
-requestAnimationFrame((t) => { lastT = t; requestAnimationFrame(loop); });
+async function main() {
+  await Assets.loadAssets('src/assent/');
+  initScenes();
+  G = {
+    scene: 'atrium',
+    currentMap: scenes.atrium.data.map,
+    atriumPos: { x: MAPS.atrium.spawn.col * TILE, y: MAPS.atrium.spawn.row * TILE },
+    player: createPlayer(MAPS.atrium.spawn),
+    cats: Cats.createCats(), // 普通猫固定生活在室外
+    npcs: NPCs.create(MAPS),
+    mimi: null,
+    mimiHearts: 0,
+    mimiMet: false,
+    bowls: [],
+    dishes: [],   // {catId, x, y}
+    particles: [], // 见 particles.js
+  };
+  document.getElementById('loading').hidden = true;
+  requestAnimationFrame((t) => { lastT = t; requestAnimationFrame(loop); });
+}
+main();
