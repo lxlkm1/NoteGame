@@ -13,7 +13,7 @@
 
 ## Global Constraints
 
-- **画面逐像素一致**：导出必须调用游戏现有的渲染函数（`buildCanvasLegacy`），禁止重写渲染逻辑。
+- **画面逐像素一致**：导出必须调用游戏现有的渲染函数（`buildCanvasLegacy`），禁止重写渲染逻辑。例外（2026-10-25 用户拍板的画面简化，Task 6.5/6.6）：chessSeat 半径 7.2、seed 噪点纹理移除、外墙去 parity 且亮窗拆为覆盖层——这些属既定画面变更，"一致"指素材组装与简化后代码渲染之间一致。
 - **地图字符串是布局唯一事实来源**：`src/data/maps/*.js` 不动；碰撞/portal 判定不变；改地图布局不需要重跑导出（位置参数组合已全量导出），只有改画法（STYLE_DRAW）才需要。
 - 像素风三件套：2d 上下文 `imageSmoothingEnabled = false`；CSS `image-rendering: pixelated`；绘制坐标 `Math.round` 取整。
 - Python 一律用 `/home/lxl/miniforge3/envs/opencode/bin/python`（Playwright 在此环境）。
@@ -872,6 +872,185 @@ node --test deploy/tests/tile-key.test.js
 node --test   # 除 zdw.test.js 2 个已知失败外全绿（assets.test.js 按新公式算 key 查 manifest，自动适配）
 git add src/tile-key.js deploy/tests/tile-key.test.js src/assent/img/
 git commit -m "Normalize chessSeat tile keys to dedupe AA noise variants
+
+Co-Authored-By: Claude Code <noreply@anthropic.com>"
+```
+
+---
+
+### Task 6.6: 地块去噪简化 + 外墙亮窗覆盖层（2026-10-25 用户拍板：墙=1 张、窗户单独 1 张、其余风格只留真变体）
+
+**Files:**
+- Modify: `src/tile-render.js`（删 seed 噪点、facade 去 parity、亮窗抽成覆盖层函数、组装路径叠加亮窗）
+- Modify: `src/tile-key.js`（按"画面实际使用的参数"归一化）
+- Modify: `tools/export.html`（导出亮窗覆盖层）
+- Test: `deploy/tests/tile-key.test.js`、`deploy/tests/assets.test.js`
+- Re-export: `src/assent/img/`（重跑 export.py）
+
+**背景与依据（已源码核实）：** 用户要求素材瘦身。种子噪点（seed dot）撑起了 wall 11 / floor 12 / facade 33 / 草地家族各 22 / pavement 22 / table 22 的文件数，用户拍板全部移除（画面变素是既定取舍）。外墙亮窗从 facade 画法中拆出为**透明底覆盖层 PNG**（`tiles/facade-window`），运行时按 win 公式位置叠加——亮窗位置不再需要进 key。书架底色被木框整格覆盖（parity 不可见），key 的 parity 归 0。**保留的真变体**：parity 深浅交替（floor/chessFloor/草地家族/pavement/table/chair）、bookshelf 6 种书脊、chessSeat 12 字、门 3 种画法。
+
+预期结果：**46 个 PNG 文件、47 条 manifest**（逐项：wall1 / floor2 / chessFloor2 / chessSeat12 / bigDoor M+W 共 2 条目 1 文件 / door m+D 各 1 / outsideDoor1 / facade1 / facade-window 1 / pavement2 / grass/tree/shrub/lamp/bench 各 2 / bookshelf6 / table2 / chair2 / toilet1）。若实际数字不符，报 DONE_WITH_CONCERNS 给实际值，不要硬凑。
+
+**Interfaces:**
+- Produces: 新导出符号 `drawFacadeWindow32(ctx, x32, y32)`（tile-render.js，32px 无变换坐标系画完整亮窗）；新素材 key `tiles/facade-window`（透明底 32×32，无 `|` 分隔段）
+- Consumes: 其余接口不变
+
+- [ ] **Step 1: 先改测试（失败）**
+
+`deploy/tests/tile-key.test.js`：
+
+(a) 把"位置参数变化会改变 key"测试整体替换为：
+
+```js
+test('位置参数只影响使用该参数的风格（去噪后 seed 不再属于任何风格）', () => {
+  const base = tileKey('.', 0, 0, tiles, {});
+  assert.notEqual(tileKey('.', 1, 0, tiles, {}), base, 'floor parity 变化');
+  assert.notEqual(tileKey('B', 1, 0, tiles, {}), tileKey('B', 0, 0, tiles, {}), 'bookshelf book 变化');
+  assert.equal(tileKey('g', 6, 0, tiles, {}), tileKey('g', 0, 0, tiles, {}), 'grass seed 已移除（列+6 不再改变 key）');
+});
+```
+
+(b) 追加：
+
+```js
+test('墙/外墙/门等画面固定：任意位置同 key', () => {
+  assert.equal(tileKey('#', 0, 0, tiles, {}), tileKey('#', 7, 9, tiles, {}));
+  assert.equal(tileKey('F', 3, 2, tiles, {}), tileKey('F', 4, 5, tiles, {}), 'facade 亮窗位置不再进 key（窗户是覆盖层）');
+  assert.equal(tileKey('m', 0, 0, tiles, {}), tileKey('m', 11, 13, tiles, {}));
+  assert.notEqual(tileKey('m', 0, 0, tiles, {}), tileKey('D', 0, 0, tiles, {}), 'm 与 D 画法不同仍需区分');
+});
+```
+
+`deploy/tests/assets.test.js` 追加：
+
+```js
+test('manifest 含外墙亮窗覆盖层', () => {
+  const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
+  const meta = manifest['tiles/facade-window'];
+  assert.ok(meta, '缺 tiles/facade-window（先跑 python tools/export.py）');
+  assert.equal(meta.w, 32); assert.equal(meta.h, 32);
+});
+```
+
+跑 `node --test deploy/tests/tile-key.test.js deploy/tests/assets.test.js` 确认失败。
+
+- [ ] **Step 2: tile-key.js 全文替换**
+
+```js
+// tile-key.js —— 地块素材键：由 (字符, 列, 行) 算出唯一素材 key（纯逻辑，导出页与运行时共用）
+// key 只含会影响该地块画面的参数（2026-10-25 去噪简化后 seed 纹理已移除，多数风格 key 与位置无关；
+// 外墙亮窗是覆盖层素材 tiles/facade-window，不进 key）
+
+// 各风格画面实际使用的位置参数：不在表中的风格 parity/seed/book/win 全归 0（画面固定）
+const STYLE_PARAMS = {
+  floor: { parity: true },     // 木地板深浅交替
+  chessFloor: { parity: true },
+  grass: { parity: true }, tree: { parity: true }, shrub: { parity: true },
+  lamp: { parity: true }, bench: { parity: true },   // 草地家族：草地底色交替
+  pavement: { parity: true },
+  table: { parity: true }, chair: { parity: true },  // 暖木底色交替
+  bookshelf: { book: true },   // 书脊颜色组合（底色被木框整格覆盖，parity 不可见）
+};
+
+export function tileKey(ch, col, row, tiles, sceneData) {
+  const t = tiles[ch];
+  const style = t && t.style ? t.style : 'floor'; // 未知字符按地板处理（与 drawTile 防呆一致）
+  if (style === 'chessSeat') {
+    // chessSeat 画面只由棋字决定：STYLE_DRAW.chessSeat 不读位置参数，drawTileDetails 仅固定 dot
+    const char = sceneData?.chessSeats?.[`${col},${row}`] ?? '';
+    return [style, ch, 0, 0, 0, 0, char].join('|');
+  }
+  const use = STYLE_PARAMS[style] || {};
+  const parity = use.parity ? (col + row) % 2 : 0;
+  const book = use.book ? (col * 7 + row * 13) % 6 : 0;
+  return [style, ch, parity, 0, book, 0, ''].join('|');
+}
+```
+
+- [ ] **Step 3: tile-render.js 去噪 + 亮窗覆盖层**
+
+(a) `STYLE_DRAW.facade` 整体替换为（去掉 parity 与亮窗块）：
+
+```js
+  facade(ctx, x, y) { // 图书馆外墙：纯色 + 顶部亮线；亮窗是覆盖层 drawFacadeWindow32，不画在这里
+    ctx.fillStyle = '#575169';
+    ctx.fillRect(x, y, TILE, TILE);
+    ctx.fillStyle = '#6b6476'; ctx.fillRect(x, y, TILE, 2);
+  },
+```
+
+(b) 在 `drawTileDetails` 之前插入：
+
+```js
+// 外墙亮窗覆盖层（32px 无变换坐标系画完整亮窗）：旧路径细节层调用它；
+// 导出页用它生成透明底 tiles/facade-window.png，运行时在同位置 drawImage 叠加——两处共用保证像素一致
+function drawFacadeWindow32(ctx, x, y) {
+  ctx.fillStyle = '#312b40'; ctx.fillRect(x + 2, y + 2, 28, 28);
+  ctx.fillStyle = '#e8bd75'; ctx.fillRect(x + 6, y + 6, 20, 20);
+  ctx.fillStyle = '#7d6070'; ctx.fillRect(x + 14, y + 6, 4, 20);
+  ctx.fillStyle = '#f8dca0'; ctx.fillRect(x + 8, y + 7, 2, 10);
+  ctx.fillStyle = '#b48657'; ctx.fillRect(x + 22, y + 10, 1, 15);
+}
+```
+
+(c) `drawTileDetails` 内：
+- 删除 `const seed = (col * 17 + row * 31) % 11;` 一行（去噪后不再有任何使用）
+- `case 'floor':` 整个分支删除（两条 dot 都是 seed 条件）
+- `case 'wall': case 'facade':` 分支替换为：
+
+```js
+    case 'wall':
+    case 'facade':
+      dot('#716b80', 2, 2, 27, 1);
+      dot('#3d3948', 1, 19, 30, 1);
+      if (style === 'facade' && row === 2 && col % 6 === 3) drawFacadeWindow32(ctx, x, y);
+      break;
+```
+
+- `case 'pavement':` 删 `dot('#a3a0a4', 7 + seed, 22, 3, 1);` 一行
+- 草地家族分支（grass/tree/shrub/lamp/bench）删 `dot('#6d9473', 3 + seed, 26, 1, 3);` 一行
+- `case 'table':` 删 `dot('#aa754b', 4 + seed, 13, 13, 1);` 一行
+
+(d) `buildSceneFromTiles` 格子循环内，`if (image) {...} else {...}` 块之后插入：
+
+```js
+      // 外墙亮窗覆盖层：位置由 win 公式决定（与 drawTileDetails 的 facade 分支同一公式）
+      const style = tiles[grid[r][c]] && tiles[grid[r][c]].style;
+      if (style === 'facade' && r === 2 && c % 6 === 3) {
+        const winImg = img('tiles/facade-window');
+        if (winImg) c2.drawImage(winImg, c * TILE * ART_SCALE, r * TILE * ART_SCALE);
+        else missing.add('tiles/facade-window');
+      }
+```
+
+(e) 导出行改为 `export { buildCanvasLegacy, buildSceneFromTiles, drawFacadeWindow32 };`
+
+- [ ] **Step 4: export.html 导出覆盖层**
+
+import 行加 `drawFacadeWindow32`。在标定地图裁剪循环之后、页内自检之前插入：
+
+```js
+      // 亮窗覆盖层：透明底 32×32（与旧路径细节层共用同一函数，像素一致由页内自检兜底）
+      const winCv = document.createElement('canvas');
+      winCv.width = winCv.height = CELL;
+      drawFacadeWindow32(winCv.getContext('2d'), 0, 0);
+      window.__EXPORTS__['tiles/facade-window'] = winCv;
+```
+
+- [ ] **Step 5: 重跑导出**
+
+```bash
+/home/lxl/miniforge3/envs/opencode/bin/python tools/export.py
+```
+
+预期：页内自检 + PNG 回读 4 场景 hard 全 0（soft 全 0 或仅 chessSeat AA）；**manifest 47 项、去重后 46 个文件**。数字不符报 DONE_WITH_CONCERNS 给实际值。
+
+- [ ] **Step 6: 全量回归 + Commit**
+
+```bash
+node --test   # 除 zdw.test.js 2 个已知失败外全绿
+git add src/tile-render.js src/tile-key.js tools/export.html deploy/tests/ src/assent/img/
+git commit -m "Simplify tile textures and extract facade window as overlay asset
 
 Co-Authored-By: Claude Code <noreply@anthropic.com>"
 ```
