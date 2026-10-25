@@ -20,6 +20,8 @@
 - 测试命令：`node --test`（测试文件放 `deploy/tests/`，跟随现有风格）。
 - 代码注释用中文，风格跟随现有文件（`// 文件名 —— 职责` 开头）。
 - **已知无关失败**：`deploy/tests/zdw.test.js` 有 2 个抓取测试失败（zdw WIP 现场，commit d95eeb5 已记录），不属于本计划范围，不要修。
+- **chessSeat 圆半径已修为 7.2**（2026-10-25 调试发现：半径 7.5 + 描边半宽 0.75 = 外沿 8.25 > 8，向四边邻居渗色约 0.5px，打破素材化前提"地块内容不越界"；修圆属既定画面微调，用户已拍板）。
+- **像素校验容差**：chessSeat 的圆/繁体字是抗锯齿渲染，Chromium 下同输入在不同绝对位置有亚像素差异（实验：792 对同 key 格子 551 对有 ≤16px 差异；fillRect 地块 0 差异）。diff 规则：**任一通道差 > 16 记硬差异（必须为 0）**；≤16 记 soft 仅供参考。
 - 每个任务完成并经用户确认后运行 `node tools/token-log.mjs --task "任务名"`。
 - 提交信息结尾带 `Co-Authored-By: Claude Code <noreply@anthropic.com>`。
 
@@ -313,7 +315,7 @@ Co-Authored-By: Claude Code <noreply@anthropic.com>"
 
 **Interfaces:**
 - Consumes: Task 1 的 `tileKey`、Task 2 的 `_register`、Task 3 的 `buildCanvasLegacy` / `buildSceneFromTiles`。
-- Produces: `window.__EXPORTS__`（key → 32×32 canvas）、`window.__SCENE_DIFF__`（内存素材组装 vs 旧路径的逐像素差，`{atrium: 0, ...}`）、`window.__DIFF__`（manifest 存在时的 PNG 回读二次校验，首跑为 `null`）、`window.__EXPORTS_READY__ = true`。
+- Produces: `window.__EXPORTS__`（key → 32×32 canvas）、`window.__SCENE_DIFF__`（内存素材组装 vs 旧路径对比，`{atrium: {hard: 0, soft: 0}, ...}`，hard 为超容差像素数）、`window.__DIFF__`（manifest 存在时的 PNG 回读二次校验，同构，首跑为 `null`）、`window.__EXPORTS_READY__ = true`。
 
 - [ ] **Step 1: 重写导出页**
 
@@ -337,15 +339,20 @@ Co-Authored-By: Claude Code <noreply@anthropic.com>"
       const SCENES = ['atrium', 'reading', 'toilet', 'outside'];
       const chessChars = [...new Set(Object.values(MAPS.atrium.chessSeats ?? {}))];
 
-      function diffCanvas(a, b) { // 同尺寸 canvas 逐像素对比，返回不同像素数
-        if (a.width !== b.width || a.height !== b.height) return -1;
+      const AA_TOL = 16; // chessSeat 圆/字的 AA 渲染位置相关（见 Global Constraints），每通道差 ≤16 容忍
+      function diffCanvas(a, b) { // 同尺寸 canvas 对比，返回 {hard, soft}：hard=任一通道差>16 的像素数
+        if (a.width !== b.width || a.height !== b.height) return { hard: -1, soft: -1 };
         const d1 = a.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, a.width, a.height).data;
         const d2 = b.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, b.width, b.height).data;
-        let n = 0;
+        let hard = 0, soft = 0;
         for (let i = 0; i < d1.length; i += 4) {
-          if (d1[i] !== d2[i] || d1[i + 1] !== d2[i + 1] || d1[i + 2] !== d2[i + 2] || d1[i + 3] !== d2[i + 3]) n++;
+          const d = Math.max(
+            Math.abs(d1[i] - d2[i]), Math.abs(d1[i + 1] - d2[i + 1]),
+            Math.abs(d1[i + 2] - d2[i + 2]), Math.abs(d1[i + 3] - d2[i + 3]));
+          if (d > AA_TOL) hard++;
+          else if (d > 0) soft++;
         }
-        return n;
+        return { hard, soft };
       }
 
       // 1) 标定地图法：每个图例字符渲一张 66×66 合成地图，逐格裁出全部位置变体
@@ -414,7 +421,20 @@ Co-Authored-By: Claude Code <noreply@anthropic.com>"
 
 注意：`buildSceneFromTiles` 会给 decor（暖光/门垫）叠加代码层，`buildCanvasLegacy` 也有同样叠加，两边一致，diff 应为 0。
 
-- [ ] **Step 2: Commit**
+- [ ] **Step 2: 修复 chessSeat 描边越界（独立提交）**
+
+调试发现（2026-10-25，页内自检 atrium 差 1058px 追出）：`STYLE_DRAW.chessSeat` 的描边圆半径 7.5 + 线宽 1.5 → 外沿 8.25 > 8，向四边邻居各渗约 0.5px。素材化前提"地块内容不越界"被它打破（其余 17 种画法全是 fillRect 格内绘制，已实证不受影响）。用户拍板修圆：
+
+`src/tile-render.js` chessSeat 中两处 `ctx.arc(x + 8, y + 8, 7.5, 0, Math.PI * 2)`（fill 与 stroke 各一处）改为半径 `7.2`，其余不动。
+
+```bash
+git add src/tile-render.js
+git commit -m "Fix chessSeat circle bleeding 0.25px into neighbor cells (radius 7.5 -> 7.2)
+
+Co-Authored-By: Claude Code <noreply@anthropic.com>"
+```
+
+- [ ] **Step 3: Commit**
 
 ```bash
 git add tools/export.html
@@ -543,15 +563,15 @@ def main():
     threading.Thread(target=serve_forever, daemon=True).start()
     items, scene_diff, _ = collect()
 
-    # 页内自检：内存素材组装的场景必须与旧路径逐像素一致，否则不写任何文件
+    # 页内自检：超容差（hard）差异必须为 0，否则不写任何文件
     if scene_diff is None:
         print('页内自检未运行（__SCENE_DIFF__ 为空）')
         sys.exit(1)
-    bad = {k: v for k, v in scene_diff.items() if v != 0}
+    bad = {k: v['hard'] for k, v in scene_diff.items() if v['hard'] != 0}
     if bad:
-        print(f'页内自检失败（素材组装 ≠ 旧渲染）：{bad}')
+        print(f'页内自检失败（素材组装 ≠ 旧渲染，超容差差异）：{bad}')
         sys.exit(1)
-    print('页内自检通过：4 场景素材组装与旧渲染逐像素一致')
+    print('页内自检通过：' + ', '.join(f"{k} hard=0 soft={v['soft']}" for k, v in scene_diff.items()))
 
     # 全量重建 tiles/（删掉已不用的旧变体）；整图方案的 scenes/ 废弃删除
     tiles_dir = IMG_DIR / 'tiles'
@@ -583,11 +603,11 @@ def main():
     if diff is None:
         print('警告：二次校验未生效（manifest 未找到？）')
         sys.exit(1)
-    bad = {k: v for k, v in diff.items() if v != 0}
+    bad = {k: v['hard'] for k, v in diff.items() if v['hard'] != 0}
     for k, v in diff.items():
-        print(f"PNG 回读校验 {k}: {'一致' if v == 0 else v}")
+        print(f"PNG 回读校验 {k}: hard={v['hard']} soft={v['soft']}")
     if bad:
-        print(f'PNG 回读校验失败：{bad}')
+        print(f'PNG 回读校验失败（超容差差异）：{bad}')
         sys.exit(1)
     print('PNG 回读校验通过 ✓')
 
@@ -604,7 +624,7 @@ if __name__ == '__main__':
 /home/lxl/miniforge3/envs/opencode/bin/python tools/export.py
 ```
 
-预期输出："页内自检通过"、N 张导出（去重后文件数明显小于 key 数）、4 行"PNG 回读校验 … 一致"、"PNG 回读校验通过 ✓"。
+预期输出："页内自检通过：atrium hard=0 soft=…（soft 仅 chessSeat AA 边缘，~90 量级）"、N 张导出（去重后文件数明显小于 key 数）、4 行"PNG 回读校验 … hard=0"、"PNG 回读校验通过 ✓"。
 
 - [ ] **Step 5: 跑测试确认通过 + 全量回归**
 
