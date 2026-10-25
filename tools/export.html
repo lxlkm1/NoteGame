@@ -17,15 +17,20 @@
       const SCENES = ['atrium', 'reading', 'toilet', 'outside'];
       const chessChars = [...new Set(Object.values(MAPS.atrium.chessSeats ?? {}))];
 
-      function diffCanvas(a, b) { // 同尺寸 canvas 逐像素对比，返回不同像素数
-        if (a.width !== b.width || a.height !== b.height) return -1;
+      const AA_TOL = 16; // chessSeat 圆/字的 AA 渲染位置相关（同输入不同绝对位置有亚像素差异），每通道差 ≤16 容忍
+      function diffCanvas(a, b) { // 同尺寸 canvas 对比，返回 {hard, soft}：hard=任一通道差>16 的像素数
+        if (a.width !== b.width || a.height !== b.height) return { hard: -1, soft: -1 };
         const d1 = a.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, a.width, a.height).data;
         const d2 = b.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, b.width, b.height).data;
-        let n = 0;
+        let hard = 0, soft = 0;
         for (let i = 0; i < d1.length; i += 4) {
-          if (d1[i] !== d2[i] || d1[i + 1] !== d2[i + 1] || d1[i + 2] !== d2[i + 2] || d1[i + 3] !== d2[i + 3]) n++;
+          const d = Math.max(
+            Math.abs(d1[i] - d2[i]), Math.abs(d1[i + 1] - d2[i + 1]),
+            Math.abs(d1[i + 2] - d2[i + 2]), Math.abs(d1[i + 3] - d2[i + 3]));
+          if (d > AA_TOL) hard++;
+          else if (d > 0) soft++;
         }
-        return n;
+        return { hard, soft };
       }
 
       // 1) 标定地图法：每个图例字符渲一张 66×66 合成地图，逐格裁出全部位置变体
