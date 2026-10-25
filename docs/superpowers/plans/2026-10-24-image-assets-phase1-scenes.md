@@ -22,6 +22,7 @@
 - **已知无关失败**：`deploy/tests/zdw.test.js` 有 2 个抓取测试失败（zdw WIP 现场，commit d95eeb5 已记录），不属于本计划范围，不要修。
 - **chessSeat 圆半径已修为 7.2**（2026-10-25 调试发现：半径 7.5 + 描边半宽 0.75 = 外沿 8.25 > 8，向四边邻居渗色约 0.5px，打破素材化前提"地块内容不越界"；修圆属既定画面微调，用户已拍板）。
 - **像素校验容差**：chessSeat 的圆/繁体字是抗锯齿渲染，Chromium 下同输入在不同绝对位置有亚像素差异（实验：792 对同 key 格子 551 对有 ≤16px 差异；fillRect 地块 0 差异）。diff 规则：**任一通道差 > 16 记硬差异（必须为 0）**；≤16 记 soft 仅供参考。
+- **chessSeat key 归一化**（Task 6.5 起）：chessSeat 的 parity/seed/book 恒为 0（其画面只由棋字决定），其余风格公式不变。
 - 每个任务完成并经用户确认后运行 `node tools/token-log.mjs --task "任务名"`。
 - 提交信息结尾带 `Co-Authored-By: Claude Code <noreply@anthropic.com>`。
 
@@ -790,6 +791,93 @@ Co-Authored-By: Claude Code <noreply@anthropic.com>"
 
 ---
 
+### Task 6.5: chessSeat 素材 key 归一化（去 AA 噪点重复，2026-10-25 用户拍板）
+
+**Files:**
+- Modify: `src/tile-key.js`
+- Test: `deploy/tests/tile-key.test.js`
+- Re-export: `src/assent/img/`（重跑 export.py，产物随之更新）
+
+**背景与依据（已源码核实，无需重查）：** chessSeat 画面只由棋字决定——`STYLE_DRAW.chessSeat`（tile-render.js:58-76）只画圆 + fillText 棋字，不读任何位置参数；`drawTileDetails` 的 chessSeat 分支（tile-render.js:252-255）只有一个固定 dot。但 key 里含 parity/seed/book，导致同一画面在不同绝对位置的 AA 亚像素差异（≤±11/通道）被 sha1 当成不同内容：52 个 chessSeat 文件语义上只值 12 个（每字一张）。归一化后预期：文件 277→237、manifest 条目 2057→1277（chessSeat 792→12）。其余 17 种地块已处语义最优（fillRect 确定性渲染，byte 级去重已到底），不动。
+
+**Interfaces:**
+- Consumes/Produces: `tileKey` 签名不变；chessSeat key 形如 `chessSeat|z|0|0|0|0|<字>`。导出页与运行时共用同一函数，一处改两边一致——export.html / buildSceneFromTiles / assets.test.js 均无需改。
+
+- [ ] **Step 1: 先写失败测试**
+
+`deploy/tests/tile-key.test.js` 追加：
+
+```js
+test('chessSeat 画面只由棋字决定：parity/seed/book 归 0，同字任意位置同 key', () => {
+  const sceneData = { chessSeats: { '0,0': '車', '5,8': '車', '3,2': '馬' } };
+  assert.equal(tileKey('z', 0, 0, tiles, sceneData), 'chessSeat|z|0|0|0|0|車');
+  assert.equal(tileKey('z', 5, 8, tiles, sceneData), 'chessSeat|z|0|0|0|0|車', '同字不同位置（parity=1,seed=3,book=1 全变）仍同 key');
+  assert.notEqual(tileKey('z', 3, 2, tiles, sceneData), tileKey('z', 0, 0, tiles, sceneData), '不同字不同 key');
+});
+```
+
+- [ ] **Step 2: 跑测试确认失败**
+
+```bash
+node --test deploy/tests/tile-key.test.js
+```
+
+预期：FAIL——新测试断言 `chessSeat|z|0|0|0|0|車`，当前实现给出含位置参数的 key。
+
+- [ ] **Step 3: tile-key.js 加归一化分支**
+
+`src/tile-key.js` 全文替换为：
+
+```js
+// tile-key.js —— 地块素材键：由 (字符, 列, 行) 算出唯一素材 key（纯逻辑，导出页与运行时共用）
+// key 必须包含所有会影响该地块画面的位置参数，否则不同画面的地块会共用同一张图
+// 参数周期 2(parity)/11(seed)/6(book,facade) 的最小公倍数为 66 —— 标定地图边长的依据
+
+export function tileKey(ch, col, row, tiles, sceneData) {
+  const t = tiles[ch];
+  const style = t && t.style ? t.style : 'floor'; // 未知字符按地板处理（与 drawTile 防呆一致）
+  const char = style === 'chessSeat' ? (sceneData?.chessSeats?.[`${col},${row}`] ?? '') : '';
+  if (style === 'chessSeat') {
+    // chessSeat 画面只由棋字决定：STYLE_DRAW.chessSeat 不读位置参数，drawTileDetails 仅固定 dot
+    // （tile-render.js:252）。parity/seed/book 归 0，避免 AA 亚像素噪点把同一画面炸成 52 张冗余图
+    return [style, ch, 0, 0, 0, 0, char].join('|');
+  }
+  const parity = (col + row) % 2;                 // 木地板/棋盘格/石板路/草地交替色
+  const seed = (col * 17 + row * 31) % 11;        // drawTileDetails 纹理噪点种子
+  const book = (col * 7 + row * 13) % 6;          // 书架书脊颜色组合
+  const win = style === 'facade' && row === 2 && col % 6 === 3 ? 1 : 0; // 外墙周期亮窗
+  return [style, ch, parity, seed, book, win, char].join('|');
+}
+```
+
+- [ ] **Step 4: 跑测试确认通过**
+
+```bash
+node --test deploy/tests/tile-key.test.js
+```
+
+预期：8/8 PASS（66 周期等旧测试不含 `'z'`，不受影响）。
+
+- [ ] **Step 5: 重跑导出**
+
+```bash
+/home/lxl/miniforge3/envs/opencode/bin/python tools/export.py
+```
+
+预期：页内自检 4 场景 hard 全 0（soft 计数仅参考，方向不定——实测由 90 降为 42）；"manifest.json 写入 1277 项，去重后文件 237 个"（chessSeat 条目 792→12：可达 (parity,seed,book) 组合实为 66 种/字——book 与 parity 同源于 (col+row)，非独立——12 字 × 66 = 792，早前摘要误估 1584 导致 485 的预估作废）；PNG 回读校验 4 场景 hard 全 0、通过 ✓。
+
+- [ ] **Step 6: 全量回归 + Commit**
+
+```bash
+node --test   # 除 zdw.test.js 2 个已知失败外全绿（assets.test.js 按新公式算 key 查 manifest，自动适配）
+git add src/tile-key.js deploy/tests/tile-key.test.js src/assent/img/
+git commit -m "Normalize chessSeat tile keys to dedupe AA noise variants
+
+Co-Authored-By: Claude Code <noreply@anthropic.com>"
+```
+
+---
+
 ### Task 7: 阶段一总验收
 
 **Files:** 无（纯验证）
@@ -816,6 +904,6 @@ node tools/token-log.mjs --task "阶段一：场景元素素材化"
 
 ## Self-Review 记录
 
-- 覆盖检查：tileKey 共享（Task 1）✓、预加载器（Task 2）✓、双路径拆分（Task 3）✓、标定地图导出 + 页内自检（Task 4）✓、去重采集 + 完整性测试（Task 5）✓、运行时切换 + loading + 守卫（Task 6）✓、地图可编辑性硬约束验证（Task 7 Step 2，本方案下不用重跑导出）✓。
+- 覆盖检查：tileKey 共享（Task 1）✓、预加载器（Task 2）✓、双路径拆分（Task 3）✓、标定地图导出 + 页内自检（Task 4）✓、去重采集 + 完整性测试（Task 5）✓、运行时切换 + loading + 守卫（Task 6）✓、chessSeat key 归一化去 AA 噪点重复（Task 6.5，2026-10-25 用户拍板）✓、地图可编辑性硬约束验证（Task 7 Step 2，本方案下不用重跑导出）✓。
 - 已知取舍：`assets.js` / canvas 组装无 node 单测（依赖浏览器 API），由 Task 4 页内自检 + Task 5 双重校验 + Task 6 浏览器验收覆盖；阶段二（角色/道具换图）与阶段三（烘焙代码搬到 tools/export-lib/、README 更新）不在本计划内，各自单独出计划。
 - 中间态说明：Task 3 完成后游戏行为不变（别名保留）；Task 4-5 只动 tools/ 与测试，运行时不受影响；Task 6 才切换运行时。
