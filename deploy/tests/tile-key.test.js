@@ -41,3 +41,10 @@ test('chessSeat 的字进入 key', () => {
 test('未知字符按地板处理（与 drawTile 防呆一致）', () => {
   assert.ok(tileKey('~', 0, 0, tiles, {}).startsWith('floor|'));
 });
+
+test('chessSeat 画面只由棋字决定：parity/seed/book 归 0，同字任意位置同 key', () => {
+  const sceneData = { chessSeats: { '0,0': '車', '5,8': '車', '3,2': '馬' } };
+  assert.equal(tileKey('z', 0, 0, tiles, sceneData), 'chessSeat|z|0|0|0|0|車');
+  assert.equal(tileKey('z', 5, 8, tiles, sceneData), 'chessSeat|z|0|0|0|0|車', '同字不同位置（parity=1,seed=3,book=1 全变）仍同 key');
+  assert.notEqual(tileKey('z', 3, 2, tiles, sceneData), tileKey('z', 0, 0, tiles, sceneData), '不同字不同 key');
+});
