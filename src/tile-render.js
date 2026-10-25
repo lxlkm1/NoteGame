@@ -111,15 +111,10 @@ const STYLE_DRAW = {
     ctx.fillStyle = '#7d5a40';
     ctx.fillRect(x + 2, y + 3, 12, 3);
   },
-  facade(ctx, x, y, col, row) {
-    ctx.fillStyle = (col + row) % 2 ? '#514b64' : '#575169';
+  facade(ctx, x, y) { // 图书馆外墙：纯色 + 顶部亮线；亮窗是覆盖层 drawFacadeWindow32，不画在这里
+    ctx.fillStyle = '#575169';
     ctx.fillRect(x, y, TILE, TILE);
     ctx.fillStyle = '#6b6476'; ctx.fillRect(x, y, TILE, 2);
-    if (row === 2 && col % 6 === 3) {
-      ctx.fillStyle = '#312b40'; ctx.fillRect(x + 1, y + 1, 14, 14);
-      ctx.fillStyle = '#e8bd75'; ctx.fillRect(x + 3, y + 3, 10, 10);
-      ctx.fillStyle = '#7d6070'; ctx.fillRect(x + 7, y + 3, 2, 10);
-    }
   },
   outsideDoor(ctx, x, y) {
     ctx.fillStyle = '#3b2c36'; ctx.fillRect(x, y, TILE, TILE);
@@ -172,6 +167,16 @@ function drawTile(ctx, ch, col, row, tiles, sceneData) {
   draw(ctx, col * TILE, row * TILE, col, row, ch, sceneData);
 }
 
+// 外墙亮窗覆盖层（32px 无变换坐标系画完整亮窗）：旧路径细节层调用它；
+// 导出页用它生成透明底 tiles/facade-window.png，运行时在同位置 drawImage 叠加——两处共用保证像素一致
+function drawFacadeWindow32(ctx, x, y) {
+  ctx.fillStyle = '#312b40'; ctx.fillRect(x + 2, y + 2, 28, 28);
+  ctx.fillStyle = '#e8bd75'; ctx.fillRect(x + 6, y + 6, 20, 20);
+  ctx.fillStyle = '#7d6070'; ctx.fillRect(x + 14, y + 6, 4, 20);
+  ctx.fillStyle = '#f8dca0'; ctx.fillRect(x + 8, y + 7, 2, 10);
+  ctx.fillStyle = '#b48657'; ctx.fillRect(x + 22, y + 10, 1, 15);
+}
+
 // 在 32px 绘制层补充 1px 级细节；格子与碰撞仍使用 16px 世界坐标。
 function drawTileDetails(ctx, ch, col, row, tiles) {
   const style = tiles[ch] && tiles[ch].style;
@@ -179,21 +184,12 @@ function drawTileDetails(ctx, ch, col, row, tiles) {
   const dot = (color, dx, dy, w = 1, h = 1) => {
     ctx.fillStyle = color; ctx.fillRect(x + dx, y + dy, w, h);
   };
-  const seed = (col * 17 + row * 31) % 11;
   switch (style) {
-    case 'floor':
-      if (seed % 3 === 0) dot('#715a43', 3 + seed, 7, 8, 1);
-      if (seed % 4 === 0) dot('#4f4033', 18, 23, 6, 1);
-      break;
     case 'wall':
     case 'facade':
       dot('#716b80', 2, 2, 27, 1);
       dot('#3d3948', 1, 19, 30, 1);
-      dot('#696476', 5 + seed, 23, 8, 1);
-      if (style === 'facade' && row === 2 && col % 6 === 3) {
-        dot('#f8dca0', 8, 7, 2, 10);
-        dot('#b48657', 22, 10, 1, 15);
-      }
+      if (style === 'facade' && row === 2 && col % 6 === 3) drawFacadeWindow32(ctx, x, y);
       break;
     case 'bookshelf': {
       dot('#a1714c', 0, 1, 32, 2);
@@ -209,7 +205,6 @@ function drawTileDetails(ctx, ch, col, row, tiles) {
     case 'table':
       dot('#bd8b5a', 1, 5, 30, 1);
       dot('#71472d', 0, 24, 32, 2);
-      dot('#aa754b', 4 + seed, 13, 13, 1);
       dot('#b47d50', 19, 19, 7, 1);
       break;
     case 'chair':
@@ -220,14 +215,12 @@ function drawTileDetails(ctx, ch, col, row, tiles) {
     case 'pavement':
       dot('#92919b', 3, 3, 11, 1);
       dot('#52535e', 28, 4, 1, 27);
-      dot('#a3a0a4', 7 + seed, 22, 3, 1);
       break;
     case 'grass':
     case 'tree':
     case 'shrub':
     case 'lamp':
     case 'bench':
-      dot('#6d9473', 3 + seed, 26, 1, 3);
       dot('#244b3c', 21, 28, 2, 2);
       if (style === 'tree' || style === 'shrub') {
         dot('#7aa883', 8, 9, 4, 2);
@@ -326,6 +319,13 @@ function buildSceneFromTiles(sceneData, tiles) {
         missing.add(key);
         c2.drawImage(getPlaceholderTile(), c * TILE * ART_SCALE, r * TILE * ART_SCALE);
       }
+      // 外墙亮窗覆盖层：位置由 win 公式决定（与 drawTileDetails 的 facade 分支同一公式）
+      const style = tiles[grid[r][c]] && tiles[grid[r][c]].style;
+      if (style === 'facade' && r === 2 && c % 6 === 3) {
+        const winImg = img('tiles/facade-window');
+        if (winImg) c2.drawImage(winImg, c * TILE * ART_SCALE, r * TILE * ART_SCALE);
+        else missing.add('tiles/facade-window');
+      }
     }
   }
   if (missing.size) console.error('[tile-render] 缺失地块素材：' + [...missing].join(', '));
@@ -352,4 +352,4 @@ function buildSceneFromTiles(sceneData, tiles) {
   return cv;
 }
 
-export { buildCanvasLegacy, buildSceneFromTiles };
+export { buildCanvasLegacy, buildSceneFromTiles, drawFacadeWindow32 };

@@ -7,7 +7,7 @@
       // 不 import scenes.js（模块加载即预渲染且带音频副作用），直接复用底层渲染函数
       import { MAPS } from '../src/data/maps/index.js';
       import TILES from '../src/data/maps/tiles.js';
-      import { buildCanvasLegacy, buildSceneFromTiles } from '../src/tile-render.js';
+      import { buildCanvasLegacy, buildSceneFromTiles, drawFacadeWindow32 } from '../src/tile-render.js';
       import { tileKey } from '../src/tile-key.js';
       import { TILE, ART_SCALE } from '../src/map.js';
       import { _register } from '../src/assets.js';
@@ -60,6 +60,12 @@
           }
         }
       }
+
+      // 亮窗覆盖层：透明底 32×32（与旧路径细节层共用同一函数，像素一致由页内自检兜底）
+      const winCv = document.createElement('canvas');
+      winCv.width = winCv.height = CELL;
+      drawFacadeWindow32(winCv.getContext('2d'), 0, 0);
+      window.__EXPORTS__['tiles/facade-window'] = winCv;
 
       // 2) 页内自检：内存素材组装 4 个真实场景，与旧路径逐像素对比（必须为 0）
       for (const [key, canvas] of Object.entries(window.__EXPORTS__)) _register(key, canvas);

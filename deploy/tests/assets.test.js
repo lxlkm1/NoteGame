@@ -36,3 +36,10 @@ test('manifest 覆盖 4 张地图实际用到的全部地块素材，且文件�
     }
   }
 });
+
+test('manifest 含外墙亮窗覆盖层', () => {
+  const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
+  const meta = manifest['tiles/facade-window'];
+  assert.ok(meta, '缺 tiles/facade-window（先跑 python tools/export.py）');
+  assert.equal(meta.w, 32); assert.equal(meta.h, 32);
+});

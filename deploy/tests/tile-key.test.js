@@ -15,19 +15,15 @@ test('key 以 66 为周期重复（标定地图 66×66 因此穷尽全部组合�
   }
 });
 
-test('位置参数变化会改变 key（同字符不同位置的画面可能不同）', () => {
+test('位置参数只影响使用该参数的风格（去噪后 seed 不再属于任何风格）', () => {
   const base = tileKey('.', 0, 0, tiles, {});
-  assert.notEqual(tileKey('.', 1, 0, tiles, {}), base, 'parity 变化');
-  assert.notEqual(tileKey('.', 6, 0, tiles, {}), base, '仅 seed 变化（列+6 保持 parity/book 不变）');
+  assert.notEqual(tileKey('.', 1, 0, tiles, {}), base, 'floor parity 变化');
+  assert.notEqual(tileKey('B', 1, 0, tiles, {}), tileKey('B', 0, 0, tiles, {}), 'bookshelf book 变化');
+  assert.equal(tileKey('g', 6, 0, tiles, {}), tileKey('g', 0, 0, tiles, {}), 'grass seed 已移除（列+6 不再改变 key）');
 });
 
 test('door 的 m 与 D 画法不同，key 必须区分', () => {
   assert.notEqual(tileKey('m', 0, 0, tiles, {}), tileKey('D', 0, 0, tiles, {}));
-});
-
-test('facade 亮窗只在 row===2 且 col%6===3，key 必须区分', () => {
-  assert.notEqual(tileKey('F', 3, 2, tiles, {}), tileKey('F', 3, 3, tiles, {}));
-  assert.notEqual(tileKey('F', 3, 2, tiles, {}), tileKey('F', 4, 2, tiles, {}));
 });
 
 test('chessSeat 的字进入 key', () => {
@@ -47,4 +43,11 @@ test('chessSeat 画面只由棋字决定：parity/seed/book 归 0，同字任意
   assert.equal(tileKey('z', 0, 0, tiles, sceneData), 'chessSeat|z|0|0|0|0|車');
   assert.equal(tileKey('z', 5, 8, tiles, sceneData), 'chessSeat|z|0|0|0|0|車', '同字不同位置（parity=1,seed=3,book=1 全变）仍同 key');
   assert.notEqual(tileKey('z', 3, 2, tiles, sceneData), tileKey('z', 0, 0, tiles, sceneData), '不同字不同 key');
+});
+
+test('墙/外墙/门等画面固定：任意位置同 key', () => {
+  assert.equal(tileKey('#', 0, 0, tiles, {}), tileKey('#', 7, 9, tiles, {}));
+  assert.equal(tileKey('F', 3, 2, tiles, {}), tileKey('F', 4, 5, tiles, {}), 'facade 亮窗位置不再进 key（窗户是覆盖层）');
+  assert.equal(tileKey('m', 0, 0, tiles, {}), tileKey('m', 11, 13, tiles, {}));
+  assert.notEqual(tileKey('m', 0, 0, tiles, {}), tileKey('D', 0, 0, tiles, {}), 'm 与 D 画法不同仍需区分');
 });
