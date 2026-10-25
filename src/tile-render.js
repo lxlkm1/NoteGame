@@ -57,10 +57,10 @@ const STYLE_DRAW = {
   },
   chessSeat(ctx, x, y, col, row, ch, sceneData) { // 棋子凳子：圆形棋子造型，写繁体象棋字
     ctx.fillStyle = '#c89a5e';
-    ctx.beginPath(); ctx.arc(x + 8, y + 8, 7.5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x + 8, y + 8, 7.2, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = '#8a5c30';
     ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.arc(x + 8, y + 8, 7.5, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(x + 8, y + 8, 7.2, 0, Math.PI * 2); ctx.stroke();
     ctx.fillStyle = '#8a5c30';
     ctx.beginPath(); ctx.arc(x + 8, y + 8, 5, 0, Math.PI * 2); ctx.fill();
     const label = sceneData.chessSeats && sceneData.chessSeats[col + ',' + row];
