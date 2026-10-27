@@ -1057,6 +1057,88 @@ Co-Authored-By: Claude Code <noreply@anthropic.com>"
 
 ---
 
+### Task 6.7: 极限压缩（每风格 1 张；书架/地板/棋盘格保留变化，2026-10-26 用户拍板）
+
+**Files:**
+- Modify: `src/tile-render.js`（草地/石板路底色固定、桌椅木底固定）
+- Modify: `src/tile-key.js`（STYLE_PARAMS 表收缩）
+- Test: `deploy/tests/tile-key.test.js`
+- Re-export: `src/assent/img/`（重跑 export.py）
+
+**背景：** 用户要求"尽可能使用最少的图片还原游戏效果"。parity 深浅交替只保留在**大面积可见**的 floor（房间地板）与 chessFloor（棋盘格必须双色）；草地家族/石板路/桌椅的交替色视觉效果弱，全部固定为单色。**书架 6 种书脊序列用户明确保留**（每格 4 本书颜色不同，书架之间也不同）。预期：46 → **38 个文件**、47 → **39 条 manifest**（逐项：wall1 / floor2 / chessFloor2 / chessSeat12 / bigDoor 2 条目 1 文件 / door m+D 各 1 / outsideDoor1 / facade1 / facade-window1 / pavement1 / grass/tree/shrub/lamp/bench 各 1 / bookshelf6 / table1 / chair1 / toilet1）。数字不符报 DONE_WITH_CONCERNS 给实际值，不要硬凑。
+
+**关键原则：key 归一化必须和画法固定同步改**——只改 key 不改画法会让页内自检 hard>0（组装用一张图 vs 旧路径随位置变化），这正是双校验的兜底价值。
+
+- [ ] **Step 1: 先写失败测试**
+
+`deploy/tests/tile-key.test.js` 追加：
+
+```js
+test('草地家族/石板路/桌椅底色固定：parity 不再进 key（floor/chessFloor 保留）', () => {
+  for (const ch of ['g', 't', 's', 'l', 'b', 'p', 'T', 'c']) {
+    assert.equal(tileKey(ch, 0, 0, tiles, {}), tileKey(ch, 1, 0, tiles, {}), `${ch} parity 已移除`);
+  }
+  assert.notEqual(tileKey('.', 0, 0, tiles, {}), tileKey('.', 1, 0, tiles, {}), 'floor parity 保留');
+  assert.notEqual(tileKey('q', 0, 0, tiles, {}), tileKey('q', 1, 0, tiles, {}), 'chessFloor parity 保留');
+  assert.notEqual(tileKey('B', 0, 0, tiles, {}), tileKey('B', 1, 0, tiles, {}), 'bookshelf book 保留');
+});
+```
+
+跑 `node --test deploy/tests/tile-key.test.js` 确认新测试失败（前 8 个断言全失败：这些风格 key 目前含 parity）。
+
+- [ ] **Step 2: tile-render.js 底色固定（4 处替换）**
+
+(a) `STYLE_DRAW.grass`：`ctx.fillStyle = (col + row) % 2 ? '#3e6654' : '#426d58';` 改为 `ctx.fillStyle = '#426d58';`，签名 `(ctx, x, y, col, row)` 改为 `(ctx, x, y)`。
+
+(b) `STYLE_DRAW.pavement`：`ctx.fillStyle = (col + row) % 2 ? '#6f6e78' : '#797984';` 改为 `ctx.fillStyle = '#797984';`，签名同样去掉 col/row。
+
+(c) `STYLE_DRAW.table`：`drawWoodBase(ctx, x, y, col, row);` 改为 `ctx.fillStyle = '#63503e'; ctx.fillRect(x, y, TILE, TILE); // 底色固定（不再随 parity 交替）`。
+
+(d) `STYLE_DRAW.chair`：同 (c) 的替换。
+
+注意：`drawWoodBase` 本身保留不动——floor 与 bookshelf 仍在用（bookshelf 底色被木框整格覆盖，parity 不可见，无需改）。
+
+顺手修 export.html 陈旧注释（Task 6.6 审查 Minor）：`const CAL = 66; // 位置参数周期 2/11/6 的最小公倍数` 改为 `const CAL = 66; // 标定地图边长：充分覆盖剩余位置参数周期（parity 2 / book 6）`。
+
+- [ ] **Step 3: tile-key.js 的 STYLE_PARAMS 表收缩**
+
+```js
+// 各风格画面实际使用的位置参数：不在表中的风格 parity/seed/book/win 全归 0（画面固定）
+const STYLE_PARAMS = {
+  floor: { parity: true },      // 木地板深浅交替（大面积视觉特征，保留）
+  chessFloor: { parity: true }, // 棋盘格必须双色
+  bookshelf: { book: true },    // 书脊颜色组合（用户拍板保留变化）
+};
+```
+
+文件头注释第二行改为：`// key 只含会影响该地块画面的参数（2026-10-26 极限压缩后仅 floor/chessFloor 保留 parity、bookshelf 保留 book；`
+
+- [ ] **Step 4: 跑测试确认通过**
+
+```bash
+node --test deploy/tests/tile-key.test.js   # 预期 10/10 PASS
+```
+
+- [ ] **Step 5: 重跑导出**
+
+```bash
+/home/lxl/miniforge3/envs/opencode/bin/python tools/export.py
+```
+
+预期：页内自检 + PNG 回读 4 场景 hard 全 0（soft 仅 atrium ~42）；**manifest 39 项、去重后 38 个文件**。
+
+- [ ] **Step 6: 全量回归 + Commit**
+
+```bash
+node --test   # 除 zdw.test.js 2 个已知失败外全绿
+git add src/tile-render.js src/tile-key.js tools/export.html deploy/tests/tile-key.test.js src/assent/img/
+git commit -m "Fix grass-family, pavement and furniture tiles to single variants
+
+Co-Authored-By: Claude Code <noreply@anthropic.com>"
+```
+
+---
+
 ### Task 7: 阶段一总验收
 
 **Files:** 无（纯验证）
