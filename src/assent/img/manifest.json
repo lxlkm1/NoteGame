@@ -119,18 +119,8 @@
     "w": 32,
     "h": 32
   },
-  "tiles/pavement|p|1|0|0|0|": {
-    "path": "img/tiles/pavement-002.png",
-    "w": 32,
-    "h": 32
-  },
   "tiles/grass|g|0|0|0|0|": {
     "path": "img/tiles/grass-001.png",
-    "w": 32,
-    "h": 32
-  },
-  "tiles/grass|g|1|0|0|0|": {
-    "path": "img/tiles/grass-002.png",
     "w": 32,
     "h": 32
   },
@@ -139,18 +129,8 @@
     "w": 32,
     "h": 32
   },
-  "tiles/tree|t|1|0|0|0|": {
-    "path": "img/tiles/tree-002.png",
-    "w": 32,
-    "h": 32
-  },
   "tiles/shrub|s|0|0|0|0|": {
     "path": "img/tiles/shrub-001.png",
-    "w": 32,
-    "h": 32
-  },
-  "tiles/shrub|s|1|0|0|0|": {
-    "path": "img/tiles/shrub-002.png",
     "w": 32,
     "h": 32
   },
@@ -159,18 +139,8 @@
     "w": 32,
     "h": 32
   },
-  "tiles/lamp|l|1|0|0|0|": {
-    "path": "img/tiles/lamp-002.png",
-    "w": 32,
-    "h": 32
-  },
   "tiles/bench|b|0|0|0|0|": {
     "path": "img/tiles/bench-001.png",
-    "w": 32,
-    "h": 32
-  },
-  "tiles/bench|b|1|0|0|0|": {
-    "path": "img/tiles/bench-002.png",
     "w": 32,
     "h": 32
   },
@@ -209,18 +179,8 @@
     "w": 32,
     "h": 32
   },
-  "tiles/table|T|1|0|0|0|": {
-    "path": "img/tiles/table-002.png",
-    "w": 32,
-    "h": 32
-  },
   "tiles/chair|c|0|0|0|0|": {
     "path": "img/tiles/chair-001.png",
-    "w": 32,
-    "h": 32
-  },
-  "tiles/chair|c|1|0|0|0|": {
-    "path": "img/tiles/chair-002.png",
     "w": 32,
     "h": 32
   },

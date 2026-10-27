@@ -13,7 +13,7 @@
       import { _register } from '../src/assets.js';
 
       const CELL = TILE * ART_SCALE; // 32
-      const CAL = 66; // 位置参数周期 2/11/6 的最小公倍数，穷尽全部组合（见 tile-key.js 注释）
+      const CAL = 66; // 标定地图边长：充分覆盖剩余位置参数周期（parity 2 / book 6）
       const SCENES = ['atrium', 'reading', 'toilet', 'outside'];
       const chessChars = [...new Set(Object.values(MAPS.atrium.chessSeats ?? {}))];
 

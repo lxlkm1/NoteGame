@@ -51,3 +51,12 @@ test('墙/外墙/门等画面固定：任意位置同 key', () => {
   assert.equal(tileKey('m', 0, 0, tiles, {}), tileKey('m', 11, 13, tiles, {}));
   assert.notEqual(tileKey('m', 0, 0, tiles, {}), tileKey('D', 0, 0, tiles, {}), 'm 与 D 画法不同仍需区分');
 });
+
+test('草地家族/石板路/桌椅底色固定：parity 不再进 key（floor/chessFloor 保留）', () => {
+  for (const ch of ['g', 't', 's', 'l', 'b', 'p', 'T', 'c']) {
+    assert.equal(tileKey(ch, 0, 0, tiles, {}), tileKey(ch, 1, 0, tiles, {}), `${ch} parity 已移除`);
+  }
+  assert.notEqual(tileKey('.', 0, 0, tiles, {}), tileKey('.', 1, 0, tiles, {}), 'floor parity 保留');
+  assert.notEqual(tileKey('q', 0, 0, tiles, {}), tileKey('q', 1, 0, tiles, {}), 'chessFloor parity 保留');
+  assert.notEqual(tileKey('B', 0, 0, tiles, {}), tileKey('B', 1, 0, tiles, {}), 'bookshelf book 保留');
+});

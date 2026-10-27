@@ -97,15 +97,15 @@ const STYLE_DRAW = {
       ctx.fillRect(x + 1 + i * 4, y + 2 + (i % 2), 3, 11);
     }
   },
-  table(ctx, x, y, col, row) { // 阅览桌：木地板 + 桌面 + 深边
-    drawWoodBase(ctx, x, y, col, row);
+  table(ctx, x, y) { // 阅览桌：木底 + 桌面 + 深边
+    ctx.fillStyle = '#63503e'; ctx.fillRect(x, y, TILE, TILE); // 底色固定（不再随 parity 交替）
     ctx.fillStyle = '#8a5c3a';
     ctx.fillRect(x, y + 2, TILE, TILE - 4);
     ctx.fillStyle = '#9d6d47';
     ctx.fillRect(x, y + 2, TILE, 3);
   },
-  chair(ctx, x, y, col, row) { // 椅子（可走）：木地板 + 椅面
-    drawWoodBase(ctx, x, y, col, row);
+  chair(ctx, x, y) { // 椅子（可走）：木底 + 椅面
+    ctx.fillStyle = '#63503e'; ctx.fillRect(x, y, TILE, TILE); // 底色固定（不再随 parity 交替）
     ctx.fillStyle = '#6a4a34';
     ctx.fillRect(x + 2, y + 3, 12, 10);
     ctx.fillStyle = '#7d5a40';
@@ -121,14 +121,14 @@ const STYLE_DRAW = {
     ctx.fillStyle = '#9d704a'; ctx.fillRect(x + 2, y, 12, 15);
     ctx.fillStyle = '#e8c86e'; ctx.fillRect(x + 11, y + 8, 2, 2);
   },
-  pavement(ctx, x, y, col, row) {
-    ctx.fillStyle = (col + row) % 2 ? '#6f6e78' : '#797984';
+  pavement(ctx, x, y) {
+    ctx.fillStyle = '#797984';
     ctx.fillRect(x, y, TILE, TILE);
     ctx.fillStyle = '#62616d'; ctx.fillRect(x, y + 15, TILE, 1);
     ctx.fillRect(x + 15, y, 1, TILE);
   },
-  grass(ctx, x, y, col, row) {
-    ctx.fillStyle = (col + row) % 2 ? '#3e6654' : '#426d58';
+  grass(ctx, x, y) {
+    ctx.fillStyle = '#426d58';
     ctx.fillRect(x, y, TILE, TILE);
     ctx.fillStyle = '#548066'; ctx.fillRect(x + 4, y + 5, 2, 3);
     ctx.fillRect(x + 11, y + 11, 2, 2);
