@@ -13,7 +13,7 @@ export function tileKey(ch, col, row, tiles, sceneData) {
   const t = tiles[ch];
   const style = t && t.style ? t.style : 'floor'; // 未知字符按地板处理（与 drawTile 防呆一致）
   if (style === 'chessSeat') {
-    // chessSeat 画面只由棋字决定：STYLE_DRAW.chessSeat 不读位置参数，drawTileDetails 仅固定 dot
+    // chessSeat 画面只由棋字决定（素材按字出图，12 字 12 张），位置参数全归 0
     const char = sceneData?.chessSeats?.[`${col},${row}`] ?? '';
     return [style, ch, 0, 0, 0, 0, char].join('|');
   }

@@ -19,8 +19,3 @@ export async function loadAssets(baseUrl = 'src/assent/') {
 export function img(key) {
   return images.get(key) ?? null;
 }
-
-// _register：仅供 tools/export.html 把内存 canvas 注入为"图片"（导出页页内自检用）
-export function _register(key, image) {
-  images.set(key, image);
-}

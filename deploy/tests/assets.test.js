@@ -23,7 +23,7 @@ function checkPngFile(meta) {
 }
 
 test('manifest 覆盖 4 张地图实际用到的全部地块素材，且文件为合法 32×32 PNG', () => {
-  assert.ok(existsSync(manifestPath), '缺少 src/assent/img/manifest.json（先跑 python tools/export.py）');
+  assert.ok(existsSync(manifestPath), '缺少 src/assent/img/manifest.json（素材已固化入库，从 git 恢复或重新 AI 生成）');
   const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
   const checked = new Set();
   for (const name of ['atrium', 'reading', 'toilet', 'outside']) {
@@ -45,7 +45,7 @@ test('manifest 覆盖 4 张地图实际用到的全部地块素材，且文件�
 test('manifest 含外墙亮窗覆盖层', () => {
   const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
   const meta = manifest['tiles/facade-window'];
-  assert.ok(meta, '缺 tiles/facade-window（先跑 python tools/export.py）');
+  assert.ok(meta, '缺 tiles/facade-window（素材已固化入库，从 git 恢复或重新 AI 生成）');
   assert.equal(meta.w, 32); assert.equal(meta.h, 32);
   checkPngFile(meta); // 此 key 由运行时直接查用、不经 tileKey，第一个用例覆盖不到，需单独校验文件
 });
