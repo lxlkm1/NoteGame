@@ -4,6 +4,7 @@
 # 契约：收件箱里的文件名 == 目标素材文件名（如 wall-001.png），处理后直接覆盖 --out 里的同名文件
 import argparse
 import sys
+from collections import Counter
 from pathlib import Path
 
 from PIL import Image
@@ -70,6 +71,15 @@ def normalize(src, palette, n_colors, key=None, key_tol=40, snap=True):
     if key is not None:
         im = key_out(im, key, key_tol)
         mask = [a for *_rgb, a in rgba_pixels(im)]
+        # 抠掉的像素用剩余主色顶替，避免背景色占用限色名额（alpha 仍保持 0）
+        opaque = [c[:3] for c in rgba_pixels(im) if c[3] == 255]
+        if opaque and len(opaque) < len(mask):
+            fill = Counter(opaque).most_common(1)[0][0]
+            px = im.load()
+            for y in range(im.height):
+                for x in range(im.width):
+                    if px[x, y][3] == 0:
+                        px[x, y] = (*fill, 0)
     rgb = im.convert('RGB')
     # 先限色（中位切分）把 AI 的渐变/阴影收成平涂色块，再逐色对齐游戏调色板
     q = rgb.quantize(colors=n_colors, method=Image.MEDIANCUT).convert('RGB')
