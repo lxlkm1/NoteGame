@@ -7,3 +7,4 @@ temp_*/
 # token 消耗记录：个人数据，每次会话都变，不进仓库
 docs/token-log.md
 docs/token-log.state.json
+assets-ai/
