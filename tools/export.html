@@ -40,7 +40,7 @@
         if (isChess && chessChars.length === 0) continue;
         const grid = Array.from({ length: CAL }, () => ch.repeat(CAL));
         const chessSeats = {};
-        if (isChess) { // 12 种字轮转铺满全图，每种字都会落在各种 seed 位置上
+        if (isChess) { // 12 种字轮转铺满全图，保证每字至少出现一次（key 只含字，同字取首个出现位置的图）
           for (let r = 0; r < CAL; r++) {
             for (let c = 0; c < CAL; c++) chessSeats[`${c},${r}`] = chessChars[(r * CAL + c) % chessChars.length];
           }

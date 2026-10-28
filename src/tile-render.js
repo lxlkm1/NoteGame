@@ -7,7 +7,7 @@ import { img } from './assets.js';
 // ---- 渲染（只在浏览器调用） ----
 const BOOK_COLORS = ['#c25b4e', '#4e7cc2', '#c2a84e', '#5cb27a', '#a05cc2', '#c27b4e'];
 
-function drawWoodBase(ctx, x, y, col, row) { // 暖木交替地板（房间地板 + 书架/桌子/椅子下层）
+function drawWoodBase(ctx, x, y, col, row) { // 暖木交替地板（房间地板）
   ctx.fillStyle = (col + row) % 2 === 0 ? '#63503e' : '#5a4837';
   ctx.fillRect(x, y, TILE, TILE);
 }
@@ -85,8 +85,7 @@ const STYLE_DRAW = {
   floor(ctx, x, y, col, row) { // 房间地板：暖木交替
     drawWoodBase(ctx, x, y, col, row);
   },
-  bookshelf(ctx, x, y, col, row) { // 书架：木地板 + 木框 + 一排彩色书
-    drawWoodBase(ctx, x, y, col, row);
+  bookshelf(ctx, x, y, col, row) { // 书架：木框 + 一排彩色书
     ctx.fillStyle = '#7a4a2e';
     ctx.fillRect(x, y, TILE, TILE);
     ctx.fillStyle = '#5c3820';

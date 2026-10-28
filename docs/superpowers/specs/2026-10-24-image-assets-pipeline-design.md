@@ -20,7 +20,7 @@ NoteGame 是纯 Canvas 2D 像素风小游戏（无框架，约 4900 行 JS）。
 | 图片组织 | 每帧一个独立 PNG（不用雪碧图），可直接打开查看/替换 |
 | 像素数据去留 | 保留 `src/data/*.js` 和生成器作为"源文件"，运行时不再加载；导出脚本可随时重跑 |
 | 导出方案 | 浏览器导出页 + Python Playwright 采集（100% 保真，含象棋字 fillText） |
-| 场景图片粒度 | **元素素材（2026-10-24 用户拍板，取代整图方案）**：每种地块的每个位置变体一张 32×32 PNG（按内容去重，约 60-150 张），运行时按地图字符串逐格组装。改地图无需重跑导出（位置参数组合已全量覆盖）；只有改画法（STYLE_DRAW）才需重跑 |
+| 场景图片粒度 | **元素素材（2026-10-24 用户拍板，取代整图方案）**：每种地块的每个位置变体一张 32×32 PNG（按内容去重；设计时估算约 60-150 张，任务 6.5/6.6/6.7 去噪后实际 38 张 PNG / 39 条 manifest），运行时按地图字符串逐格组装。改地图无需重跑导出（位置参数组合已全量覆盖）；只有改画法（STYLE_DRAW）才需重跑 |
 
 ## 总体架构
 
@@ -38,7 +38,7 @@ src/assent/img/**.png + manifest.json（产物）
 ```
 main.js 启动 → await assets.load() 预加载全部 PNG（Promise.all）
     → drawSprite(key) 内部查 Image → drawImage（不再碰矩阵/调色板）
-    → buildCanvas() 每格算 tileKey(字符,列,行) → 查地块 PNG → drawImage 组装场景
+    → buildSceneFromTiles() 每格算 tileKey(字符,列,行) → 查地块 PNG → drawImage 组装场景
     → 地图字符串保留做碰撞/portal 判定 + 场景组装依据（逻辑零改动）
 ```
 
@@ -48,7 +48,7 @@ main.js 启动 → await assets.load() 预加载全部 PNG（Promise.all）
 
 地块画法存在位置相关变化（交替色、种子纹理、书架变色、象棋字、外墙亮窗），为保证逐像素一致且**不改任何现有渲染代码**：
 
-1. 导出页为图例中每个字符生成 66×66 格标定地图（66 = 位置周期 2/11/6 的最小公倍数，穷尽所有参数组合），用现有 `buildCanvas` 旧路径渲染，逐格裁 32×32 小图，按内容去重
+1. 导出页为图例中每个字符生成 66×66 格标定地图（66 = 位置周期 2/11/6 的最小公倍数，穷尽所有参数组合），用现有 `buildCanvasLegacy` 旧路径渲染，逐格裁 32×32 小图，按内容去重
 2. 象棋凳：标定地图配合成 chessSeats 数据，把 12 种繁体字各渲成独立图
 3. 页内像素对比：素材组装的 4 场景 vs 旧代码渲染的 4 场景必须逐像素一致（每次导出自动验证）
 4. 共享纯函数 `tileKey(ch, col, row, tiles, sceneData)`（`src/tile-key.js`）让导出与运行时算出同一个 key
@@ -58,7 +58,8 @@ main.js 启动 → await assets.load() 预加载全部 PNG（Promise.all）
 ```
 src/assent/img/
 ├── tiles/      地块素材（32×32，按内容去重）：墙/地板×2/草地/石板路/书架×6/象棋凳12字/
-│               棋盘格×2/门/大门/外墙×2/树/树丛/路灯/长椅/桌椅/洁具… 约 60-150 张
+│               棋盘格×2/门/大门/外墙/外墙亮窗覆盖层/树/树丛/路灯/长椅/桌椅/洁具…
+│               实际 38 张 PNG / 39 条 manifest（设计时估算约 60-150 张）
 ├── player/     down1/down2/up1/up2/side1/side2.png（32×32）
 ├── mimi/       idle1/idle2/walk1/walk2/eat/sleep.png（32×32）
 ├── cats/       cat01…cat10/ × 6 帧（60 张，配色变体全导出）
@@ -78,8 +79,8 @@ src/assent/img/
 | `src/assets.js`（新增） | 预加载器：fetch manifest → Promise.all 加载全部 PNG → `Map<key, Image>`；导出 `img(key)` 查询 |
 | `src/sprites.js` | `drawSprite(ctx, key, x, y, flip, scale)` 内部改查 Image；`detailedSprite` 等烘焙逻辑在阶段三搬到 `tools/export-lib/` 供导出页专用 |
 | `src/tile-key.js`（新增） | 纯函数 `tileKey(ch, col, row, tiles, sceneData)` → 地块素材 key；导出页与运行时共用 |
-| `src/tile-render.js` | `buildCanvas(sceneData, tiles)` 改为按 tileKey 查图组装（缺图的格子画品红占位）；旧逐格绘制实现保留为 `buildCanvasLegacy`（含 `STYLE_DRAW`/`drawTileDetails`），仅导出页使用，阶段三搬到 `tools/export-lib/`；decor 暖光/门垫因尺寸位置由地图配置驱动，保留代码叠加（归"特效"类） |
-| `src/scenes.js` | 模块加载时不再立即渲染；新增 `initScenes()` 在资产加载后调 `buildCanvas` 构建场景表 |
+| `src/tile-render.js` | `buildSceneFromTiles(sceneData, tiles)` 按 tileKey 查图组装（缺图的格子画品红占位）；旧逐格绘制实现保留为 `buildCanvasLegacy`（含 `STYLE_DRAW`/`drawTileDetails`），仅导出页使用，阶段三搬到 `tools/export-lib/`；decor 暖光/门垫因尺寸位置由地图配置驱动，保留代码叠加（归"特效"类） |
+| `src/scenes.js` | 模块加载时不再立即渲染；新增 `initScenes()` 在资产加载后调 `buildSceneFromTiles` 构建场景表 |
 | `src/main.js` | 启动改 async：显示 loading 提示 → await assets.load → initScenes() → 启动 loop |
 | 8 个调用方（player.js / cats.js / mimi.js / shared.js / duyu.js / couple-render.js / zdw-render.js / render.js） | 每处 `drawSprite(ctx, 矩阵, 调色板, …)` 改为 `drawSprite(ctx, 'key', …)`，每处几行 |
 

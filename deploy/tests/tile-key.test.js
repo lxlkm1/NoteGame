@@ -8,7 +8,7 @@ test('key 确定性：同参数同 key', () => {
   assert.equal(tileKey('.', 3, 4, tiles, {}), tileKey('.', 3, 4, tiles, {}));
 });
 
-test('key 以 66 为周期重复（标定地图 66×66 因此穷尽全部组合）', () => {
+test('key 以 66 为周期重复（标定地图 66×66 覆盖剩余位置参数周期：parity 2 / book 6）', () => {
   for (const ch of ['.', 'g', 'B', '#', 'q']) {
     assert.equal(tileKey(ch, 5, 7, tiles, {}), tileKey(ch, 5 + 66, 7, tiles, {}), `${ch} 列周期`);
     assert.equal(tileKey(ch, 5, 7, tiles, {}), tileKey(ch, 5, 7 + 66, tiles, {}), `${ch} 行周期`);
@@ -41,7 +41,7 @@ test('未知字符按地板处理（与 drawTile 防呆一致）', () => {
 test('chessSeat 画面只由棋字决定：parity/seed/book 归 0，同字任意位置同 key', () => {
   const sceneData = { chessSeats: { '0,0': '車', '5,8': '車', '3,2': '馬' } };
   assert.equal(tileKey('z', 0, 0, tiles, sceneData), 'chessSeat|z|0|0|0|0|車');
-  assert.equal(tileKey('z', 5, 8, tiles, sceneData), 'chessSeat|z|0|0|0|0|車', '同字不同位置（parity=1,seed=3,book=1 全变）仍同 key');
+  assert.equal(tileKey('z', 5, 8, tiles, sceneData), 'chessSeat|z|0|0|0|0|車', '同字不同位置（位置参数全变）仍同 key');
   assert.notEqual(tileKey('z', 3, 2, tiles, sceneData), tileKey('z', 0, 0, tiles, sceneData), '不同字不同 key');
 });
 
