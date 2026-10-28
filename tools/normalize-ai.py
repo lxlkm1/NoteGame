@@ -92,6 +92,7 @@ def main():
     ap.add_argument('--key-out', default=None, help='抠掉的颜色，如 "#ff00ff"（角色/道具用）')
     ap.add_argument('--key-tol', type=int, default=40, help='抠色容差（默认 40）')
     ap.add_argument('--no-palette', action='store_true', help='不对齐游戏调色板（只做限色）')
+    ap.add_argument('--only', default=None, help='只处理指定文件（逗号分隔，如 wall-001.png,grass-001.png）')
     ap.add_argument('--dry-run', action='store_true', help='只报告，不写文件')
     args = ap.parse_args()
 
@@ -100,6 +101,9 @@ def main():
         print(f'收件箱不存在：{inbox}')
         sys.exit(1)
     files = sorted(p for p in inbox.iterdir() if p.suffix.lower() == '.png')
+    if args.only:
+        wanted = set(args.only.split(','))
+        files = [p for p in files if p.name in wanted]
     if not files:
         print(f'收件箱里没有 PNG：{inbox}')
         sys.exit(1)
