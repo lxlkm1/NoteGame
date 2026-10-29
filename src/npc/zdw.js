@@ -95,7 +95,8 @@ function groundPoint(npc) {
   const { col, row } = cell(npc);
   const dx = npc.facing === 'left' ? -1 : 1;
   const hide = npc.heldMimi?.hide || npc.targetMimi?.hide;
-  for (const [x, y] of [[dx, 0], [-dx, 0], [0, 1], [0, -1], [0, 0]]) {
+  // 同侧优先：草丛占住同侧正格时，放草丛同侧角格外（保持抓起与放下同侧），都不行才落到身后
+  for (const [x, y] of [[dx, 0], [dx, 1], [dx, -1], [-dx, 0], [0, 1], [0, -1], [0, 0]]) {
     if (hide && col + x === hide.col && row + y === hide.row) continue;
     if (walkable(npc, col + x, row + y)) return { x: (col + x) * TILE, y: (row + y) * TILE };
   }
